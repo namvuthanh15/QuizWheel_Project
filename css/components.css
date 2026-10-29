@@ -164,7 +164,7 @@
 .host-hint { text-align: center; color: var(--muted); }
 
 /* ===== Tab trong màn hình host + cấu hình vòng quay ===== */
-.tabs { display: flex; gap: 10px; }
+.tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .tab { font: inherit; font-weight: 800; padding: 9px 26px; cursor: pointer; color: #6b2300; background: rgba(255,246,220,.7);
   border: 3px solid var(--ink); border-radius: 999px; box-shadow: 0 4px 0 #a24a00; transition: transform .08s, box-shadow .08s; }
 .tab[aria-selected="true"] { background: var(--yellow); color: var(--ink); transform: translateY(2px); box-shadow: 0 2px 0 #a24a00; }
@@ -271,3 +271,24 @@ html:not([lang="vi"]) .home-title-text { display: block; }
 .shuffle-box legend { padding: 0; margin-bottom: 6px; font-weight: 700; font-size: .92rem; }
 .shuffle-box input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ink); cursor: pointer; }
 .shuffle-box .radio { cursor: pointer; }
+
+/* ===== Tab "Đăng web" (đăng seed.js lên GitHub) ===== */
+.publish-card { max-width: 760px; margin: 0 auto; width: 100%; min-width: 0; }
+.pub-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+.pub-grid .field { min-width: 0; }
+.pub-token-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pub-token-row input { flex: 1 1 200px; min-width: 0; font: inherit; font-weight: 500; padding: 9px 12px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; color: var(--text); }
+.pub-token-row .btn { padding: 8px 16px; }
+.pub-guide { margin: 12px 0; padding: 8px 14px; background: var(--card-2); border: 2px solid var(--ink); border-radius: 14px; }
+.pub-guide summary { cursor: pointer; font-weight: 800; padding: 4px 0; }
+.pub-guide summary:focus-visible { outline: 3px solid #fff; outline-offset: 2px; box-shadow: 0 0 0 6px var(--ink); border-radius: 6px; }
+.pub-guide ol { margin: 6px 0 0; padding-left: 22px; overflow-wrap: anywhere; }
+.pub-sum-title { margin: 16px 0 6px; }
+.pub-summary { margin: 0; padding: 10px 14px 10px 30px; background: #fff; border: 2px solid var(--ink); border-radius: 12px; overflow-wrap: anywhere; }
+.pub-warn { color: #b4120a; font-weight: 700; }
+.pub-warn:empty { display: none; }
+.pub-status { min-height: 1.4em; margin: 6px 0; font-weight: 600; overflow-wrap: anywhere; }
+.pub-ok { color: #14532d; font-weight: 800; }
+.pub-wait { display: block; margin-top: 4px; color: var(--muted); font-size: .88rem; font-weight: 500; }
+.pub-link { color: #6b2300; font-weight: 800; }
+.publish-card .form-error { overflow-wrap: anywhere; }

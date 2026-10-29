@@ -320,10 +320,11 @@
 
   function showTab(name, level) {
     if (level) setWheelLevel(level);
-    ["questions", "wheel"].forEach(function (t) {
+    ["questions", "wheel", "publish"].forEach(function (t) {
       UI.$("#panel-" + t).hidden = (t !== name);
       UI.$("#tab-" + t).setAttribute("aria-selected", String(t === name));
     });
+    if (name === "publish" && window.Publish) Publish.show();    // nạp lại ô nhập + tóm tắt dữ liệu mới nhất
   }
 
   /* ---------- Khởi tạo ---------- */
@@ -367,6 +368,7 @@
     sel.addEventListener("change", function () { setWheelLevel(sel.value); });
     UI.$("#tab-questions").addEventListener("click", function () { showTab("questions"); });
     UI.$("#tab-wheel").addEventListener("click", function () { showTab("wheel"); });
+    UI.$("#tab-publish").addEventListener("click", function () { showTab("publish"); });
     ["#set-time", "#set-shuffle-easy", "#set-shuffle-hard"].forEach(function (sel) { UI.$(sel).addEventListener("change", saveSettings); });
 
     $$(".ans-edit").forEach(function (block, i) {

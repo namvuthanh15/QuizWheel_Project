@@ -25,3 +25,10 @@
   .w-item .w-label { min-width: 0; flex: 1 1 110px; }
   .w-item .w-count { width: 62px; }
 }
+
+/* Tab Đăng web: điện thoại hẹp -> 1 cột; 3 tab thu nhỏ để không tràn ngang */
+@media (max-width: 520px) {
+  .pub-grid { grid-template-columns: minmax(0, 1fr); }
+  .tab { padding: 8px 16px; }
+  .pub-token-row .btn { flex: 1 1 auto; }
+}

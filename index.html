@@ -104,6 +104,7 @@
         <div class="tabs" role="tablist" aria-label="Phần cài đặt" data-i18n-aria="host.tabsAria">
           <button class="tab" role="tab" id="tab-questions" aria-controls="panel-questions" aria-selected="true" type="button" data-i18n="host.tabQuestions">Câu hỏi</button>
           <button class="tab" role="tab" id="tab-wheel" aria-controls="panel-wheel" aria-selected="false" type="button" data-i18n="host.tabWheel">Vòng quay</button>
+          <button class="tab" role="tab" id="tab-publish" aria-controls="panel-publish" aria-selected="false" type="button" data-i18n="host.tabPublish">Đăng web</button>
         </div>
         <div id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" class="tab-panel">
         <div class="host-layout">
@@ -246,6 +247,55 @@
             <div class="host-tools"><button type="button" class="btn btn-secondary" id="w-preview" data-i18n="host.wheel.preview">Xem thử vòng quay</button><button type="button" class="btn btn-ghost" id="w-reset" data-i18n="host.wheel.reset">Khôi phục mặc định</button></div>
           </div>
         </div>
+        <div id="panel-publish" role="tabpanel" aria-labelledby="tab-publish" class="tab-panel" hidden>
+          <form class="card publish-card" id="pub-form" autocomplete="off" novalidate>
+            <h3 data-i18n="pub.title">Đăng dữ liệu lên web</h3>
+            <p class="note" data-i18n="pub.intro">Ghi thẳng file dữ liệu vào kho GitHub của bạn, không cần xuất/nhập file.</p>
+
+            <div class="pub-grid">
+              <label class="field"><span data-i18n="pub.owner">Tài khoản GitHub (owner)</span>
+                <input id="pub-owner" type="text" maxlength="39" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+              <label class="field"><span data-i18n="pub.repo">Tên repo</span>
+                <input id="pub-repo" type="text" maxlength="100" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+              <label class="field"><span data-i18n="pub.branch">Nhánh</span>
+                <input id="pub-branch" type="text" maxlength="200" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
+              <label class="field"><span data-i18n="pub.path">Đường dẫn file</span>
+                <input id="pub-path" type="text" maxlength="200" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-describedby="pub-path-hint"></label>
+            </div>
+            <p class="note" id="pub-path-hint" data-i18n="pub.pathHint">Chỉ dùng chữ, số, . _ - và /; phải là file .js; không bắt đầu bằng / và không chứa ..</p>
+
+            <label class="field" for="pub-token"><span data-i18n="pub.token">Mã truy cập GitHub (token)</span></label>
+            <div class="pub-token-row">
+              <input id="pub-token" name="pub-token" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore aria-describedby="pub-token-note">
+              <button type="button" class="btn btn-ghost" id="pub-reveal" aria-controls="pub-token" aria-pressed="false" data-i18n="pub.show">Hiện mã</button>
+              <button type="button" class="btn btn-ghost" id="pub-clear" data-i18n="pub.clearToken">Xóa mã</button>
+            </div>
+            <p class="note" id="pub-token-note" data-i18n="pub.tokenNote">Mã chỉ được giữ trong phiên này (đóng tab là mất). Nên dùng mã “fine-grained” chỉ cấp cho đúng 1 repo, quyền Contents (đọc/ghi), có thời hạn ngắn.</p>
+
+            <details class="pub-guide">
+              <summary data-i18n="pub.guide.title">Cách tạo mã (token)</summary>
+              <ol>
+                <li data-i18n="pub.guide.s1">GitHub &gt; ảnh đại diện &gt; Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens &gt; Generate new token.</li>
+                <li data-i18n="pub.guide.s2">Resource owner: chọn tài khoản của bạn. Expiration: đặt ngắn (ví dụ 30 ngày).</li>
+                <li data-i18n="pub.guide.s3">Repository access: chọn Only select repositories rồi chọn đúng repo QuizWheel.</li>
+                <li data-i18n="pub.guide.s4">Permissions &gt; Repository permissions &gt; Contents: Read and write.</li>
+                <li data-i18n="pub.guide.s5">Bấm Generate token, sao chép mã (chỉ hiện một lần) rồi dán vào ô phía trên.</li>
+              </ol>
+              <p class="note" data-i18n="pub.guide.warn">Không gửi mã cho ai, không dán vào chat hay vào file trong repo. Tên menu của GitHub có thể thay đổi.</p>
+            </details>
+
+            <label class="field"><span data-i18n="pub.message">Nội dung commit (tùy chọn)</span>
+              <input id="pub-message" type="text" maxlength="200" autocomplete="off" placeholder="Cập nhật dữ liệu QuizWheel" data-i18n-ph="pub.messagePh"></label>
+
+            <h4 class="pub-sum-title" data-i18n="pub.sum.title">Tóm tắt trước khi đăng</h4>
+            <ul class="pub-summary" id="pub-summary"></ul>
+            <p class="note pub-warn" id="pub-warn"></p>
+
+            <div class="host-tools"><button type="button" class="btn" id="pub-submit" data-i18n="pub.submit">Đăng lên web</button></div>
+            <p class="pub-status" id="pub-status" aria-live="polite"></p>
+            <p class="form-error" id="pub-error" role="alert"></p>
+          </form>
+        </div>
         <button class="btn btn-secondary" type="button" data-nav="settings" data-i18n="common.back">Quay lại</button>
       </div>
     </section>
@@ -355,6 +405,7 @@
   <script src="js/ui.js"></script>
   <script src="js/quiz.js"></script>
   <script src="js/host.js"></script>
+  <script src="js/publish.js"></script>
   <script src="js/wheel.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/lang.js"></script>

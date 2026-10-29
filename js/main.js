@@ -34,7 +34,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Chế độ host: mở web với ?host=1 một lần để bật trên trình duyệt này, ?host=0 để tắt
     const hp = new URLSearchParams(location.search).get("host");
-    if (hp === "1") Store.setHostMode(true); else if (hp === "0") Store.setHostMode(false);
+    if (hp === "1") Store.setHostMode(true); else if (hp === "0") { Store.setHostMode(false); Publish.clearToken(); }   // tắt chế độ host thì xóa luôn mã GitHub
     const hostOk = Store.isHostMode();
     document.querySelectorAll("[data-host-only]").forEach(function (el) { el.hidden = !hostOk; });
 
@@ -93,6 +93,7 @@
     Sfx.init();
     Wheel.init();
     Host.init();
+    Publish.init();
     Settings.init();
     go("home");
   });

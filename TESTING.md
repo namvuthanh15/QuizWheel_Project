@@ -44,6 +44,27 @@ và bấm đúp `index.html` (file://). Kết quả: **tất cả đạt** sau k
 - [x] Dữ liệu riêng trong trình duyệt được ưu tiên hơn `seed.js`; "Khôi phục mặc định" quay về dữ liệu đăng kèm
 - [x] Thiếu `seed.js` (404) hoặc `seed.js` sai cấu trúc/ảnh lạ: tự rơi về bộ mẫu, không lỗi
 
+## Tab "Đăng web" (Milestone 10)
+Kiểm tra tự động bằng Playwright + Chromium: **245 mục, tất cả đạt**. GitHub được giả lập bằng `page.route("https://api.github.com/**")`, dùng token GIẢ, web chạy qua `python -m http.server` từ thư mục cha (có thư mục con) và qua tên miền công khai `quizwheel.test` (ánh xạ về 127.0.0.1).
+- [x] Luồng thành công (22 mục): đúng 1 GET rồi 1 PUT; URL/header đúng; body có message/content/sha/branch; base64 giải mã khớp từng byte (tiếng Việt, emoji, `</script>`, U+2028); giữ khối comment đầu file; link commit mở tab mới với `rel="noopener noreferrer"`
+- [x] Đăng lại đúng dữ liệu hiện có thì file sinh ra giống hệt `data/seed.js` hiện tại (từng byte)
+- [x] Vòng khứ hồi: phục vụ lại nội dung đã PUT làm `seed.js` cho ngữ cảnh mới (LocalStorage trống): số câu, số ô, ảnh thua, cài đặt đều đúng
+- [x] Lỗi (77 mục): 401, 403 (thiếu quyền / rate limit hai kiểu), 404 (file mới -> tạo mới; sai repo/nhánh; ở bước PUT), 409 rồi thành công, 409 hai lần, 422, 500, mã lạ 418, đường dẫn là thư mục, mạng đứt, offline, timeout 30 giây thật; nút mở khóa lại, không lỗi JS
+- [x] Chống bấm đúp: bấm 3 lần chỉ 1 PUT; gọi hàm đăng khi đang chạy không tạo request mới
+- [x] Bảo mật: token chỉ ở sessionStorage + header Authorization tới api.github.com (quét LocalStorage, `Store.exportJSON()`, DOM kể cả thuộc tính, mọi request, console, thông báo); ô mã `type=password`; Xóa mã làm sạch sessionStorage và ô nhập; `?host=0` xóa mã
+- [x] Đầu vào (38 mục): thiếu owner/repo/token, `..`, bắt đầu bằng `/`, ký tự lạ, không phải `.js`, token có khoảng trắng: báo lỗi và KHÔNG gọi mạng; dữ liệu rỗng hỏi xác nhận riêng; > 5 MB bị chặn; 1-5 MB cảnh báo và vẫn đăng đúng
+- [x] Phân quyền: người chơi không thấy `#tab-publish`; gọi `Publish.publish()` bị từ chối, 0 request; `?host=1` bật, `?host=0` tắt
+- [x] Giao diện: không tràn ngang ở 320/360/390/768/1280 px (cả Tiếng Việt và English, kể cả lỗi dài 400 ký tự liền); bàn phím Tab/Enter/Space; vi và en có đúng cùng bộ khóa
+- [x] Hồi quy: Easy, Hard, Impossible, Free, vòng quay, soạn câu hỏi, Xuất/Nhập file; không lỗi JS mới
+- Ghi chú: Chromium tự ghi "Failed to load resource" vào console khi gặp HTTP 4xx/5xx giả lập; đó không phải lỗi JS và đã được loại khỏi phép đếm lỗi.
+
+## Chưa kiểm thử được: cần bạn tự thử với GitHub thật
+- [ ] Đăng thật bằng token thật (nên thử bằng một thay đổi nhỏ, ví dụ sửa 1 chữ trong 1 câu hỏi, rồi xem commit mới xuất hiện trong repo)
+- [ ] Tên menu thật trên GitHub khi tạo token (README chỉ đối chiếu được qua tài liệu bên thứ ba)
+- [ ] Thời gian GitHub Pages dựng lại và bộ nhớ đệm trên thiết bị người chơi
+- [ ] Repo thuộc tổ chức (organization) có thể cần quản trị viên duyệt token fine-grained
+- [ ] Nhánh có bảo vệ (branch protection) có thể từ chối ghi trực tiếp (sẽ hiện lỗi 403/422 kèm lời nhắn của GitHub)
+
 ## Cần bạn thử bằng tay (máy tự động không làm được)
 - [ ] Điện thoại thật (iPhone Safari, Android Chrome): chạm, cuộn, vòng quay mượt không
 - [ ] Nghe thật: nhạc nền, tiếng click, tiếng sai, tiếng wow; âm lượng kéo thanh
