@@ -33,7 +33,7 @@
       ctx.strokeStyle = "#3a1000"; ctx.lineWidth = 8; ctx.stroke();
       return;
     }
-    const arc = TWO_PI / n, fontSize = n > 14 ? 17 : 22;
+    const arc = TWO_PI / n, fontSize = n > 24 ? 14 : n > 14 ? 17 : 22;   // nhiều ô thì chữ nhỏ dần để vừa ô
     state.slices.forEach(function (s, i) {
       const a0 = state.rotation + i * arc;
       ctx.beginPath(); ctx.moveTo(c, c); ctx.arc(c, c, r, a0, a0 + arc); ctx.closePath();

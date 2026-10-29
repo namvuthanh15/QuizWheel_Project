@@ -18,7 +18,7 @@
   Object.keys(LEVEL_PRICES).forEach(function (l) { Object.defineProperty(LEVEL_LABELS, l, { enumerable: true, get: function () { return I18n.t("level.label." + l); } }); });
   const LEVEL_NAMES = { free: "Free", easy: "Easy", hard: "Hard", impossible: "Impossible" };
   function keyFor(base, level) { return level === "easy" ? base : base + "." + level; }
-  const WHEEL_MAX = 20;                              // tổng số ô tối đa trên vòng quay
+  const WHEEL_MAX = 36;                              // tổng số ô tối đa trên vòng quay
   const PALETTE = ["#ff5a3c", "#ffb81f", "#2fb36b", "#2f8fe8", "#a855f7", "#ff8a1f", "#ec4899", "#14b8a6"];
   const LIMITS = { question: 200, answer: 60, explain: 200, maxQuestions: 200 };
   const SHUFFLE_LEVELS = ["easy", "hard"];       // mức trắc nghiệm có thể bật/tắt đảo vị trí đáp án
@@ -130,7 +130,7 @@
       const label = typeof r.label === "string" ? r.label.trim().slice(0, 30) : "";
       let count = Math.round(Number(r.count));
       if (!label || !Number.isFinite(count) || count < 1) continue;
-      count = Math.min(count, WHEEL_MAX - total);      // không vượt tổng 20 ô
+      count = Math.min(count, WHEEL_MAX - total);      // không vượt tổng 36 ô
       out.push({ id: typeof r.id === "string" && r.id ? r.id.slice(0, 40) : uid(), label: label, count: count,
                  color: typeof r.color === "string" && /^#[0-9a-fA-F]{6}$/.test(r.color) ? r.color : PALETTE[out.length % PALETTE.length] });
       total += count;
