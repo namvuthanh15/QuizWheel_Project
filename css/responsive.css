@@ -1,0 +1,21 @@
+@media (max-width: 760px) {
+  .mode-grid, .wheel-layout { grid-template-columns: 1fr; }
+  .topbar { flex-direction: column; gap: 8px; padding: 12px; }
+  main { padding-top: 20px; }
+}
+@media (max-width: 760px) {
+  .level-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .game-text { -webkit-text-stroke-width: 5px; }
+}
+@media (max-width: 760px) {
+  .host-layout { grid-template-columns: 1fr; }
+  .answer-grid { gap: 10px; }
+  .answer-cell { aspect-ratio: 4 / 3; }
+}
+
+/* Màn hình nhỏ: hàng giá trị vòng quay được phép xuống dòng, không tràn ngang */
+@media (max-width: 520px) {
+  .w-item { flex-wrap: wrap; }
+  .w-item .w-label { min-width: 0; flex: 1 1 110px; }
+  .w-item .w-count { width: 62px; }
+}

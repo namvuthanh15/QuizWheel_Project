@@ -1,0 +1,22 @@
+/* ===== Nền động dùng cho mọi màn hình: vàng nắng (trên) -> cam lửa (dưới), tia sáng và sóng ===== */
+.home-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+  background: linear-gradient(180deg, #ffe85a 0%, #ffc233 30%, #ff9419 62%, #ff5a0f 100%);
+  background-size: 100% 140%; animation: bg-sway 10s ease-in-out infinite alternate; }
+
+/* Tia sáng: các nan quạt xoay chậm, mờ dần ra xa tâm */
+.home-bg .rays { position: absolute; left: 50%; top: -20%; width: 220vmax; height: 220vmax; margin-left: -110vmax; margin-top: -60vmax;
+  background: repeating-conic-gradient(rgba(255,255,255,.28) 0 7deg, transparent 7deg 22deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 38%); mask-image: radial-gradient(circle, #000 0%, transparent 38%);
+  animation: rays-spin 70s linear infinite; }
+
+/* Sóng: SVG rộng gấp đôi màn hình, trượt đúng 1 chu kỳ (-50%) rồi lặp liền mạch */
+.home-bg .wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 24vh; animation: wave-slide 14s linear infinite; }
+.wave path { fill: rgba(255,255,255,.22); }
+.wave-2 { height: 19vh; animation-duration: 20s; animation-direction: reverse; }
+.wave-2 path { fill: rgba(255,120,20,.45); }
+.wave-3 { height: 13vh; animation-duration: 11s; }
+.wave-3 path { fill: rgba(200,50,0,.38); }
+
+@keyframes bg-sway { from { background-position: 0 0; } to { background-position: 0 100%; } }
+@keyframes rays-spin { to { transform: rotate(360deg); } }
+@keyframes wave-slide { to { transform: translateX(-50%); } }
