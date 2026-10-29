@@ -83,3 +83,11 @@ Kiểm tra tự động bằng Playwright + Chromium: **245 mục, tất cả đ
 ## Sửa lỗi chữ đáp án tràn ô trên điện thoại
 - [x] Ô đáp án A-D cao theo nội dung (không còn aspect-ratio cứng); điện thoại <= 600px chuyển sang 1 cột
 - [x] Đáp án 60 ký tự (có dấu, không dấu cách, kèm/không kèm ảnh) hiển thị trọn vẹn ở 320, 360, 390, 414, 768, 1280 px; không cắt, không tràn ngang, ô >= 44px
+
+## Chọn số câu hỏi (Easy 2/4/6/8, Hard 4/6/8)
+- [x] Bấm Easy / Hard hiện màn "Chọn số câu hỏi" (4 ô / 3 ô), nhạc nền vẫn chạy; Quay lại về màn chọn mức
+- [x] Kho chưa đủ câu thì ô tương ứng bị khóa; kho < ô nhỏ nhất thì có thông báo
+- [x] 45 tổ hợp (mức x số câu x số câu đúng) cho đúng vòng quay / lì xì thẳng theo bảng thưởng (kiểm tra bằng jsdom)
+- [x] Đúng hết 8 câu: hiện "Lì xì 36K" (Hard: 72K hoặc số host nhập), có âm wow + màn hình reveal, không có nút quay, có nút Chơi tiếp
+- [x] Điểm hiện đúng số lẻ (6 câu: 16.7 mỗi câu, đúng hết = 100/100); tiếng Việt và English đủ khóa
+- [ ] Cần thử tay trên trình duyệt thật: giao diện màn chọn số câu (điện thoại + máy tính), âm thanh

@@ -39,17 +39,15 @@
   function renderList() {
     UI.$("#host-count").textContent = questions.length;
     const rule = Quiz.rules[QLEVEL];
+    const minCount = rule.counts[0], maxCount = rule.counts[rule.counts.length - 1];
     UI.$("#q-level").value = QLEVEL;
     syncLoseCard();
-    UI.$("#q-rule").textContent = rule.direct
-      ? I18n.t("host.rule.typed", { count: rule.count, parts: rule.parts, price: Store.LEVEL_PRICES[QLEVEL] })
-      : I18n.t("host.rule.mcq", { count: rule.count, points: rule.points, tiers: rule.tiers.map(function (t) {
-          const wheel = Store.LEVEL_NAMES[t.wheel];
-          return I18n.t(t.min >= rule.pass ? "host.rule.full" : t.min > 0 ? "host.rule.from" : "host.rule.zero", { min: t.min, wheel: wheel });
-        }).join("; ") });
-    UI.$("#host-qwarn").textContent = questions.length < rule.count
-      ? I18n.t("host.warn.need", { count: rule.count, level: Store.LEVEL_NAMES[QLEVEL] })
-      : "";
+    UI.$("#q-rule").textContent = ruleText(rule);
+    UI.$("#host-qwarn").textContent = questions.length < minCount
+      ? I18n.t("host.warn.need", { count: minCount, level: Store.LEVEL_NAMES[QLEVEL] })
+      : questions.length < maxCount
+        ? I18n.t("host.warn.pool", { have: questions.length, max: maxCount, level: Store.LEVEL_NAMES[QLEVEL] })
+        : "";
     const ol = UI.$("#host-list");
     ol.textContent = "";
     if (questions.length === 0) {
@@ -69,6 +67,24 @@
       li.append(edit, del);
       ol.appendChild(li);
     });
+  }
+
+  // Mô tả luật của mức đang soạn, dựng thẳng từ bảng thưởng trong quiz.js (nên đổi bảng là host thấy ngay)
+  function ruleText(rule) {
+    if (rule.direct) return I18n.t("host.rule.typed", { count: rule.counts[0], parts: rule.parts, price: Store.LEVEL_PRICES[QLEVEL] });
+    const prize = Store.loadSettings().bigPrize[QLEVEL];
+    const lines = [I18n.t("host.rule.mcq", { counts: rule.counts.join(", ") })];
+    rule.counts.forEach(function (n) {
+      const plan = rule.plan[n];
+      const tiers = plan.map(function (t, i) {
+        const hi = i === 0 ? n : plan[i - 1].min - 1;                  // bậc này áp dụng cho số câu đúng từ t.min đến hi
+        const range = hi === t.min ? String(hi) : t.min + "-" + hi;
+        const to = t.prize ? I18n.t("host.rule.toPrize", { price: prize }) : I18n.t("host.rule.toWheel", { wheel: Store.WHEEL_NAMES[t.wheel] });
+        return I18n.t("host.rule.tier", { range: range, to: to });
+      }).join("; ");
+      lines.push(I18n.t("host.rule.line", { n: n, tiers: tiers }));
+    });
+    return lines.join("\n");
   }
 
   function persist() {
@@ -200,12 +216,17 @@
     const s = Store.loadSettings();
     UI.$("#set-time").value = s.timePerQuestion;
     Store.SHUFFLE_LEVELS.forEach(function (l) { UI.$("#set-shuffle-" + l).checked = !!s.shuffleAnswers[l]; });
+    Store.PRIZE_LEVELS.forEach(function (l) { UI.$("#set-prize-" + l).value = s.bigPrize[l]; });
   }
   function saveSettings() {
     const shuffleAnswers = {};
     Store.SHUFFLE_LEVELS.forEach(function (l) { shuffleAnswers[l] = UI.$("#set-shuffle-" + l).checked; });
-    const c = Store.saveSettings({ timePerQuestion: UI.$("#set-time").value, shuffleAnswers: shuffleAnswers });
+    const bigPrize = {};
+    Store.PRIZE_LEVELS.forEach(function (l) { bigPrize[l] = UI.$("#set-prize-" + l).value; });
+    const c = Store.saveSettings({ timePerQuestion: UI.$("#set-time").value, shuffleAnswers: shuffleAnswers, bigPrize: bigPrize });
     UI.$("#set-time").value = c.timePerQuestion;   // hiện giá trị đã chuẩn hóa
+    Store.PRIZE_LEVELS.forEach(function (l) { UI.$("#set-prize-" + l).value = c.bigPrize[l]; });
+    renderList();                                  // mô tả luật có ghi số tiền lì xì -> vẽ lại
     UI.toast(I18n.t("host.toast.settingsSaved"));
   }
 
@@ -336,7 +357,10 @@
   }
   function buildLevelOptions() {
     fillLevels(UI.$("#q-level"), Store.QUESTION_LEVELS, QLEVEL);
-    fillLevels(UI.$("#w-level"), Store.WHEEL_LEVELS, wLevel);
+    const ws = UI.$("#w-level");                   // vòng quay: tên riêng từng vòng (vd "Easy · 4 câu"), không có giá
+    ws.textContent = "";
+    Store.WHEEL_LEVELS.forEach(function (l) { const o = UI.el("option", "", Store.WHEEL_NAMES[l]); o.value = l; ws.appendChild(o); });
+    ws.value = wLevel;
   }
   function init() {
     UI.$("#host-add").addEventListener("click", function () { openForm(null); });
@@ -369,7 +393,7 @@
     UI.$("#tab-questions").addEventListener("click", function () { showTab("questions"); });
     UI.$("#tab-wheel").addEventListener("click", function () { showTab("wheel"); });
     UI.$("#tab-publish").addEventListener("click", function () { showTab("publish"); });
-    ["#set-time", "#set-shuffle-easy", "#set-shuffle-hard"].forEach(function (sel) { UI.$(sel).addEventListener("change", saveSettings); });
+    ["#set-time", "#set-shuffle-easy", "#set-shuffle-hard", "#set-prize-easy", "#set-prize-hard"].forEach(function (sel) { UI.$(sel).addEventListener("change", saveSettings); });
 
     $$(".ans-edit").forEach(function (block, i) {
       block.querySelector(".f-ans-file").addEventListener("change", async function (e) {

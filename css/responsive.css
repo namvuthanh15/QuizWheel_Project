@@ -32,3 +32,9 @@
   .tab { padding: 8px 16px; }
   .pub-token-row .btn { flex: 1 1 auto; }
 }
+
+/* Chọn số câu hỏi: điện thoại -> 2 ô mỗi hàng */
+@media (max-width: 760px) {
+  .count-grid { gap: 16px; }
+  .count-btn { width: calc(50% - 8px); max-width: 200px; }
+}

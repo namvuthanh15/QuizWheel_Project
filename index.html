@@ -70,6 +70,17 @@
       </div>
     </section>
 
+    <!-- ===== MÀN HÌNH: CHỌN SỐ CÂU HỎI (Easy: 2/4/6/8, Hard: 4/6/8) – các ô được dựng bằng JS (main.js, buildCount) ===== -->
+    <section class="screen" id="screen-count" hidden>
+      <div class="levels count">
+        <span class="level-chip" id="count-level"></span>
+        <h1 class="game-text levels-title" data-i18n="count.title">Chọn số câu hỏi</h1>
+        <div class="count-grid" id="count-grid"></div>
+        <p class="note count-note" id="count-note" role="status"></p>
+        <button class="btn btn-secondary" type="button" data-nav="levels" data-i18n="common.back">Quay lại</button>
+      </div>
+    </section>
+
     <!-- ===== MÀN HÌNH: SETTING (Soạn câu hỏi + âm lượng) ===== -->
     <section class="screen" id="screen-settings" hidden>
       <div class="settings">
@@ -118,6 +129,14 @@
                 <label class="radio"><input type="checkbox" id="set-shuffle-easy"> <span data-i18n="host.shuffle.easy">Mức Easy</span></label>
                 <label class="radio"><input type="checkbox" id="set-shuffle-hard"> <span data-i18n="host.shuffle.hard">Mức Hard</span></label>
                 <p class="note" data-i18n="host.shuffle.note">Bật: mỗi lần chơi, 4 đáp án (kèm ảnh) được xáo trộn vị trí A/B/C/D, đáp án đúng không còn cố định. Tắt: giữ đúng thứ tự bạn đã soạn.</p>
+              </fieldset>
+              <fieldset class="shuffle-box">
+                <legend data-i18n="host.prize">Lì xì khi đúng hết 8 câu</legend>
+                <label class="field"><span data-i18n="host.prize.easy">Mức Easy</span>
+                  <input type="text" id="set-prize-easy" maxlength="20" placeholder="36K"></label>
+                <label class="field"><span data-i18n="host.prize.hard">Mức Hard</span>
+                  <input type="text" id="set-prize-hard" maxlength="20" placeholder="72K"></label>
+                <p class="note" data-i18n="host.prize.note">Đúng hết 8 câu thì nhận thẳng số lì xì này (không quay), kèm hiệu ứng như lúc nhận thưởng vòng quay. Để trống = dùng giá trị mặc định.</p>
               </fieldset>
               <p class="note" data-i18n="host.noteOnce">Mỗi câu chỉ chọn 1 lần. Đáp án đúng không bị lộ khi người chơi chọn sai.</p>
             </div>

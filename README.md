@@ -3,18 +3,22 @@ Mở `index.html` bằng Chrome/Edge (hoặc Live Server) để chạy. Không c
 
 ## Luồng chơi hiện có
 - **Free (1K)**: vào thẳng vòng quay Free, quay 1 lần.
-- **Easy (2 - 10K)**: bốc ngẫu nhiên 2 câu từ kho câu hỏi Easy, mỗi câu đúng +50 điểm (mỗi câu chỉ chọn 1 lần).
-  - Đạt 100 điểm -> quay vòng quay **Easy**.
-  - Còn lại (đúng 1 câu hoặc sai hết) -> quay vòng quay **Free**.
-- **Hard (20 - 50K)**: bốc ngẫu nhiên 4 câu từ kho câu hỏi Hard, mỗi câu đúng +25 điểm.
-  - Đủ 100 điểm -> vòng quay **Hard**; 25 - 75 điểm -> vòng quay **Easy**; 0 điểm -> vòng quay **Free**.
+- **Easy (2 - 10K)** và **Hard (20 - 50K)**: bấm mức xong sẽ hiện màn **Chọn số câu hỏi** (Easy: 2 / 4 / 6 / 8 câu; Hard: 4 / 6 / 8 câu). Chọn xong thì bốc ngẫu nhiên đúng số câu đó từ kho câu hỏi của mức; mỗi câu đúng được 100 ÷ số câu điểm (đúng hết = 100đ). Ô nào kho chưa đủ câu thì bị khóa.
+  - Easy 2 câu: đúng 2 -> vòng quay **Easy**; còn lại -> **Free**.
+  - Easy 4 câu: đúng 4 -> vòng quay **Easy 4 câu**; đúng 1-3 -> **Easy** (2 câu); sai hết -> **Free**.
+  - Easy 6 câu: đúng 6 -> **Easy 6 câu**; 4-5 -> **Easy 4 câu**; 1-3 -> **Easy**; sai hết -> **Free**.
+  - Easy 8 câu: đúng 8 -> nhận thẳng **Lì xì 36K** (không quay, có âm "wow" + hiệu ứng như lúc nhận thưởng vòng quay); 6-7 -> **Easy 6 câu**; 4-5 -> **Easy 4 câu**; 1-3 -> **Easy**; sai hết -> **Free**.
+  - Hard 4 câu: đúng 4 -> vòng quay **Hard**; 1-3 -> **Easy**; sai hết -> **Free**.
+  - Hard 6 câu: đúng 6 -> **Hard 6 câu**; 4-5 -> **Hard** (4 câu); 1-3 -> **Easy**; sai hết -> **Free**.
+  - Hard 8 câu: đúng 8 -> nhận thẳng lì xì (mặc định 72K, host đổi được); 6-7 -> **Hard 6 câu**; 4-5 -> **Hard**; 1-3 -> **Easy**; sai hết -> **Free**.
+  - Bảng thưởng nằm ở `Quiz.rules` trong `js/quiz.js` (mỗi dòng `{ min: số câu đúng tối thiểu, wheel | prize }`), muốn đổi luật chỉ cần sửa bảng này; phần mô tả luật trong Setting tự cập nhật theo.
 - **Impossible (100K)**: không dùng A/B/C/D và không có vòng quay. Bốc ngẫu nhiên 1 câu gồm 2 ý, người chơi gõ 2 hàng ngày/tháng/năm (`__/__/__`).
   - Đúng cả 2 ý -> "Chúc mừng, bạn đã thắng 100K!".
   - Không đủ 2 ý -> hiện bức ảnh do host tải lên (Setting > Câu hỏi > Impossible).
 
 ## Setting (host)
-- Tab **Câu hỏi**: chọn mức (Easy / Hard / Impossible) rồi soạn kho câu hỏi riêng (Easy cần >= 2 câu, Hard cần >= 4 câu), chỉnh thời gian mỗi câu, và bật/tắt **Đảo vị trí đáp án** riêng cho Easy và Hard (mặc định bật: mỗi lần chơi, 4 đáp án kèm ảnh được xáo trộn A/B/C/D).
-- Tab **Vòng quay**: chọn mức (Free / Easy / Hard) rồi chỉnh giá trị, số ô, màu riêng cho từng vòng.
+- Tab **Câu hỏi**: ô **Lì xì khi đúng hết 8 câu** (Easy mặc định 36K, Hard mặc định 72K) nằm ở phần Cài đặt chung; chọn mức (Easy / Hard / Impossible) rồi soạn kho câu hỏi riêng (Easy cần >= 2 câu, Hard cần >= 4 câu), chỉnh thời gian mỗi câu, và bật/tắt **Đảo vị trí đáp án** riêng cho Easy và Hard (mặc định bật: mỗi lần chơi, 4 đáp án kèm ảnh được xáo trộn A/B/C/D).
+- Tab **Vòng quay**: chọn vòng (Free / Easy 2 câu / Easy 4 câu / Easy 6 câu / Hard 4 câu / Hard 6 câu) rồi chỉnh giá trị, số ô, màu riêng cho từng vòng. Easy 4 câu, Easy 6 câu và Hard 6 câu là các vòng riêng mới (đang có giá trị mẫu, hãy nhập lại theo ý bạn).
   - Nút **Xem thử vòng quay** nằm ngay trong tab này (quay không giới hạn, để host kiểm tra). Thanh trên cùng không còn nút "Vòng quay", nên người chơi chỉ vào được vòng quay sau khi làm xong quiz.
 
 ## Dữ liệu đăng kèm web và chế độ host

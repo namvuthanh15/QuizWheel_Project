@@ -11,18 +11,23 @@
   const KEY_I = "quizwheel.v1.loseimage";          // ảnh hiện khi trả lời sai ở mức Impossible
   const QUESTION_LEVELS = ["easy", "hard", "impossible"];
   const TYPED_LEVELS = ["impossible"];             // mức nhập đáp án bằng bàn phím (không dùng A/B/C/D)
-  const WHEEL_LEVELS = ["free", "easy", "hard"];       // impossible không có vòng quay: thắng thì nhận thẳng 100K           // mức có vòng quay
+  // Vòng quay: "easy" = vòng của phần 2 câu Easy, "easy4"/"easy6" = vòng riêng khi đúng hết 4/6 câu Easy,
+  // "hard" = vòng của phần 4 câu Hard, "hard6" = vòng riêng khi đúng hết 6 câu Hard. Impossible và "đúng hết 8 câu" nhận thẳng lì xì, không quay.
+  const WHEEL_LEVELS = ["free", "easy", "easy4", "easy6", "hard", "hard6"];
+  const PRIZE_LEVELS = ["easy", "hard"];            // mức có giải "đúng hết 8 câu" (nhận thẳng, không quay)
   // Nhãn mức theo ngôn ngữ hiện tại (getter -> luôn đọc đúng ngôn ngữ đang chọn); LEVEL_PRICES là phần giá, không cần dịch
   const LEVEL_PRICES = { free: "1K", easy: "2 - 10K", hard: "20 - 50K", impossible: "100K" };
-  const LEVEL_LABELS = {};
-  Object.keys(LEVEL_PRICES).forEach(function (l) { Object.defineProperty(LEVEL_LABELS, l, { enumerable: true, get: function () { return I18n.t("level.label." + l); } }); });
+  const LEVEL_LABELS = {};                          // nhãn trên chip: có cả các vòng quay riêng (easy4, easy6, hard6)
+  Object.keys(LEVEL_PRICES).concat(["easy4", "easy6", "hard6"]).forEach(function (l) { Object.defineProperty(LEVEL_LABELS, l, { enumerable: true, get: function () { return I18n.t("level.label." + l); } }); });
+  const WHEEL_NAMES = {};                           // tên vòng quay trong ô chọn của host (vd "Easy · 4 câu")
+  WHEEL_LEVELS.forEach(function (l) { Object.defineProperty(WHEEL_NAMES, l, { enumerable: true, get: function () { return I18n.t("wheel.name." + l); } }); });
   const LEVEL_NAMES = { free: "Free", easy: "Easy", hard: "Hard", impossible: "Impossible" };
   function keyFor(base, level) { return level === "easy" ? base : base + "." + level; }
   const WHEEL_MAX = 36;                              // tổng số ô tối đa trên vòng quay
   const PALETTE = ["#ff5a3c", "#ffb81f", "#2fb36b", "#2f8fe8", "#a855f7", "#ff8a1f", "#ec4899", "#14b8a6"];
   const LIMITS = { question: 200, answer: 60, explain: 200, maxQuestions: 200 };
   const SHUFFLE_LEVELS = ["easy", "hard"];       // mức trắc nghiệm có thể bật/tắt đảo vị trí đáp án
-  const DEFAULT_SETTINGS = { timePerQuestion: 20, shuffleAnswers: { easy: true, hard: true } };
+  const DEFAULT_SETTINGS = { timePerQuestion: 20, shuffleAnswers: { easy: true, hard: true }, bigPrize: { easy: "36K", hard: "72K" } };   // bigPrize: lì xì khi đúng hết 8 câu
 
   function uid() { return "q" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -94,9 +99,16 @@
     const sh = raw.shuffleAnswers && typeof raw.shuffleAnswers === "object" ? raw.shuffleAnswers : {};
     const shuffleAnswers = {};
     SHUFFLE_LEVELS.forEach(function (l) { shuffleAnswers[l] = sh[l] === undefined ? DEFAULT_SETTINGS.shuffleAnswers[l] : sh[l] === true; });   // chưa cấu hình -> mặc định bật
+    const bp = raw.bigPrize && typeof raw.bigPrize === "object" ? raw.bigPrize : {};
+    const bigPrize = {};
+    PRIZE_LEVELS.forEach(function (l) {
+      const v = typeof bp[l] === "string" ? bp[l].trim().slice(0, 20) : "";
+      bigPrize[l] = v || DEFAULT_SETTINGS.bigPrize[l];                                           // để trống -> dùng mặc định
+    });
     return {
       timePerQuestion: clamp(raw.timePerQuestion, 0, 300, DEFAULT_SETTINGS.timePerQuestion),    // 0 = không giới hạn
-      shuffleAnswers: shuffleAnswers                                                            // đảo vị trí đáp án theo từng mức
+      shuffleAnswers: shuffleAnswers,                                                           // đảo vị trí đáp án theo từng mức
+      bigPrize: bigPrize                                                                        // lì xì nhận thẳng khi đúng hết 8 câu (theo mức)
     };
   }
 
@@ -140,7 +152,11 @@
   const DEFAULT_WHEELS = {
     free: [{ label: "1K", count: 6 }, { label: "Chúc may mắn", count: 2 }],
     easy: [{ label: "2K", count: 4 }, { label: "5K", count: 3 }, { label: "10K", count: 1 }, { label: "Chúc may mắn", count: 2 }],
-    hard: [{ label: "20K", count: 3 }, { label: "50K", count: 1 }, { label: "Chúc may mắn", count: 4 }]
+    hard: [{ label: "20K", count: 3 }, { label: "50K", count: 1 }, { label: "Chúc may mắn", count: 4 }],
+    // Vòng quay riêng (giá trị mẫu, host tự nhập lại trong Setting > Vòng quay)
+    easy4: [{ label: "5K", count: 3 }, { label: "10K", count: 2 }, { label: "15K", count: 1 }],
+    easy6: [{ label: "10K", count: 3 }, { label: "15K", count: 2 }, { label: "20K", count: 1 }],
+    hard6: [{ label: "30K", count: 3 }, { label: "50K", count: 2 }, { label: "80K", count: 1 }]
   };
   function defaultWheel(level) {
     const seed = seedOf();
@@ -165,7 +181,7 @@
 
   window.Store = {
     LIMITS: LIMITS, WHEEL_MAX: WHEEL_MAX, PALETTE: PALETTE,
-    QUESTION_LEVELS: QUESTION_LEVELS, SHUFFLE_LEVELS: SHUFFLE_LEVELS, TYPED_LEVELS: TYPED_LEVELS, isTyped: isTyped, WHEEL_LEVELS: WHEEL_LEVELS, LEVEL_LABELS: LEVEL_LABELS, LEVEL_PRICES: LEVEL_PRICES, LEVEL_NAMES: LEVEL_NAMES,
+    QUESTION_LEVELS: QUESTION_LEVELS, SHUFFLE_LEVELS: SHUFFLE_LEVELS, TYPED_LEVELS: TYPED_LEVELS, isTyped: isTyped, WHEEL_LEVELS: WHEEL_LEVELS, PRIZE_LEVELS: PRIZE_LEVELS, WHEEL_NAMES: WHEEL_NAMES, LEVEL_LABELS: LEVEL_LABELS, LEVEL_PRICES: LEVEL_PRICES, LEVEL_NAMES: LEVEL_NAMES,
     uid: uid,
     // Chế độ host: luôn bật khi mở bằng file:// hoặc localhost; trên web công khai chỉ bật ở trình duyệt đã mở link có ?host=1
     isHostMode() {

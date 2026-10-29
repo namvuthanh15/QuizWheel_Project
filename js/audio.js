@@ -3,7 +3,7 @@
 // Trình duyệt chặn tự phát âm thanh trước khi người dùng chạm vào trang, nên nhạc nền sẽ bắt đầu ở lần chạm/bấm phím đầu tiên.
 (function () {
   const MUSIC_SRC = "assets/music/ryukyuvania.mp3";
-  const MUSIC_SCREENS = ["home", "settings", "levels"];            // màn hình có nhạc nền
+  const MUSIC_SCREENS = ["home", "settings", "levels", "count"];            // màn hình có nhạc nền
   const SFX = { click: "assets/sounds/click.mp3", cat: "assets/sounds/cat-laugh.mp3",
                  wow: "assets/sounds/anime-wow.mp3", omg: "assets/sounds/oh-my-god.mp3" };
   const WRONG = ["assets/sounds/bruh.mp3", "assets/sounds/shocked.mp3", "assets/sounds/fart.mp3"];

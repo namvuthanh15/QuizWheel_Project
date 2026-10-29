@@ -3,16 +3,28 @@
 // Mỗi câu chỉ được chọn MỘT lần (sai / hết giờ = 0 điểm, sang câu tiếp).
 (function () {
   const LETTERS = "ABCD";
-  // Luật từng mức: bốc "count" câu ngẫu nhiên, mỗi câu đúng được "points" điểm.
-  // "tiers": xét từ trên xuống, tổng điểm >= min thì được quay vòng quay "wheel" (mức đầu tiên = vòng quay của chính mức đó).
+  // Luật từng mức: người chơi chọn 1 trong "counts" (số câu), bốc ngẫu nhiên đúng số câu đó; mỗi câu đúng được 100/số câu điểm (tổng 100đ).
+  // "plan[số câu]": xét từ trên xuống, số câu đúng >= min thì nhận phần thưởng của bậc đó:
+  //   wheel = quay vòng quay đó; prize = nhận thẳng lì xì (số tiền host nhập ở Setting, không quay).
+  // Muốn đổi luật thì sửa bảng này (vd: bậc { min: 1, wheel: "easy" } = đúng ít nhất 1 câu thì được quay vòng Easy).
+  const PASS = 100;                                 // đủ 100đ = đúng hết
   const RULES = {
-    easy: { count: 2, points: 50, pass: 100, tiers: [{ min: 100, wheel: "easy" }, { min: 0, wheel: "free" }] },
-    hard: { count: 4, points: 25, pass: 100, tiers: [{ min: 100, wheel: "hard" }, { min: 1, wheel: "easy" }, { min: 0, wheel: "free" }] },
+    easy: { counts: [2, 4, 6, 8], plan: {
+      2: [{ min: 2, wheel: "easy" }, { min: 0, wheel: "free" }],
+      4: [{ min: 4, wheel: "easy4" }, { min: 1, wheel: "easy" }, { min: 0, wheel: "free" }],
+      6: [{ min: 6, wheel: "easy6" }, { min: 4, wheel: "easy4" }, { min: 1, wheel: "easy" }, { min: 0, wheel: "free" }],
+      8: [{ min: 8, prize: true }, { min: 6, wheel: "easy6" }, { min: 4, wheel: "easy4" }, { min: 1, wheel: "easy" }, { min: 0, wheel: "free" }]
+    } },
+    hard: { counts: [4, 6, 8], plan: {
+      4: [{ min: 4, wheel: "hard" }, { min: 1, wheel: "easy" }, { min: 0, wheel: "free" }],
+      6: [{ min: 6, wheel: "hard6" }, { min: 4, wheel: "hard" }, { min: 1, wheel: "easy" }, { min: 0, wheel: "free" }],
+      8: [{ min: 8, prize: true }, { min: 6, wheel: "hard6" }, { min: 4, wheel: "hard" }, { min: 1, wheel: "easy" }, { min: 0, wheel: "free" }]
+    } },
     // Mức nhập ngày: bốc 1 câu gồm "parts" ý. "direct": đúng đủ các ý thì thắng thẳng (không có vòng quay), sai thì hiện ảnh của host
-    impossible: { count: 1, parts: 2, direct: true }
+    impossible: { counts: [1], parts: 2, direct: true }
   };
 
-  const state = { level: "", rules: null, questions: [], index: 0, score: 0, solved: 0,
+  const state = { level: "", rules: null, count: 0, points: 0, questions: [], index: 0, score: 0, solved: 0,
                   locked: false, timeLeft: 0, timerId: null, settings: null, onDone: null, result: null, typed: null };
 
   function shuffle(arr) {                           // Fisher–Yates
@@ -32,27 +44,31 @@
       correct: order.indexOf(q.correct)
     });
   }
+  function fmt(n) { return String(Math.round(n * 10) / 10); }   // 100/6 -> 16.7, 12.5 giữ nguyên
   function stopTimer() { if (state.timerId !== null) { clearInterval(state.timerId); state.timerId = null; } }
 
   function showPanel(name) {                        // name: "empty" | "play" | "result" | null
     ["empty", "play", "result"].forEach(function (p) { UI.$("#quiz-" + p).hidden = (p !== name); });
   }
 
-  // level: "easy"...; onDone({ passed, score, solved, total }) được gọi khi người chơi bấm nút ở màn kết quả
-  function start(level, onDone) {
+  // level: "easy"...; count: số câu người chơi đã chọn (phải nằm trong rules.counts)
+  // onDone({ passed, wheel, prize, score, solved, total }) được gọi khi người chơi bấm nút ở màn kết quả
+  function start(level, count, onDone) {
     stopTimer();
     const rules = RULES[level];
-    state.level = level; state.rules = rules; state.onDone = onDone || null; state.result = null; state.typed = null;
+    const valid = !!rules && rules.counts.indexOf(count) >= 0;
+    state.level = level; state.rules = rules; state.count = valid ? count : 0; state.points = valid ? PASS / count : 0;
+    state.onDone = onDone || null; state.result = null; state.typed = null;
     state.settings = Store.loadSettings();
-    const all = rules ? Store.loadQuestions(level) : [];
-    if (!rules || all.length < rules.count) {
-      UI.$("#quiz-empty-msg").textContent = rules
-        ? I18n.t("quiz.needMore", { count: rules.count, have: all.length })
+    const all = valid ? Store.loadQuestions(level) : [];
+    if (!valid || all.length < count) {
+      UI.$("#quiz-empty-msg").textContent = valid
+        ? I18n.t("quiz.needMore", { count: count, have: all.length })
         : I18n.t("quiz.noQuiz");
       showPanel("empty"); return;
     }
 
-    state.questions = shuffle(all).slice(0, rules.count);   // bốc ngẫu nhiên từ kho câu hỏi của mức
+    state.questions = shuffle(all).slice(0, count);   // bốc ngẫu nhiên từ kho câu hỏi của mức
     const sh = state.settings.shuffleAnswers;
     if (!Store.isTyped(level) && sh && sh[level]) state.questions = state.questions.map(shuffleAnswers);   // host bật "đảo đáp án" cho mức này
     state.index = 0; state.score = 0; state.solved = 0;
@@ -60,7 +76,7 @@
 
     UI.$("#quiz-level").textContent = Store.LEVEL_LABELS[level] || "";
     UI.$("#quiz-total").textContent = state.questions.length;
-    UI.$("#quiz-pass").textContent = rules.pass;
+    UI.$("#quiz-pass").textContent = PASS;
     showPanel("play");
     showQuestion();
   }
@@ -133,10 +149,10 @@
     if (cell.disabled) return;
 
     if (i === q.correct) {
-      state.score += state.rules.points;
       state.solved++;
+      state.score = Math.round(state.solved * PASS / state.count * 10) / 10;   // tính lại từ số câu đúng để không lệch số lẻ (vd 100/6)
       cell.classList.add("right"); cell.querySelector(".cell-mark").textContent = "✓";
-      feedback(I18n.t("quiz.right", { pts: state.rules.points }), "good");
+      feedback(I18n.t("quiz.right", { pts: fmt(state.points) }), "good");
       if (q.explain) { UI.$("#quiz-explain").textContent = q.explain; UI.$("#quiz-explain").hidden = false; }
     } else {
       // Chọn sai: chỉ đánh dấu đáp án đã chọn, KHÔNG tiết lộ đáp án đúng
@@ -168,19 +184,33 @@
 
   function showResult(total, unit) {
     resetResultUI();
-    const passed = state.score >= state.rules.pass;
-    const tier = state.rules.tiers.find(function (t) { return state.score >= t.min; });
-    const wheel = tier.wheel;
-    state.result = { passed: passed, wheel: wheel, score: state.score, solved: state.solved, total: total };
+    const passed = state.solved === total;           // đúng hết = đủ 100đ
+    const tier = state.rules.plan[total].find(function (t) { return state.solved >= t.min; });
+    const wheel = tier.wheel || null;
+    state.result = { passed: passed, wheel: wheel, prize: !!tier.prize, score: state.score, solved: state.solved, total: total };
     UI.$("#quiz-summary").textContent =
-      I18n.t("quiz.summary", { solved: state.solved, total: total, unit: unit, score: state.score, pass: state.rules.pass });
+      I18n.t("quiz.summary", { solved: state.solved, total: total, unit: unit, score: fmt(state.score), pass: PASS });
+    if (tier.prize) { showPrize(total); return; }
     const verdict = UI.$("#quiz-verdict");
     verdict.textContent = passed
-      ? I18n.t("quiz.pass", { pass: state.rules.pass, level: Store.LEVEL_LABELS[wheel] })
-      : I18n.t("quiz.fail", { pass: state.rules.pass, level: Store.LEVEL_LABELS[wheel] });
+      ? I18n.t("quiz.pass", { pass: PASS, level: Store.LEVEL_LABELS[wheel] })
+      : I18n.t("quiz.fail", { pass: PASS, level: Store.LEVEL_LABELS[wheel] });
     verdict.className = "feedback " + (passed ? "good" : "bad");
     UI.$("#quiz-continue").textContent = I18n.t("quiz.spinLevel", { level: Store.LEVEL_LABELS[wheel] });
     showPanel("result");
+  }
+
+  // Đúng hết 8 câu: nhận thẳng lì xì (không quay). Dùng đúng hiệu ứng như lúc nhận thưởng vòng quay: âm "wow" + màn hình reveal.
+  function showPrize(total) {
+    const price = state.settings.bigPrize[state.level];
+    UI.$("#quiz-continue").hidden = true;
+    UI.$("#quiz-back").hidden = false;
+    const verdict = UI.$("#quiz-verdict");
+    verdict.textContent = I18n.t("quiz.prizeWin", { total: total, price: price });
+    verdict.className = "feedback good win-text";
+    showPanel("result");
+    Sfx.wow();
+    UI.reveal(I18n.t("quiz.prizeReveal", { price: price }));
   }
 
   /* ---------- Mức nhập ngày (impossible) ---------- */

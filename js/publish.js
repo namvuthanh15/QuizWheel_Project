@@ -125,7 +125,7 @@
     const q = countQuestions(info.seed), w = countCells(info.seed), size = new TextEncoder().encode(info.text).length;
     const N = Store.LEVEL_NAMES;
     box.appendChild(UI.el("li", "", I18n.t("pub.sum.q", { easy: q.easy, hard: q.hard, impossible: q.impossible, e: N.easy, h: N.hard, i: N.impossible })));
-    box.appendChild(UI.el("li", "", I18n.t("pub.sum.w", { free: w.free, easy: w.easy, hard: w.hard, f: N.free, e: N.easy, h: N.hard })));
+    box.appendChild(UI.el("li", "", I18n.t("pub.sum.w", { list: Store.WHEEL_LEVELS.map(function (l) { return Store.WHEEL_NAMES[l] + " " + w[l]; }).join(" · ") })));
     box.appendChild(UI.el("li", "", I18n.t(info.seed.loseImage ? "pub.sum.loseYes" : "pub.sum.loseNo")));
     box.appendChild(UI.el("li", "", I18n.t("pub.sum.size", { kb: (size / 1024).toFixed(1) })));
     const total = q.easy + q.hard + q.impossible;

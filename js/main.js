@@ -6,6 +6,7 @@
     if (name === "host" && !Store.isHostMode()) return;   // người chơi không vào được màn hình soạn (nơi có sẵn đáp án)
     if (name === "host") Host.open();
     if (name === "settings") Lang.close();
+    if (name === "count") buildCount(opts && opts.level);   // dựng các ô chọn số câu của mức vừa chọn
     if (name === "wheel") Wheel.open(opts);        // dựng lại vòng quay theo cấu hình mới nhất của host
     else Wheel.stop();                             // rời vòng quay khi đang quay: hủy lần quay đó
     UI.showScreen(name);
@@ -17,18 +18,42 @@
 
   // Luồng chơi theo mức:
   //  free -> vòng quay Free
-  //  easy -> quiz (2 câu x 50đ): 100đ -> vòng quay Easy, còn lại -> Free
-  //  hard -> quiz (4 câu x 25đ): 100đ -> vòng quay Hard, 25-75đ -> Easy, 0đ -> Free
+  //  easy / hard -> màn "Chọn số câu hỏi" (Easy: 2/4/6/8, Hard: 4/6/8) -> quiz -> vòng quay (hoặc lì xì thẳng khi đúng hết 8 câu) tùy số câu đúng
   //  impossible -> 1 câu 2 ý nhập ngày/tháng/năm: đúng cả 2 -> thắng 100K, ngược lại -> hiện ảnh của host (không có vòng quay)
-  //  (luật chi tiết nằm ở Quiz.rules trong quiz.js)
+  //  (bảng thưởng chi tiết nằm ở Quiz.rules trong quiz.js)
+  function startQuiz(level, count) {
+    go("quiz");
+    Quiz.start(level, count, function (res) { if (res.wheel) playWheel(res.wheel); });
+  }
+
   function playLevel(level) {
     if (level === "free") { playWheel("free"); return; }
-    if (Quiz.rules[level]) {
-      go("quiz");
-      Quiz.start(level, function (res) { if (res.wheel) playWheel(res.wheel); });
-      return;
-    }
-    UI.toast(I18n.t("main.later"));
+    const rule = Quiz.rules[level];
+    if (!rule) { UI.toast(I18n.t("main.later")); return; }
+    if (rule.counts.length > 1) go("count", { level: level });   // có nhiều lựa chọn số câu -> cho người chơi chọn
+    else startQuiz(level, rule.counts[0]);
+  }
+
+  // Màn "Chọn số câu hỏi": mỗi số câu là 1 ô lớn; ô nào kho câu hỏi chưa đủ thì bị khóa
+  let countLevel = "";
+  function buildCount(level) {
+    const rule = Quiz.rules[level];
+    if (!rule) return;
+    countLevel = level;
+    const have = Store.loadQuestions(level).length;
+    UI.$("#count-level").textContent = Store.LEVEL_LABELS[level] || "";
+    const grid = UI.$("#count-grid");
+    grid.textContent = "";
+    rule.counts.forEach(function (n) {
+      const btn = UI.el("button", "count-btn"); btn.type = "button";
+      btn.disabled = have < n;
+      btn.setAttribute("aria-label", I18n.t("count.aria", { n: n }));
+      btn.append(UI.el("span", "game-text count-num", String(n)), UI.el("span", "count-unit", I18n.t("count.unit")));
+      if (have < n) btn.appendChild(UI.el("span", "count-locked", I18n.t("count.locked")));
+      btn.addEventListener("click", function () { startQuiz(level, n); });
+      grid.appendChild(btn);
+    });
+    UI.$("#count-note").textContent = have < rule.counts[0] ? I18n.t("quiz.needMore", { count: rule.counts[0], have: have }) : "";
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -68,6 +93,7 @@
     });
 
     UI.$("#quiz-continue").addEventListener("click", Quiz.proceed);
+    I18n.onChange(function () { if (countLevel && !UI.$("#screen-count").hidden) buildCount(countLevel); });
     // Ô ngày/tháng/năm: chỉ nhận chữ số; đủ số ký tự hoặc gõ "/" thì nhảy sang ô kế tiếp
     const blanks = Array.from(document.querySelectorAll(".blank"));
     blanks.forEach(function (inp, i) {
