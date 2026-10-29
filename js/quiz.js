@@ -82,6 +82,7 @@
     q.answers.forEach(function (a, i) {
       const cell = UI.el("button", "answer-cell" + (a.image ? "" : " no-img"));
       cell.type = "button";
+      if (a.text && a.text.length > 28) cell.classList.add("long");   // đáp án dài: giảm cỡ chữ nhẹ
       cell.setAttribute("aria-label", I18n.t("quiz.ansAria", { l: LETTERS[i] }) + (a.text ? ": " + a.text : ""));
       if (a.image) {
         const img = UI.el("img", "cell-img"); img.src = a.image; img.alt = ""; img.draggable = false;

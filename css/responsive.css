@@ -10,7 +10,13 @@
 @media (max-width: 760px) {
   .host-layout { grid-template-columns: 1fr; }
   .answer-grid { gap: 10px; }
-  .answer-cell { aspect-ratio: 4 / 3; }
+  .answer-cell { min-height: 128px; }
+}
+/* Điện thoại hẹp: 1 cột để chữ có đủ bề ngang; hàng cao theo nội dung từng ô (auto), không ép bằng nhau */
+@media (max-width: 600px) {
+  .answer-grid { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; gap: 12px; }
+  .answer-cell { min-height: 96px; }
+  .answer-cell:not(.no-img) { min-height: 120px; }
 }
 
 /* Màn hình nhỏ: hàng giá trị vòng quay được phép xuống dòng, không tràn ngang */

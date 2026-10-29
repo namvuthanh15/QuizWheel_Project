@@ -58,3 +58,7 @@ và bấm đúp `index.html` (file://). Kết quả: **tất cả đạt** sau k
 5. Vòng quay chưa tôn trọng chế độ giảm chuyển động.
 6. Bấm đúp "Quay thưởng" có thể mở vòng quay hai lần; trạng thái câu nhập ngày cũ còn sót khi chơi mức khác.
 7. Chữ rất dài không có dấu cách (200 ký tự liền) làm trang bị kéo rộng ngang gần 4000px. Đã cho chữ do host nhập tự ngắt dòng.
+
+## Sửa lỗi chữ đáp án tràn ô trên điện thoại
+- [x] Ô đáp án A-D cao theo nội dung (không còn aspect-ratio cứng); điện thoại <= 600px chuyển sang 1 cột
+- [x] Đáp án 60 ký tự (có dấu, không dấu cách, kèm/không kèm ảnh) hiển thị trọn vẹn ở 320, 360, 390, 414, 768, 1280 px; không cắt, không tràn ngang, ô >= 44px
