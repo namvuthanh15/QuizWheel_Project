@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="app.title">QuizWheel – Quiz &amp; Vòng quay may mắn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/home-bg.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Nền động cho trang chủ: gradient + tia sáng + 3 lớp sóng (xem css/home-bg.css) -->
+  <div class="home-bg" aria-hidden="true">
+    <div class="rays"></div>
+    <svg class="wave wave-1" viewBox="0 0 2400 200" preserveAspectRatio="none"><path d="M0 100 C200 40 400 40 600 100 C800 160 1000 160 1200 100 C1400 40 1600 40 1800 100 C2000 160 2200 160 2400 100 V200 H0 Z"/></svg>
+    <svg class="wave wave-2" viewBox="0 0 2400 200" preserveAspectRatio="none"><path d="M0 100 C200 40 400 40 600 100 C800 160 1000 160 1200 100 C1400 40 1600 40 1800 100 C2000 160 2200 160 2400 100 V200 H0 Z"/></svg>
+    <svg class="wave wave-3" viewBox="0 0 2400 200" preserveAspectRatio="none"><path d="M0 100 C200 40 400 40 600 100 C800 160 1000 160 1200 100 C1400 40 1600 40 1800 100 C2000 160 2200 160 2400 100 V200 H0 Z"/></svg>
+  </div>
+  <header class="topbar">
+    <a class="logo" href="#home" data-nav="home">QUIZ<span>WHEEL</span></a>
+    <nav>
+      <button class="nav-link" data-nav="home" data-i18n="nav.home">Trang chủ</button>
+      <button class="nav-link" data-nav="levels" data-i18n="nav.quiz">Quiz</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ===== MÀN HÌNH: HOME ===== -->
+    <section class="screen" id="screen-home">
+      <div class="home">
+        <img class="home-title" src="assets/images/title.png" alt="Liệu bạn có biết gì về Nem?" data-i18n-alt="home.title" draggable="false">
+        <h1 class="game-text home-title-text" data-i18n="home.title">Liệu bạn có biết gì về Nem?</h1>
+        <button class="img-btn" type="button" id="btn-start" aria-label="Start">
+          <img src="assets/images/btn-start.png" alt="" draggable="false">
+        </button>
+        <button class="img-btn" type="button" id="btn-setting" aria-label="Setting">
+          <img src="assets/images/btn-setting.png" alt="" draggable="false">
+        </button>
+      </div>
+    </section>
+
+        <!-- ===== MÀN HÌNH: CHỌN MỨC LÌ XÌ ===== -->
+    <section class="screen" id="screen-levels" hidden>
+      <div class="levels">
+        <h1 class="game-text levels-title" data-i18n="levels.title">Chọn Mức Lì Xì</h1>
+        <div class="level-grid">
+        <button class="level-btn" type="button" data-level="free" aria-label="Mức Free: 1K" data-i18n-aria="levels.aria.free">
+          <img src="assets/images/level-free.jpg" alt="" draggable="false">
+          <span class="game-text level-price">1K</span>
+        </button>
+        <button class="level-btn" type="button" data-level="easy" aria-label="Mức Easy: 2 - 10K" data-i18n-aria="levels.aria.easy">
+          <img src="assets/images/level-easy.jpg" alt="" draggable="false">
+          <span class="game-text level-price">2 - 10K</span>
+        </button>
+        <button class="level-btn" type="button" data-level="hard" aria-label="Mức Hard: 20 - 50K" data-i18n-aria="levels.aria.hard">
+          <img src="assets/images/level-hard.jpg" alt="" draggable="false">
+          <span class="game-text level-price">20 - 50K</span>
+        </button>
+        <button class="level-btn" type="button" data-level="impossible" aria-label="Mức Impossible: 100K" data-i18n-aria="levels.aria.impossible">
+          <img src="assets/images/level-impossible.jpg" alt="" draggable="false">
+          <span class="game-text level-price">100K</span>
+        </button>
+        </div>
+        <button class="btn btn-secondary" type="button" data-nav="home" data-i18n="common.back">Quay lại</button>
+      </div>
+    </section>
+
+    <!-- ===== MÀN HÌNH: SETTING (Soạn câu hỏi + âm lượng) ===== -->
+    <section class="screen" id="screen-settings" hidden>
+      <div class="settings">
+        <button class="btn btn-primary settings-item" type="button" id="set-open-host" data-host-only data-nav="host" data-i18n="settings.editQuestions">Soạn câu hỏi</button>
+        <div class="vol-row">
+          <button class="vol-icon" type="button" id="vol-sound-btn" aria-label="Bật/tắt âm thanh" data-i18n-aria="settings.soundToggle">
+            <img id="vol-sound-icon" src="assets/images/icon-speaker.png" alt="" draggable="false">
+          </button>
+          <input class="vol-slider" type="range" id="vol-sound" min="0" max="100" step="1" value="70" aria-label="Âm lượng Sound" data-i18n-aria="settings.soundVol">
+        </div>
+        <div class="vol-row">
+          <button class="vol-icon" type="button" id="vol-music-btn" aria-label="Bật/tắt nhạc nền" data-i18n-aria="settings.musicToggle">
+            <img id="vol-music-icon" src="assets/images/icon-music.png" alt="" draggable="false">
+          </button>
+          <input class="vol-slider" type="range" id="vol-music" min="0" max="100" step="1" value="70" aria-label="Âm lượng Music" data-i18n-aria="settings.musicVol">
+        </div>
+        <div class="lang" id="lang">
+          <button class="lang-toggle" type="button" id="lang-toggle" aria-expanded="false" aria-controls="lang-list">
+            <span class="game-text lang-label" data-i18n="settings.language">Ngôn ngữ</span>
+            <span class="lang-arrow" aria-hidden="true"></span>
+          </button>
+          <ul class="lang-list" id="lang-list" role="listbox" aria-label="Danh sách ngôn ngữ" data-i18n-aria="settings.languageList" hidden></ul>
+        </div>
+        <button class="btn btn-secondary" type="button" data-nav="home" data-i18n="common.back">Quay lại</button>
+      </div>
+    </section>
+
+    <!-- ===== MÀN HÌNH: HOST (SOẠN CÂU HỎI) ===== -->
+    <section class="screen" id="screen-host" hidden>
+      <div class="host">
+        <h1 class="game-text host-title" data-i18n="settings.editQuestions">Soạn câu hỏi</h1>
+        <div class="tabs" role="tablist" aria-label="Phần cài đặt" data-i18n-aria="host.tabsAria">
+          <button class="tab" role="tab" id="tab-questions" aria-controls="panel-questions" aria-selected="true" type="button" data-i18n="host.tabQuestions">Câu hỏi</button>
+          <button class="tab" role="tab" id="tab-wheel" aria-controls="panel-wheel" aria-selected="false" type="button" data-i18n="host.tabWheel">Vòng quay</button>
+        </div>
+        <div id="panel-questions" role="tabpanel" aria-labelledby="tab-questions" class="tab-panel">
+        <div class="host-layout">
+          <div class="host-left">
+            <div class="card">
+              <h3 data-i18n="host.general">Cài đặt chung</h3>
+              <label class="field"><span data-i18n="host.time">Thời gian mỗi câu (giây, 0 = không giới hạn)</span>
+                <input type="number" id="set-time" min="0" max="300" step="1"></label>
+              <fieldset class="shuffle-box">
+                <legend data-i18n="host.shuffle">Đảo vị trí đáp án</legend>
+                <label class="radio"><input type="checkbox" id="set-shuffle-easy"> <span data-i18n="host.shuffle.easy">Mức Easy</span></label>
+                <label class="radio"><input type="checkbox" id="set-shuffle-hard"> <span data-i18n="host.shuffle.hard">Mức Hard</span></label>
+                <p class="note" data-i18n="host.shuffle.note">Bật: mỗi lần chơi, 4 đáp án (kèm ảnh) được xáo trộn vị trí A/B/C/D, đáp án đúng không còn cố định. Tắt: giữ đúng thứ tự bạn đã soạn.</p>
+              </fieldset>
+              <p class="note" data-i18n="host.noteOnce">Mỗi câu chỉ chọn 1 lần. Đáp án đúng không bị lộ khi người chơi chọn sai.</p>
+            </div>
+            <div class="card">
+              <label class="field"><span data-i18n="host.pool">Kho câu hỏi của mức</span>
+                <select id="q-level"></select></label>
+              <p class="note" id="q-rule"></p>
+              <div class="host-head">
+                <h3><span data-i18n="host.questions">Câu hỏi</span> (<span id="host-count">0</span>)</h3>
+                <button type="button" class="btn btn-secondary" id="host-add" data-i18n="host.add">Thêm câu hỏi</button>
+              </div>
+              <p class="note" id="host-qwarn"></p>
+              <ol class="host-list" id="host-list"></ol>
+              <p class="form-error" id="host-msg" role="alert"></p>
+              <div class="host-tools">
+                <button type="button" class="btn btn-ghost" id="host-export" data-i18n="host.export">Xuất file</button>
+                <label class="btn btn-ghost file-label"><span data-i18n="host.import">Nhập file</span><input type="file" id="host-import" accept=".json,application/json"></label>
+                <button type="button" class="btn btn-ghost" id="host-reset" data-i18n="host.sample">Bộ mẫu</button>
+              </div>
+              <p class="note" data-i18n="host.noteSaved">Câu hỏi được lưu trong trình duyệt của bạn. Muốn chuyển sang máy khác, hãy “Xuất file” rồi “Nhập file” ở máy đó.</p>
+            </div>
+            <div class="card" id="lose-card" hidden>
+              <h3 data-i18n="host.loseTitle">Ảnh khi trả lời sai (mức Impossible)</h3>
+              <p class="note" data-i18n="host.loseNote">Nếu người chơi không đúng đủ 2 ý, màn hình sẽ hiện bức ảnh này. Nếu thắng thì hiện “Chúc mừng, bạn đã thắng 100K”.</p>
+              <div class="ans-img-row">
+                <input type="file" id="lose-file" accept="image/*" aria-label="Chọn ảnh khi trả lời sai" data-i18n-aria="host.loseAria">
+                <button type="button" class="link-btn danger" id="lose-clear" data-i18n="common.removeImage" hidden>Xóa ảnh</button>
+              </div>
+              <img class="ans-preview" id="lose-preview" alt="" hidden>
+              <p class="form-error" id="lose-error" role="alert"></p>
+            </div>
+          </div>
+          <div class="host-right">
+            <div class="card host-hint" id="host-hint"><p data-i18n="host.hint">Bấm “Thêm câu hỏi” hoặc “Sửa” để soạn nội dung ở đây.</p></div>
+            <div class="card" id="host-form-typed" hidden>
+              <h3 id="ft-title" data-i18n="host.typed.add">Thêm câu hỏi nhập ngày</h3>
+              <label class="field"><span data-i18n="host.typed.q">Câu hỏi (gồm 2 ý)</span>
+                <textarea id="ft-question" rows="3" maxlength="200" placeholder="vd: Ý 1: Ngày Quốc khánh? Ý 2: Ngày thống nhất đất nước?" data-i18n-ph="host.typed.qph"></textarea></label>
+              <fieldset class="ans-box">
+                <legend data-i18n="host.typed.legend" data-i18n-n="1">Đáp án ý 1 (ngày / tháng / năm)</legend>
+                <div class="date-edit"><input type="number" id="ft-d1" min="1" max="31" placeholder="Ngày" data-i18n-ph="host.typed.day" aria-label="Ý 1: ngày" data-i18n-aria="host.typed.ariaDay" data-i18n-n="1"><span>/</span><input type="number" id="ft-m1" min="1" max="12" placeholder="Tháng" data-i18n-ph="host.typed.month" aria-label="Ý 1: tháng" data-i18n-aria="host.typed.ariaMonth" data-i18n-n="1"><span>/</span><input type="number" id="ft-y1" min="1" max="9999" placeholder="Năm" data-i18n-ph="host.typed.year" aria-label="Ý 1: năm" data-i18n-aria="host.typed.ariaYear" data-i18n-n="1"></div>
+              </fieldset>
+              <fieldset class="ans-box">
+                <legend data-i18n="host.typed.legend" data-i18n-n="2">Đáp án ý 2 (ngày / tháng / năm)</legend>
+                <div class="date-edit"><input type="number" id="ft-d2" min="1" max="31" placeholder="Ngày" data-i18n-ph="host.typed.day" aria-label="Ý 2: ngày" data-i18n-aria="host.typed.ariaDay" data-i18n-n="2"><span>/</span><input type="number" id="ft-m2" min="1" max="12" placeholder="Tháng" data-i18n-ph="host.typed.month" aria-label="Ý 2: tháng" data-i18n-aria="host.typed.ariaMonth" data-i18n-n="2"><span>/</span><input type="number" id="ft-y2" min="1" max="9999" placeholder="Năm" data-i18n-ph="host.typed.year" aria-label="Ý 2: năm" data-i18n-aria="host.typed.ariaYear" data-i18n-n="2"></div>
+              </fieldset>
+              <p class="note" data-i18n="host.typed.note">Người chơi nhập ngày/tháng/năm vào 2 hàng ô trống. Ngày và tháng so khớp theo số (05 = 5); năm gõ đủ 4 số hoặc 2 số cuối đều được.</p>
+              <p class="form-error" id="ft-error" role="alert"></p>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="ft-save" data-i18n="common.saveQuestion">Lưu câu hỏi</button>
+                <button type="button" class="btn btn-ghost" id="ft-cancel" data-i18n="common.cancel">Hủy</button>
+              </div>
+            </div>
+            <div class="card" id="host-form" hidden>
+              <h3 id="f-title" data-i18n="host.form.add">Thêm câu hỏi</h3>
+              <label class="field"><span data-i18n="host.form.q">Câu hỏi</span>
+                <textarea id="f-question" rows="2" maxlength="200" placeholder="Nhập nội dung câu hỏi" data-i18n-ph="host.form.qph"></textarea></label>
+            <fieldset class="ans-edit">
+              <legend data-i18n="host.form.ans" data-i18n-l="A">Đáp án A</legend>
+              <label class="radio"><input type="radio" class="f-correct" name="f-correct" value="0"> <span data-i18n="host.form.correct">Đây là đáp án đúng</span></label>
+              <input type="text" class="f-ans-text" maxlength="60" placeholder="Chữ trong ô A" data-i18n-ph="host.form.ansph" data-i18n-l="A" aria-label="Nội dung đáp án A" data-i18n-aria="host.form.ansAria">
+              <div class="ans-img-row">
+                <input type="file" class="f-ans-file" accept="image/*" aria-label="Ảnh meme cho đáp án A" data-i18n-aria="host.form.imgAria" data-i18n-l="A">
+                <button type="button" class="link-btn danger f-ans-clear" data-i18n="common.removeImage" hidden>Xóa ảnh</button>
+              </div>
+              <img class="ans-preview" alt="" hidden>
+            </fieldset>
+            <fieldset class="ans-edit">
+              <legend data-i18n="host.form.ans" data-i18n-l="B">Đáp án B</legend>
+              <label class="radio"><input type="radio" class="f-correct" name="f-correct" value="1"> <span data-i18n="host.form.correct">Đây là đáp án đúng</span></label>
+              <input type="text" class="f-ans-text" maxlength="60" placeholder="Chữ trong ô B" data-i18n-ph="host.form.ansph" data-i18n-l="B" aria-label="Nội dung đáp án B" data-i18n-aria="host.form.ansAria">
+              <div class="ans-img-row">
+                <input type="file" class="f-ans-file" accept="image/*" aria-label="Ảnh meme cho đáp án B" data-i18n-aria="host.form.imgAria" data-i18n-l="B">
+                <button type="button" class="link-btn danger f-ans-clear" data-i18n="common.removeImage" hidden>Xóa ảnh</button>
+              </div>
+              <img class="ans-preview" alt="" hidden>
+            </fieldset>
+            <fieldset class="ans-edit">
+              <legend data-i18n="host.form.ans" data-i18n-l="C">Đáp án C</legend>
+              <label class="radio"><input type="radio" class="f-correct" name="f-correct" value="2"> <span data-i18n="host.form.correct">Đây là đáp án đúng</span></label>
+              <input type="text" class="f-ans-text" maxlength="60" placeholder="Chữ trong ô C" data-i18n-ph="host.form.ansph" data-i18n-l="C" aria-label="Nội dung đáp án C" data-i18n-aria="host.form.ansAria">
+              <div class="ans-img-row">
+                <input type="file" class="f-ans-file" accept="image/*" aria-label="Ảnh meme cho đáp án C" data-i18n-aria="host.form.imgAria" data-i18n-l="C">
+                <button type="button" class="link-btn danger f-ans-clear" data-i18n="common.removeImage" hidden>Xóa ảnh</button>
+              </div>
+              <img class="ans-preview" alt="" hidden>
+            </fieldset>
+            <fieldset class="ans-edit">
+              <legend data-i18n="host.form.ans" data-i18n-l="D">Đáp án D</legend>
+              <label class="radio"><input type="radio" class="f-correct" name="f-correct" value="3"> <span data-i18n="host.form.correct">Đây là đáp án đúng</span></label>
+              <input type="text" class="f-ans-text" maxlength="60" placeholder="Chữ trong ô D" data-i18n-ph="host.form.ansph" data-i18n-l="D" aria-label="Nội dung đáp án D" data-i18n-aria="host.form.ansAria">
+              <div class="ans-img-row">
+                <input type="file" class="f-ans-file" accept="image/*" aria-label="Ảnh meme cho đáp án D" data-i18n-aria="host.form.imgAria" data-i18n-l="D">
+                <button type="button" class="link-btn danger f-ans-clear" data-i18n="common.removeImage" hidden>Xóa ảnh</button>
+              </div>
+              <img class="ans-preview" alt="" hidden>
+            </fieldset>
+              <label class="field"><span data-i18n="host.form.explain">Giải thích (tùy chọn, chỉ hiện sau khi trả lời đúng)</span>
+                <textarea id="f-explain" rows="2" maxlength="200"></textarea></label>
+              <p class="form-error" id="f-error" role="alert"></p>
+              <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="f-save" data-i18n="common.saveQuestion">Lưu câu hỏi</button>
+                <button type="button" class="btn btn-ghost" id="f-cancel" data-i18n="common.cancel">Hủy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div id="panel-wheel" role="tabpanel" aria-labelledby="tab-wheel" class="tab-panel" hidden>
+          <div class="card wheel-host">
+            <div class="host-head">
+              <h3 data-i18n="host.wheel.title">Giá trị trên vòng quay</h3>
+              <span class="level-chip"><span data-i18n="host.wheel.total">Tổng</span>: <b id="w-total">0</b>/20 <span data-i18n="host.wheel.cells">ô</span></span>
+            </div>
+            <label class="field"><span data-i18n="host.wheel.level">Mức lì xì</span>
+              <select id="w-level"></select></label>
+            <p class="note" data-i18n="host.wheel.note">Mỗi giá trị có “số ô”. Giá trị nhiều ô hơn thì dễ trúng hơn. Tổng số ô tối đa là 20.</p>
+            <form id="w-form" class="w-form">
+              <input id="w-label" type="text" maxlength="30" placeholder="Giá trị (vd: 10K)" data-i18n-ph="host.wheel.labelph" aria-label="Giá trị mới" data-i18n-aria="host.wheel.newValue">
+              <input id="w-count" type="number" min="1" max="20" value="1" aria-label="Số ô" data-i18n-aria="host.wheel.cellsAria">
+              <input id="w-color" type="color" value="#ff5a3c" aria-label="Màu" data-i18n-aria="host.wheel.color">
+              <button class="btn btn-secondary" type="submit" data-i18n="host.wheel.addBtn">Thêm</button>
+            </form>
+            <p class="form-error" id="w-error" role="alert"></p>
+            <ul class="w-list" id="w-list"></ul>
+            <p class="note" id="w-warn"></p>
+            <div class="host-tools"><button type="button" class="btn btn-secondary" id="w-preview" data-i18n="host.wheel.preview">Xem thử vòng quay</button><button type="button" class="btn btn-ghost" id="w-reset" data-i18n="host.wheel.reset">Khôi phục mặc định</button></div>
+          </div>
+        </div>
+        <button class="btn btn-secondary" type="button" data-nav="settings" data-i18n="common.back">Quay lại</button>
+      </div>
+    </section>
+
+    <!-- ===== MÀN HÌNH: QUIZ ===== -->
+    <section class="screen" id="screen-quiz" hidden>
+      <div class="card quiz-card">
+        <div id="quiz-empty" hidden>
+          <h2 data-i18n="quiz.emptyTitle">Chưa có câu hỏi</h2>
+          <p id="quiz-empty-msg" data-i18n="quiz.emptyMsg">Hãy vào phần Setting để soạn câu hỏi trước khi chơi.</p>
+          <button class="btn btn-primary" type="button" data-host-only data-nav="host" data-i18n="settings.editQuestions">Soạn câu hỏi</button>
+        </div>
+
+        <div id="quiz-play" hidden>
+          <div class="quiz-hud">
+            <span class="level-chip" id="quiz-level"></span>
+            <span><span data-i18n="quiz.q">Câu</span> <b id="quiz-index">1</b>/<b id="quiz-total">5</b></span>
+            <span><span data-i18n="quiz.score">Điểm</span>: <b id="quiz-score">0</b>/<b id="quiz-pass">100</b></span>
+            <span class="timer">⏱ <b id="quiz-time">15s</b></span>
+          </div>
+          <div class="progress"><div class="progress-bar" id="quiz-progress"></div></div>
+          <h2 id="quiz-question"></h2>
+          <div class="answer-grid" id="quiz-answers"></div>
+          <p class="feedback" id="quiz-feedback" role="status" aria-live="polite"></p>
+          <p class="explain" id="quiz-explain" hidden></p>
+          <button class="btn btn-primary" id="quiz-next" data-i18n="quiz.next" hidden>Câu tiếp theo</button>
+        </div>
+
+        <div id="quiz-result" hidden>
+          <h2 data-i18n="quiz.result">Kết quả</h2>
+          <p id="quiz-summary"></p>
+          <p class="feedback" id="quiz-verdict" role="status"></p>
+          <img class="lose-img" id="quiz-lose-img" alt="" hidden>
+          <div class="form-actions">
+            <button class="btn btn-primary" id="quiz-continue" type="button" data-i18n="quiz.spin">Quay thưởng</button>
+            <button class="btn btn-primary" id="quiz-back" type="button" data-nav="levels" data-i18n="quiz.again" hidden>Chơi tiếp</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== MÀN HÌNH: NHẬP ĐÁP ÁN (mức Impossible) ===== -->
+    <section class="screen" id="screen-typed" hidden>
+      <div class="typed">
+        <span class="level-chip" id="typed-level"></span>
+        <div class="card typed-qcard"><p id="typed-question"></p></div>
+        <h1 class="game-text typed-title" data-i18n="typed.title">Nhập câu trả lời</h1>
+        <form class="typed-dates" id="typed-form" autocomplete="off">
+          <div class="date-row">
+            <input class="blank blank-dm" id="typed-d1" type="text" inputmode="numeric" maxlength="2" aria-label="Ý 1: ngày" data-i18n-aria="host.typed.ariaDay" data-i18n-n="1" autocomplete="off">
+            <span class="game-text slash" aria-hidden="true">/</span>
+            <input class="blank blank-dm" id="typed-m1" type="text" inputmode="numeric" maxlength="2" aria-label="Ý 1: tháng" data-i18n-aria="host.typed.ariaMonth" data-i18n-n="1" autocomplete="off">
+            <span class="game-text slash" aria-hidden="true">/</span>
+            <input class="blank blank-y" id="typed-y1" type="text" inputmode="numeric" maxlength="4" aria-label="Ý 1: năm" data-i18n-aria="host.typed.ariaYear" data-i18n-n="1" autocomplete="off">
+          </div>
+          <div class="date-row">
+            <input class="blank blank-dm" id="typed-d2" type="text" inputmode="numeric" maxlength="2" aria-label="Ý 2: ngày" data-i18n-aria="host.typed.ariaDay" data-i18n-n="2" autocomplete="off">
+            <span class="game-text slash" aria-hidden="true">/</span>
+            <input class="blank blank-dm" id="typed-m2" type="text" inputmode="numeric" maxlength="2" aria-label="Ý 2: tháng" data-i18n-aria="host.typed.ariaMonth" data-i18n-n="2" autocomplete="off">
+            <span class="game-text slash" aria-hidden="true">/</span>
+            <input class="blank blank-y" id="typed-y2" type="text" inputmode="numeric" maxlength="4" aria-label="Ý 2: năm" data-i18n-aria="host.typed.ariaYear" data-i18n-n="2" autocomplete="off">
+          </div>
+        </form>
+        <span class="timer typed-timer" id="typed-timer">⏱ <b id="typed-time"></b></span>
+        <button class="btn btn-primary" id="typed-submit" type="submit" form="typed-form" data-i18n="typed.submit">Gửi đáp án</button>
+      </div>
+    </section>
+
+    <!-- ===== MÀN HÌNH: WHEEL ===== -->
+    <section class="screen" id="screen-wheel" hidden>
+      <div class="wheel-layout">
+        <div class="card wheel-card">
+          <span class="level-chip" id="wheel-level"></span>
+          <div class="wheel-wrap">
+            <div class="pointer"></div>
+            <canvas id="wheel-canvas" width="520" height="520" aria-label="Vòng quay" data-i18n-aria="wheel.aria"></canvas>
+          </div>
+          <button class="btn btn-primary" id="spin-btn" data-i18n="wheel.spin">Quay</button>
+          <p class="wheel-result" id="wheel-result" aria-live="polite"></p>
+          <button class="btn btn-secondary" id="wheel-again" type="button" data-nav="levels" data-i18n="quiz.again" hidden>Chơi tiếp</button>
+        </div>
+        <div class="card wheel-editor">
+          <h3 data-i18n="wheel.values">Các giá trị trên vòng quay</h3>
+          <p class="note" id="wheel-note"></p>
+          <ul id="wheel-legend" class="slice-list"></ul>
+          <button class="btn btn-ghost" id="wheel-edit" type="button" data-i18n="wheel.edit">Chỉnh vòng quay</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Màn hình tối + tia sáng + chữ lớn giữa màn hình (kết quả vòng quay / thắng lớn). Bấm để tắt. -->
+  <div class="reveal" id="reveal" role="status" aria-live="polite" hidden>
+    <div class="reveal-rays" aria-hidden="true"></div>
+    <div class="game-text reveal-text" id="reveal-text"></div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <footer class="footer" data-i18n="footer">QuizWheel – bản demo. Quiz và Wheel sẽ được hoàn thiện ở các milestone sau.</footer>
+
+  <!-- Thứ tự quan trọng: file nào được dùng bởi file khác phải nạp trước (giống #include) -->
+  <script src="js/i18n.js"></script>
+  <script src="data/questions.js"></script>
+  <script src="data/seed.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/host.js"></script>
+  <script src="js/wheel.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/lang.js"></script>
+  <script src="js/sfx-data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
