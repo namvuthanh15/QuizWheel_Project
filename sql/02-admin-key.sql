@@ -5,7 +5,7 @@
 -- Sau này đổi được ngay trong web (tab Người chơi > Đổi mật khẩu host).
 -- ============================================================================
 do $$
-declare v_key text := 'setkeoroisui';
+declare v_key text := 'DOI-MAT-KHAU-NAY-THANH-MAT-KHAU-THAT';
 begin
   if v_key like 'DOI-MAT-KHAU-NAY%' or length(v_key) < 12 then
     raise exception 'Hãy sửa v_key thành mật khẩu thật (>= 12 ký tự) rồi chạy lại.';

@@ -80,14 +80,34 @@
 
   /* ---------- Khung "Gửi cho người chơi" ---------- */
   // Link chỉ chứa TÊN (?u=...). PIN không bao giờ nằm trong link.
+  // Địa chỉ web công khai KHÔNG lấy từ trang host nếu bạn đang mở bằng file:// hoặc localhost (người chơi không vào được).
+  const KEY_BASE = "quizwheel.v2.publicBase";   // LocalStorage: chỉ là địa chỉ web, không có bí mật
+  function cleanBase(v) {
+    v = String(v || "").trim();
+    if (!/^https?:\/\//i.test(v)) return "";
+    try { const u = new URL(v); u.search = ""; u.hash = ""; u.pathname = /\.[a-z0-9]+$/i.test(u.pathname) ? u.pathname.replace(/[^/]*$/, "") : u.pathname.replace(/\/*$/, "/"); return u.toString(); } catch (e) { return ""; }
+  }
+  function isLocalHost(h) { return h === "localhost" || h === "127.0.0.1" || h === "[::1]" || /^(192\.168|10)\./.test(h); }
+  function guessBase() {
+    try { const s = localStorage.getItem(KEY_BASE); if (s && cleanBase(s)) return cleanBase(s); } catch (e) {}
+    if (/^https?:$/.test(location.protocol) && !isLocalHost(location.hostname)) return cleanBase(location.href);
+    try {   // dùng owner/repo đã nhập ở tab Đăng web cũ (nếu có) -> https://owner.github.io/repo/
+      const c = JSON.parse(localStorage.getItem("quizwheel.v1.publish"));
+      if (c && c.owner && c.repo) return cleanBase("https://" + c.owner + ".github.io/" + (c.repo.toLowerCase() === (c.owner + ".github.io").toLowerCase() ? "" : c.repo + "/"));
+    } catch (e) {}
+    return "";
+  }
+  function saveBase(v) { try { localStorage.setItem(KEY_BASE, v); } catch (e) {} }
   function playerLink(name) {
-    const u = new URL("index.html", location.href);
-    u.search = ""; u.hash = "";
+    const base = guessBase();
+    if (!base) return "";
+    const u = new URL("index.html", base);
     u.searchParams.set("u", name);
     return u.toString();
   }
   function shareText(b) {
     const url = playerLink(b.name);
+    if (!url) return "(Hãy nhập địa chỉ web của game ở ô bên dưới để tạo link.)";
     if (b.withPin && b.pin) return "Vào " + url + " rồi nhập PIN " + b.pin + " để chơi QuizWheel nhé.";
     return "Vào " + url + " để chơi QuizWheel nhé. Tên “" + b.name + "” đã điền sẵn, bạn chỉ cần nhập PIN (mình gửi PIN riêng cho bạn).";
   }
@@ -106,6 +126,13 @@
     const pre = h("pre", "preview", shareText(b));
     const redraw = function () { pre.textContent = shareText(b); };
     c.appendChild(pre);
+    const bi = input("text", guessBase(), { placeholder: "https://ten-ban.github.io/QuizWheel/", autocomplete: "off" });
+    bi.addEventListener("change", function () {
+      const v = cleanBase(bi.value);
+      if (!v) { say("Địa chỉ web phải bắt đầu bằng https:// (không dùng đường dẫn ổ đĩa D:/).", false); return; }
+      say(""); saveBase(v); bi.value = v; redraw();
+    });
+    c.appendChild(field("Địa chỉ web của game (nơi người chơi mở được, không phải đường dẫn trong máy bạn)", bi));
     if (b.pin) {
       const lab = h("label", "wrow"), cb = h("input"); cb.type = "checkbox"; cb.checked = b.withPin;
       cb.addEventListener("change", function () { b.withPin = cb.checked; redraw(); });
@@ -117,9 +144,11 @@
     }
     const acts = h("div", "form-actions");
     acts.appendChild(btn("Sao chép lời nhắn", "btn btn-primary", function () {
+      if (!playerLink(b.name)) { say("Chưa có địa chỉ web của game, hãy nhập ở ô phía trên.", false); return; }
       copyText(shareText(b)).then(function () { UI.toast("Đã sao chép lời nhắn."); }, function () { say("Không sao chép được, hãy bôi đen đoạn trên rồi copy.", false); });
     }));
     acts.appendChild(btn("Chỉ sao chép link", "btn btn-secondary", function () {
+      if (!playerLink(b.name)) { say("Chưa có địa chỉ web của game, hãy nhập ở ô phía trên.", false); return; }
       copyText(playerLink(b.name)).then(function () { UI.toast("Đã sao chép link."); }, function () { say("Không sao chép được.", false); });
     }));
     acts.appendChild(btn("Đóng", "btn btn-secondary", function () { shareBox = null; renderPlayers(); }));
