@@ -193,10 +193,10 @@
     if (tier.prize) { showPrize(total); return; }
     const verdict = UI.$("#quiz-verdict");
     verdict.textContent = passed
-      ? I18n.t("quiz.pass", { pass: PASS, level: Store.LEVEL_LABELS[wheel] })
-      : I18n.t("quiz.fail", { pass: PASS, level: Store.LEVEL_LABELS[wheel] });
+      ? I18n.t("quiz.pass", { pass: PASS, level: Store.WHEEL_LABELS[wheel] })
+      : I18n.t("quiz.fail", { pass: PASS, level: Store.WHEEL_LABELS[wheel] });
     verdict.className = "feedback " + (passed ? "good" : "bad");
-    UI.$("#quiz-continue").textContent = I18n.t("quiz.spinLevel", { level: Store.LEVEL_LABELS[wheel] });
+    UI.$("#quiz-continue").textContent = I18n.t("quiz.spinLevel", { level: Store.WHEEL_LABELS[wheel] });
     showPanel("result");
   }
 

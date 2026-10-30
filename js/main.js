@@ -6,11 +6,22 @@
     if (name === "host" && !Store.isHostMode()) return;   // người chơi không vào được màn hình soạn (nơi có sẵn đáp án)
     if (name === "host") Host.open();
     if (name === "settings") Lang.close();
+    if (name === "levels") refreshPrices();         // giá trên màn chọn mức luôn khớp vòng quay mới nhất
     if (name === "count") buildCount(opts && opts.level);   // dựng các ô chọn số câu của mức vừa chọn
     if (name === "wheel") Wheel.open(opts);        // dựng lại vòng quay theo cấu hình mới nhất của host
     else Wheel.stop();                             // rời vòng quay khi đang quay: hủy lần quay đó
     UI.showScreen(name);
     Sfx.screen(name);                              // nhạc nền chỉ ở trang chủ, setting, chọn mức
+  }
+
+  // Giá dưới mỗi ô ở màn "Chọn mức lì xì": lấy từ vòng quay thật (Store.LEVEL_PRICES), không gõ cứng trong HTML
+  function refreshPrices() {
+    document.querySelectorAll(".level-btn").forEach(function (btn) {
+      const level = btn.dataset.level, price = Store.LEVEL_PRICES[level];
+      const span = btn.querySelector(".level-price");
+      if (span) span.textContent = price;
+      btn.setAttribute("aria-label", I18n.t("levels.aria", { level: Store.LEVEL_NAMES[level], price: price }));
+    });
   }
 
   // Quay thưởng thật: chỉ được quay 1 lần
@@ -93,6 +104,8 @@
     });
 
     UI.$("#quiz-continue").addEventListener("click", Quiz.proceed);
+    refreshPrices();
+    I18n.onChange(refreshPrices);
     I18n.onChange(function () { if (countLevel && !UI.$("#screen-count").hidden) buildCount(countLevel); });
     // Ô ngày/tháng/năm: chỉ nhận chữ số; đủ số ký tự hoặc gõ "/" thì nhảy sang ô kế tiếp
     const blanks = Array.from(document.querySelectorAll(".blank"));

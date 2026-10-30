@@ -16,11 +16,10 @@
 
       "home.title": "Liệu bạn có biết gì về Nem?",
       "levels.title": "Chọn Mức Lì Xì",
-      "levels.aria.free": "Mức Free: 1K", "levels.aria.easy": "Mức Easy: 2 - 10K", "levels.aria.hard": "Mức Hard: 20 - 50K", "levels.aria.impossible": "Mức Impossible: 100K",
-      "level.label.free": "Lì xì 1K", "level.label.easy": "Lì xì 2 - 10K", "level.label.hard": "Lì xì 20 - 50K", "level.label.impossible": "Lì xì 100K",
-      "level.label.easy4": "Lì xì Easy · 4 câu", "level.label.easy6": "Lì xì Easy · 6 câu", "level.label.hard6": "Lì xì Hard · 6 câu",
+      "levels.aria": "Mức {level}: {price}",
+      "level.label": "Lì xì {price}",
       "wheel.name.free": "Free", "wheel.name.easy": "Easy · 2 câu", "wheel.name.easy4": "Easy · 4 câu", "wheel.name.easy6": "Easy · 6 câu", "wheel.name.hard": "Hard · 4 câu", "wheel.name.hard6": "Hard · 6 câu",
-      "count.title": "Chọn số câu hỏi", "count.unit": "câu hỏi", "count.aria": "{n} câu hỏi", "count.locked": "Chưa đủ câu hỏi",
+      "count.title": "Chọn số câu hỏi", "count.sub": "Liều ăn nhiều", "count.unit": "câu hỏi", "count.aria": "{n} câu hỏi", "count.locked": "Chưa đủ câu hỏi",
 
       "settings.editQuestions": "Soạn câu hỏi",
       "settings.soundToggle": "Bật/tắt âm thanh", "settings.musicToggle": "Bật/tắt nhạc nền",
@@ -196,11 +195,10 @@
 
       "home.title": "How much do you know about Nem?",
       "levels.title": "Choose Lucky Money Tier",
-      "levels.aria.free": "Free tier: 1K", "levels.aria.easy": "Easy tier: 2 - 10K", "levels.aria.hard": "Hard tier: 20 - 50K", "levels.aria.impossible": "Impossible tier: 100K",
-      "level.label.free": "Lucky money 1K", "level.label.easy": "Lucky money 2 - 10K", "level.label.hard": "Lucky money 20 - 50K", "level.label.impossible": "Lucky money 100K",
-      "level.label.easy4": "Lucky money Easy · 4 questions", "level.label.easy6": "Lucky money Easy · 6 questions", "level.label.hard6": "Lucky money Hard · 6 questions",
+      "levels.aria": "{level} tier: {price}",
+      "level.label": "Lucky money {price}",
       "wheel.name.free": "Free", "wheel.name.easy": "Easy · 2 questions", "wheel.name.easy4": "Easy · 4 questions", "wheel.name.easy6": "Easy · 6 questions", "wheel.name.hard": "Hard · 4 questions", "wheel.name.hard6": "Hard · 6 questions",
-      "count.title": "Choose number of questions", "count.unit": "questions", "count.aria": "{n} questions", "count.locked": "Not enough questions",
+      "count.title": "Choose number of questions", "count.sub": "High risk, high reward", "count.unit": "questions", "count.aria": "{n} questions", "count.locked": "Not enough questions",
 
       "settings.editQuestions": "Edit Questions",
       "settings.soundToggle": "Toggle sound", "settings.musicToggle": "Toggle music",

@@ -309,3 +309,8 @@ html:not([lang="vi"]) .home-title-text { display: block; }
 .count-btn:disabled { cursor: not-allowed; opacity: .55; filter: grayscale(.6); }
 .count-note { text-align: center; margin: -8px 0 0; }
 #q-rule { white-space: pre-line; }
+
+/* Dòng khẩu hiệu "Liều ăn nhiều" dưới tiêu đề "Chọn số câu hỏi": thẻ nâu đậm chữ vàng, hơi nghiêng cho có "điệu" */
+.count-sub { margin: -12px 0 4px; padding: 5px 22px 6px; text-align: center; text-transform: uppercase; letter-spacing: .08em; font-weight: 900;
+  font-size: clamp(1.05rem, 2.8vw, 1.45rem); color: #ffe14d; background: var(--ink); border-radius: 999px;
+  box-shadow: 0 4px 0 #a24a00, 0 8px 14px rgba(90,30,0,.3); transform: rotate(-2deg); }

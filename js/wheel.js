@@ -139,7 +139,7 @@
     opts = opts || {};
     if (opts.level && Store.WHEEL_LEVELS.indexOf(opts.level) >= 0) state.level = opts.level;
     state.once = !!opts.once; state.done = false;
-    UI.$("#wheel-level").textContent = Store.LEVEL_LABELS[state.level] || "";
+    UI.$("#wheel-level").textContent = Store.WHEEL_LABELS[state.level] || "";
     state.items = Store.loadWheel(state.level);
     state.slices = expand(state.items);
     if (state.slices.length < MIN_SLICES) state.items = state.items.slice();

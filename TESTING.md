@@ -91,3 +91,9 @@ Kiểm tra tự động bằng Playwright + Chromium: **245 mục, tất cả đ
 - [x] Đúng hết 8 câu: hiện "Lì xì 36K" (Hard: 72K hoặc số host nhập), có âm wow + màn hình reveal, không có nút quay, có nút Chơi tiếp
 - [x] Điểm hiện đúng số lẻ (6 câu: 16.7 mỗi câu, đúng hết = 100/100); tiếng Việt và English đủ khóa
 - [ ] Cần thử tay trên trình duyệt thật: giao diện màn chọn số câu (điện thoại + máy tính), âm thanh
+
+## Giá hiển thị theo vòng quay + khẩu hiệu "Liều ăn nhiều"
+- [x] Giá mỗi mức lấy từ các ô "…K" của vòng quay thật: Free 2K, Easy 3 - 20K (gộp easy/easy4/easy6), Hard 20 - 50K, Impossible 100K
+- [x] Màn vòng quay hiện giá của đúng vòng đang quay (easy 3 - 10K, easy4 5 - 15K, easy6 10 - 20K, hard 20 - 30K, hard6 25 - 50K, free 2K); nút "Quay thưởng" và câu thông báo sau Quiz dùng cùng giá
+- [x] Host sửa vòng quay thì giá tự đổi; không có ô nào ghi số + K thì dùng giá dự phòng; số lẻ làm tròn xuống (2,9K -> 2K)
+- [x] Màn "Chọn số câu hỏi" có dòng "Liều ăn nhiều" ngay dưới tiêu đề (tiếng Anh: "High risk, high reward"), không tràn ở 320/360/390px

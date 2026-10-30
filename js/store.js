@@ -15,10 +15,40 @@
   // "hard" = vòng của phần 4 câu Hard, "hard6" = vòng riêng khi đúng hết 6 câu Hard. Impossible và "đúng hết 8 câu" nhận thẳng lì xì, không quay.
   const WHEEL_LEVELS = ["free", "easy", "easy4", "easy6", "hard", "hard6"];
   const PRIZE_LEVELS = ["easy", "hard"];            // mức có giải "đúng hết 8 câu" (nhận thẳng, không quay)
-  // Nhãn mức theo ngôn ngữ hiện tại (getter -> luôn đọc đúng ngôn ngữ đang chọn); LEVEL_PRICES là phần giá, không cần dịch
-  const LEVEL_PRICES = { free: "1K", easy: "2 - 10K", hard: "20 - 50K", impossible: "100K" };
-  const LEVEL_LABELS = {};                          // nhãn trên chip: có cả các vòng quay riêng (easy4, easy6, hard6)
-  Object.keys(LEVEL_PRICES).concat(["easy4", "easy6", "hard6"]).forEach(function (l) { Object.defineProperty(LEVEL_LABELS, l, { enumerable: true, get: function () { return I18n.t("level.label." + l); } }); });
+  // GIÁ HIỂN THỊ = khoảng thưởng thật trên các vòng quay: đọc các số có chữ K trong tên ô (vd "2K", "2,5K") rồi lấy nhỏ nhất - lớn nhất.
+  // Host sửa vòng quay (hoặc đăng dữ liệu mới) thì giá ở màn chọn mức, Quiz và vòng quay tự đổi theo, không phải sửa code.
+  // Số lẻ được làm tròn XUỐNG số nguyên K (vd Free có ô 2K - 2,9K thì hiện "2K"). Ô chữ như "Chúc may mắn" bị bỏ qua.
+  // Nếu vòng quay không có ô nào ghi số + K thì dùng giá dự phòng bên dưới.
+  const FALLBACK_PRICES = { free: "2K", easy: "3 - 20K", hard: "20 - 50K", impossible: "100K" };
+  const LEVEL_WHEELS = { free: ["free"], easy: ["easy", "easy4", "easy6"], hard: ["hard", "hard6"] };   // các vòng quay thuộc mỗi mức
+  function kNumbers(items) {
+    const out = [];
+    items.forEach(function (it) {
+      const m = /(\d+(?:[.,]\d+)?)\s*[kK](?![A-Za-z0-9])/.exec(String(it.label || ""));
+      if (m) out.push(parseFloat(m[1].replace(",", ".")));
+    });
+    return out;
+  }
+  function fmtK(v) { return v >= 1 ? String(Math.floor(v)) : String(Math.round(v * 10) / 10).replace(".", I18n.lang() === "vi" ? "," : "."); }
+  function rangeText(wheels, fallback) {
+    let nums = [];
+    wheels.forEach(function (w) { nums = nums.concat(kNumbers(window.Store.loadWheel(w))); });
+    if (!nums.length) return fallback;
+    const lo = fmtK(Math.min.apply(null, nums)), hi = fmtK(Math.max.apply(null, nums));
+    return lo === hi ? lo + "K" : lo + " - " + hi + "K";
+  }
+  const LEVEL_PRICES = {};                          // giá theo MỨC (gộp các vòng quay của mức): free "2K", easy "3 - 20K"...
+  Object.keys(FALLBACK_PRICES).forEach(function (l) {
+    Object.defineProperty(LEVEL_PRICES, l, { enumerable: true, get: function () { return LEVEL_WHEELS[l] ? rangeText(LEVEL_WHEELS[l], FALLBACK_PRICES[l]) : FALLBACK_PRICES[l]; } });
+  });
+  const WHEEL_PRICES = {};                          // giá theo TỪNG VÒNG QUAY (vd easy4 "5 - 15K"), dùng ở màn hình vòng quay
+  ["free", "easy", "easy4", "easy6", "hard", "hard6"].forEach(function (w) {
+    Object.defineProperty(WHEEL_PRICES, w, { enumerable: true, get: function () { return rangeText([w], FALLBACK_PRICES[w.replace(/\d+$/, "")]); } });
+  });
+  // Nhãn chip theo ngôn ngữ hiện tại (getter -> luôn đọc đúng ngôn ngữ). LEVEL_LABELS theo mức, WHEEL_LABELS theo vòng quay.
+  const LEVEL_LABELS = {}, WHEEL_LABELS = {};
+  Object.keys(LEVEL_PRICES).forEach(function (l) { Object.defineProperty(LEVEL_LABELS, l, { enumerable: true, get: function () { return I18n.t("level.label", { price: LEVEL_PRICES[l] }); } }); });
+  Object.keys(WHEEL_PRICES).forEach(function (w) { Object.defineProperty(WHEEL_LABELS, w, { enumerable: true, get: function () { return I18n.t("level.label", { price: WHEEL_PRICES[w] }); } }); });
   const WHEEL_NAMES = {};                           // tên vòng quay trong ô chọn của host (vd "Easy · 4 câu")
   WHEEL_LEVELS.forEach(function (l) { Object.defineProperty(WHEEL_NAMES, l, { enumerable: true, get: function () { return I18n.t("wheel.name." + l); } }); });
   const LEVEL_NAMES = { free: "Free", easy: "Easy", hard: "Hard", impossible: "Impossible" };
@@ -181,7 +211,7 @@
 
   window.Store = {
     LIMITS: LIMITS, WHEEL_MAX: WHEEL_MAX, PALETTE: PALETTE,
-    QUESTION_LEVELS: QUESTION_LEVELS, SHUFFLE_LEVELS: SHUFFLE_LEVELS, TYPED_LEVELS: TYPED_LEVELS, isTyped: isTyped, WHEEL_LEVELS: WHEEL_LEVELS, PRIZE_LEVELS: PRIZE_LEVELS, WHEEL_NAMES: WHEEL_NAMES, LEVEL_LABELS: LEVEL_LABELS, LEVEL_PRICES: LEVEL_PRICES, LEVEL_NAMES: LEVEL_NAMES,
+    QUESTION_LEVELS: QUESTION_LEVELS, SHUFFLE_LEVELS: SHUFFLE_LEVELS, TYPED_LEVELS: TYPED_LEVELS, isTyped: isTyped, WHEEL_LEVELS: WHEEL_LEVELS, PRIZE_LEVELS: PRIZE_LEVELS, WHEEL_NAMES: WHEEL_NAMES, WHEEL_PRICES: WHEEL_PRICES, WHEEL_LABELS: WHEEL_LABELS, LEVEL_LABELS: LEVEL_LABELS, LEVEL_PRICES: LEVEL_PRICES, LEVEL_NAMES: LEVEL_NAMES,
     uid: uid,
     // Chế độ host: luôn bật khi mở bằng file:// hoặc localhost; trên web công khai chỉ bật ở trình duyệt đã mở link có ?host=1
     isHostMode() {
