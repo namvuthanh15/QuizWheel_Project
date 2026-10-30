@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>QuizWheel – Host</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    body { padding-bottom: 40px; }
+    main { max-width: 1100px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+    .tabs .btn { padding: 8px 18px; }
+    .tabs .btn.active { background: var(--yellow); color: var(--ink); }
+    .tbl-wrap { overflow-x: auto; }
+    table.tbl { width: 100%; border-collapse: collapse; font-size: .92rem; background: #fff; border: 3px solid var(--ink); border-radius: 12px; overflow: hidden; }
+    .tbl th, .tbl td { padding: 7px 10px; border-bottom: 1px solid #e7c98a; text-align: left; vertical-align: middle; }
+    .tbl th { background: var(--card-2); white-space: nowrap; }
+    .tbl .num { text-align: right; white-space: nowrap; }
+    .tbl .off td { opacity: .55; }
+    .acts { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin: 8px 0; }
+    .row .field { margin: 0; min-width: 120px; flex: 1; }
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+    .dirty { display: inline-block; background: var(--yellow); border: 2px solid var(--ink); border-radius: 999px; padding: 1px 12px; font-weight: 800; font-size: .85rem; }
+    .ans-block { border: 2px solid var(--ink); border-radius: 12px; padding: 10px; background: #fff; display: grid; gap: 6px; }
+    .ans-block img { max-width: 100%; max-height: 120px; object-fit: contain; border-radius: 8px; }
+    .wrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
+    .wrow .w-label { flex: 1; min-width: 140px; }
+    .ok-msg { color: #136b3a; font-weight: 800; }
+    pre.preview { background: #fff; border: 2px solid var(--ink); border-radius: 12px; padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .lose-prev { max-width: 260px; border: 3px solid var(--ink); border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="host.html">QUIZ<span>WHEEL</span> · HOST</a>
+    <div><button class="nav-link" type="button" id="btn-out" hidden>Thoát</button></div>
+  </header>
+
+  <main>
+    <!-- Đăng nhập host -->
+    <section id="sec-login" class="card" style="max-width:420px;margin:24px auto">
+      <h2>Đăng nhập host</h2>
+      <form id="login-form" autocomplete="off">
+        <label class="field"><span>Mật khẩu host</span><input id="key" type="password" autocomplete="current-password"></label>
+        <p class="feedback bad" id="login-err" role="alert"></p>
+        <button class="btn btn-primary" id="login-go" type="submit">Vào</button>
+      </form>
+      <p class="note">Mật khẩu chỉ giữ trong tab này (tải lại trang là phải nhập lại) và chỉ gửi tới Supabase.</p>
+    </section>
+
+    <!-- Giao diện host -->
+    <section id="sec-app" hidden>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <p class="feedback" id="msg" role="status"></p>
+      <div id="tab-players"></div>
+      <div id="tab-questions" hidden></div>
+      <div id="tab-wheels" hidden></div>
+      <div id="tab-settings" hidden></div>
+      <div id="tab-data" hidden></div>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-text" hidden>
+    <div class="card modal-box">
+      <p id="modal-text"></p>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="modal-ok" type="button">Đồng ý</button>
+        <button class="btn btn-secondary" id="modal-cancel" type="button">Hủy</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="js/i18n.js"></script>
+  <script src="data/seed.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/host-admin.js"></script>
+</body>
+</html>

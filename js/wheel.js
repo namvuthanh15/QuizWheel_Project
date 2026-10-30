@@ -6,7 +6,7 @@
   const MIN_SLICES = 2, SPIN_MS = REDUCED ? 1200 : 4500, SPIN_TURNS = REDUCED ? 1 : 6, TWO_PI = Math.PI * 2, POINTER = -Math.PI / 2;   // kim ở trên cùng
 
   // level: mức đang hiển thị; once = true khi đang chơi thật (chỉ được quay 1 lần), false khi host xem thử
-  const state = { level: "free", once: false, done: false, items: [], slices: [], rotation: 0, spinning: false };
+  const state = { level: "free", playId: "", once: false, done: false, items: [], slices: [], rotation: 0, spinning: false };
   let canvas, ctx;
   let runId = 0;                                   // mỗi lần quay có 1 mã; đổi mã = hủy lần quay cũ
 
@@ -20,7 +20,7 @@
       if (!best) best = left.find(function (x) { return x.n > 0; });   // chỉ còn giá trị vừa dùng
       if (!best) break;
       best.n--; last = best;
-      out.push({ label: best.it.label, color: best.it.color });
+      out.push({ id: best.it.id, label: best.it.label, color: best.it.color });
     }
     return out;
   }
@@ -73,17 +73,34 @@
     return fromRotation + diff + TWO_PI * extraTurns;
   }
 
-  function spin() {
+  async function spin() {
     if (state.spinning || (state.once && state.done) || state.slices.length < MIN_SLICES) return;
     state.spinning = true;
     UI.$("#spin-btn").disabled = true;
     const out = UI.$("#wheel-result");
     out.textContent = ""; out.classList.remove("show");
+    const myRun = ++runId;              // đổi mã = hủy lần quay cũ (khi rời màn hình)
 
-    const winner = Math.floor(Math.random() * state.slices.length);   // 1) chọn kết quả (mỗi ô xác suất bằng nhau)
+    // 1) Chọn kết quả. Chơi thật: SERVER quay và chốt kết quả (gọi lại cũng ra đúng kết quả đó). Host xem thử: quay giả tại máy.
+    let winner = Math.floor(Math.random() * state.slices.length);
+    let serverItem = null;
+    if (state.playId) {
+      const r = await Api.spin(state.playId);
+      if (myRun !== runId) return;                                    // đã rời màn hình trong lúc chờ
+      if (!r.ok) {
+        state.spinning = false; UI.$("#spin-btn").disabled = false;
+        UI.toast(Api.errText(r.error));
+        return;
+      }
+      serverItem = r.item || {};
+      const same = [];
+      state.slices.forEach(function (sl, i) { if (sl.id === serverItem.id) same.push(i); });
+      if (!same.length) state.slices.forEach(function (sl, i) { if (sl.label === serverItem.label) same.push(i); });
+      if (same.length) winner = same[Math.floor(Math.random() * same.length)];
+      else winner = -1;                                               // vòng quay trên máy khác với server: vẫn công bố đúng kết quả của server
+    }
     const startRot = state.rotation;
-    const endRot = landingRotation(winner, startRot, SPIN_TURNS);
-    const myRun = ++runId;              // 2) tính góc dừng
+    const endRot = winner >= 0 ? landingRotation(winner, startRot, SPIN_TURNS) : startRot + TWO_PI * SPIN_TURNS;
     const t0 = performance.now();
 
     function frame(now) {
@@ -96,7 +113,7 @@
       state.done = true;
       UI.$("#spin-btn").disabled = state.once || state.slices.length < MIN_SLICES;   // chơi thật: hết lượt
       syncButtons();
-      const shown = state.slices[indexUnderPointer(state.rotation)];  // đọc lại từ vị trí kim
+      const shown = serverItem && winner < 0 ? serverItem : state.slices[indexUnderPointer(state.rotation)];  // đọc lại từ vị trí kim
       out.textContent = I18n.t("wheel.result", { x: shown.label });
       out.classList.add("show");
       Sfx.wow();                                                      // sau khi quay xong
@@ -138,7 +155,7 @@
     if (state.spinning) return;
     opts = opts || {};
     if (opts.level && Store.WHEEL_LEVELS.indexOf(opts.level) >= 0) state.level = opts.level;
-    state.once = !!opts.once; state.done = false;
+    state.once = !!opts.once; state.done = false; state.playId = opts.once && opts.playId ? opts.playId : "";
     UI.$("#wheel-level").textContent = Store.WHEEL_LABELS[state.level] || "";
     state.items = Store.loadWheel(state.level);
     state.slices = expand(state.items);

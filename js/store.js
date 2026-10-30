@@ -88,6 +88,9 @@
     };
   }
 
+  // Ảnh từ server: chỉ nhận data URL ảnh hoặc link https (host đăng ảnh lên Supabase)
+  function safeImage(v) { return isImage(v) ? v : (typeof v === "string" && /^https:\/\/[^\s"'<>]+$/.test(v) ? v : null); }
+
   function isTyped(level) { return TYPED_LEVELS.indexOf(level) >= 0; }
 
   // Câu hỏi nhập ngày (mức Impossible): { id, text, parts: [ {d, m, y}, {d, m, y} ] } – đáp án của 2 ý là 2 ngày/tháng/năm
@@ -206,13 +209,18 @@
     catch (e) { return false; }                        // thường là đầy bộ nhớ (~5MB)
   }
 
+  // Chế độ server: cấu hình công khai lấy từ api_config() (luật, vòng quay, cài đặt, số câu trong kho, số lượt tốn). KHÔNG có đáp án.
+  let remote = null;
+
   function qOk(level) { return QUESTION_LEVELS.indexOf(level) >= 0; }
   function wOk(level) { return WHEEL_LEVELS.indexOf(level) >= 0; }
 
   window.Store = {
     LIMITS: LIMITS, WHEEL_MAX: WHEEL_MAX, PALETTE: PALETTE,
     QUESTION_LEVELS: QUESTION_LEVELS, SHUFFLE_LEVELS: SHUFFLE_LEVELS, TYPED_LEVELS: TYPED_LEVELS, isTyped: isTyped, WHEEL_LEVELS: WHEEL_LEVELS, PRIZE_LEVELS: PRIZE_LEVELS, WHEEL_NAMES: WHEEL_NAMES, WHEEL_PRICES: WHEEL_PRICES, WHEEL_LABELS: WHEEL_LABELS, LEVEL_LABELS: LEVEL_LABELS, LEVEL_PRICES: LEVEL_PRICES, LEVEL_NAMES: LEVEL_NAMES,
-    uid: uid,
+    uid: uid, safeImage: safeImage,
+    cleanListFor: function (level, arr) { return cleanList(arr, level); },
+    cleanWheelItems: function (arr) { return cleanWheel(arr); },
     // Chế độ host: luôn bật khi mở bằng file:// hoặc localhost; trên web công khai chỉ bật ở trình duyệt đã mở link có ?host=1
     isHostMode() {
       const h = location.hostname;
@@ -228,8 +236,13 @@
     },
     saveQuestions(level, list) { return qOk(level) && write(keyFor(KEY_Q, level), cleanList(list, level)); },
     resetQuestions(level) { try { localStorage.removeItem(keyFor(KEY_Q, level)); } catch (e) {} return this.loadQuestions(level); },
+    setRemote(cfg) { remote = cfg && typeof cfg === "object" ? cfg : null; },
+    remote() { return remote; },
+    poolCount(level) { return remote ? Number((remote.pool || {})[level]) || 0 : this.loadQuestions(level).length; },
+    cost(level) { return remote && remote.costs ? Math.max(0, Number(remote.costs[level]) || 0) : 0; },
     loadWheel(level) {
       if (!wOk(level)) return [];
+      if (remote) return cleanWheel((remote.wheels || {})[level]);
       const raw = read(keyFor(KEY_W, level));
       return raw === null ? defaultWheel(level) : cleanWheel(raw);
     },
@@ -249,7 +262,7 @@
       return { sound: clamp(r.sound, 0, 100, 70), music: clamp(r.music, 0, 100, 70) };
     },
     saveAudio(a) { const c = { sound: clamp(a.sound, 0, 100, 70), music: clamp(a.music, 0, 100, 70) }; write(KEY_A, c); return c; },
-    loadSettings() { const raw = read(KEY_S); const seed = seedOf(); return cleanSettings(raw === null && seed ? seed.settings : raw); },
+    loadSettings() { if (remote) return cleanSettings(remote.settings); const raw = read(KEY_S); const seed = seedOf(); return cleanSettings(raw === null && seed ? seed.settings : raw); },
     saveSettings(s) { const c = cleanSettings(s); write(KEY_S, c); return c; },
     exportJSON() {
       const self = this, questions = {}, wheels = {};

@@ -40,6 +40,24 @@
       UI._toastId = setTimeout(function () { t.hidden = true; }, 2400);
     },
 
+    // Hộp xác nhận (thay cho window.confirm, đa ngôn ngữ). Trả về Promise<boolean>.
+    confirm(message, okText) {
+      return new Promise(function (resolve) {
+        const m = document.getElementById("modal"), ok = document.getElementById("modal-ok"), no = document.getElementById("modal-cancel");
+        document.getElementById("modal-text").textContent = message;
+        ok.textContent = okText || I18n.t("confirm.ok");
+        m.hidden = false; ok.focus();
+        function done(v) {
+          m.hidden = true;
+          ok.removeEventListener("click", yes); no.removeEventListener("click", nope); document.removeEventListener("keydown", key);
+          resolve(v);
+        }
+        function yes() { done(true); } function nope() { done(false); }
+        function key(e) { if (e.key === "Escape") done(false); }
+        ok.addEventListener("click", yes); no.addEventListener("click", nope); document.addEventListener("keydown", key);
+      });
+    },
+
     // Tạo phần tử an toàn: dùng textContent, KHÔNG dùng innerHTML với dữ liệu người dùng.
     el(tag, className, text) {
       const node = document.createElement(tag);

@@ -1,0 +1,419 @@
+// host-admin.js – trang host (host.html): quản lý người chơi, kho câu hỏi, vòng quay, cài đặt, nạp dữ liệu cũ lên Supabase.
+// Mọi thao tác gọi hàm admin_* trên server kèm MẬT KHẨU HOST (giữ trong biến, không lưu vào LocalStorage/URL).
+(function () {
+  const LETTERS = "ABCD", LEVELS = ["easy", "hard", "impossible"];
+  const $ = function (s) { return document.querySelector(s); };
+  const h = UI.el;
+  let KEY = "";
+  let players = [];
+  let D = { questions: { easy: [], hard: [], impossible: [] }, wheels: {}, settings: null, loseImage: null };
+  let cfg = { costs: { easy: 1, hard: 1, impossible: 0 }, startTurns: 3, freeSpins: 1, impossiblePrize: "100K" };
+  let tab = "players", qLevel = "easy", wLevel = "free", editing = null, histFor = null;
+  const dirty = { questions: false, wheel: false };
+  const form = { images: [null, null, null, null] };
+
+  const ERR = { auth: "Sai mật khẩu host.", locked: "Nhập sai quá nhiều lần, bị khóa 15 phút.", nokey: "Chưa đặt mật khẩu host (chạy 02-admin-key.sql).",
+    network: "Không kết nối được Supabase.", server: "Máy chủ báo lỗi.", config: "Chưa cấu hình js/config.js.",
+    bad_name: "Tên phải 1–30 ký tự.", bad_pin: "PIN phải 4–12 ký tự.", exists: "Tên này đã có người dùng.", no_player: "Không tìm thấy người chơi.",
+    short_key: "Mật khẩu mới phải từ 8 ký tự.", bad_data: "Dữ liệu không hợp lệ." };
+
+  function say(msg, good) { const m = $("#msg"); m.textContent = msg || ""; m.className = "feedback " + (good ? "good" : "bad"); }
+  function errMsg(r) { return (ERR[r.error] || "Lỗi: " + r.error) + (r.message ? " (" + r.message + ")" : ""); }
+
+  // Gọi hàm admin_*; trả về kết quả hoặc null nếu lỗi (đã hiện thông báo). Sai mật khẩu giữa chừng -> về màn đăng nhập.
+  async function adm(fn, params) {
+    const r = await Api.call(fn, Object.assign({ p_key: KEY }, params || {}));
+    if (r.ok) return r;
+    if (r.error === "auth" || r.error === "locked") { logout(errMsg(r)); return null; }
+    say(errMsg(r), false); return null;
+  }
+
+  /* ---------- Đăng nhập ---------- */
+  async function login(e) {
+    e.preventDefault();
+    const k = $("#key").value; if (!k) return;
+    $("#login-go").disabled = true; $("#login-err").textContent = "";
+    const r = await Api.call("admin_login", { p_key: k });
+    $("#login-go").disabled = false;
+    if (!r.ok) { $("#login-err").textContent = errMsg(r); $("#key").value = ""; return; }
+    KEY = k; $("#key").value = "";
+    $("#sec-login").hidden = true; $("#sec-app").hidden = false; $("#btn-out").hidden = false;
+    await loadAll(); showTab("players");
+  }
+  function logout(msg) {
+    KEY = ""; players = []; $("#sec-app").hidden = true; $("#btn-out").hidden = true; $("#sec-login").hidden = false;
+    $("#login-err").textContent = msg || "";
+  }
+
+  async function loadAll() {
+    const [p, ex, st] = await Promise.all([adm("admin_players"), adm("admin_export"), adm("admin_settings")]);
+    if (p) players = p.players;
+    if (ex) {
+      D.questions = { easy: ex.questions.easy || [], hard: ex.questions.hard || [], impossible: ex.questions.impossible || [] };
+      D.wheels = ex.wheels || {}; D.settings = ex.settings; D.loseImage = ex.loseImage || null;
+    }
+    if (st) cfg = { costs: st.costs, startTurns: st.startTurns, freeSpins: st.freeSpins, impossiblePrize: st.impossiblePrize };
+    dirty.questions = dirty.wheel = false;
+  }
+
+  /* ---------- Tab ---------- */
+  const TABS = [["players", "Người chơi"], ["questions", "Câu hỏi"], ["wheels", "Vòng quay"], ["settings", "Cài đặt"], ["data", "Nạp / sao lưu"]];
+  function showTab(name) {
+    tab = name; say("");
+    const bar = $("#tabs"); bar.textContent = "";
+    TABS.forEach(function (t) {
+      const b = h("button", "btn btn-secondary" + (t[0] === name ? " active" : ""), t[1]); b.type = "button";
+      b.addEventListener("click", function () { showTab(t[0]); });
+      bar.appendChild(b);
+    });
+    TABS.forEach(function (t) { $("#tab-" + t[0]).hidden = t[0] !== name; });
+    ({ players: renderPlayers, questions: renderQuestions, wheels: renderWheels, settings: renderSettings, data: renderData })[name]();
+  }
+  function box(id) { const el = $("#tab-" + id); el.textContent = ""; return el; }
+  function field(label, input) { const l = h("label", "field"); l.append(h("span", "", label), input); return l; }
+  function input(type, value, attrs) { const i = h("input"); i.type = type; i.value = value === undefined || value === null ? "" : value; Object.keys(attrs || {}).forEach(function (k) { i.setAttribute(k, attrs[k]); }); return i; }
+  function btn(text, cls, fn) { const b = h("button", cls, text); b.type = "button"; b.addEventListener("click", fn); return b; }
+  function link(text, fn, danger) { return btn(text, "link-btn" + (danger ? " danger" : ""), fn); }
+  function kfmt(v) { return String(Math.round(Number(v) * 10) / 10) + "K"; }
+
+  /* ====================== NGƯỜI CHƠI ====================== */
+  function renderPlayers() {
+    const el = box("players");
+    const c = h("div", "card");
+    c.appendChild(h("h2", "", "Tạo người chơi"));
+    const row = h("div", "row");
+    const n = input("text", "", { maxlength: 30 }), pin = input("text", "", { maxlength: 12, autocomplete: "off" }), t = input("number", "", { min: 0, placeholder: "mặc định " + cfg.startTurns });
+    row.append(field("Tên", n), field("PIN (4–12 ký tự)", pin), field("Số lượt ban đầu", t));
+    row.appendChild(btn("Tạo", "btn btn-primary", async function () {
+      const r = await adm("admin_player_create", { p_name: n.value, p_pin: pin.value, p_turns: t.value === "" ? null : Number(t.value) });
+      if (r) { await loadAll(); say("Đã tạo người chơi " + n.value.trim() + ". Nhớ gửi PIN cho họ.", true); renderPlayers(); }
+    }));
+    c.appendChild(row); el.appendChild(c);
+
+    const wrap = h("div", "tbl-wrap"); wrap.style.marginTop = "14px";
+    const tb = h("table", "tbl");
+    const head = h("tr"); ["Tên", "Lượt", "Free đã dùng", "Đã trúng", "Đã trả", "Còn nợ", "Ván", "Lần cuối", "Thao tác"].forEach(function (x) { head.appendChild(h("th", "", x)); });
+    tb.appendChild(head);
+    if (!players.length) { const tr = h("tr"), td = h("td", "", "Chưa có người chơi."); td.colSpan = 9; tr.appendChild(td); tb.appendChild(tr); }
+    players.forEach(function (p) {
+      const tr = h("tr", p.active ? "" : "off");
+      const owed = Math.max(0, Number(p.rewardK) - Number(p.paidK));
+      tr.append(h("td", "", p.name + (p.active ? "" : " (khóa)")), h("td", "num", String(p.turns)), h("td", "num", String(p.freeUsed)),
+        h("td", "num", kfmt(p.rewardK)), h("td", "num", kfmt(p.paidK)), h("td", "num", owed > 0 ? kfmt(owed) : "—"), h("td", "num", String(p.plays)),
+        h("td", "", p.lastAt ? new Date(p.lastAt).toLocaleString("vi-VN") : "—"));
+      const td = h("td"); const a = h("div", "acts");
+      a.append(
+        link("± Lượt", async function () {
+          const v = window.prompt("Cộng/trừ bao nhiêu lượt cho " + p.name + "? (vd 3 hoặc -1)", "1"); if (v === null) return;
+          const d = parseInt(v, 10); if (!Number.isInteger(d)) { say("Hãy nhập số nguyên.", false); return; }
+          if (await adm("admin_player_update", { p_id: p.id, p_turns_delta: d })) { await loadAll(); renderPlayers(); say("Đã chỉnh lượt.", true); }
+        }),
+        link("Reset Free", async function () { if (await adm("admin_player_update", { p_id: p.id, p_free_used: 0 })) { await loadAll(); renderPlayers(); say("Đã cho " + p.name + " quay Free lại.", true); } }),
+        link("Đổi PIN", async function () {
+          const v = window.prompt("PIN mới cho " + p.name + " (4–12 ký tự):", ""); if (v === null) return;
+          if (await adm("admin_player_update", { p_id: p.id, p_pin: v })) say("Đã đổi PIN (người này bị đăng xuất).", true);
+        }),
+        link(p.active ? "Khóa" : "Mở khóa", async function () { if (await adm("admin_player_update", { p_id: p.id, p_active: !p.active })) { await loadAll(); renderPlayers(); } }),
+        link("Đã trả", async function () {
+          const v = window.prompt("Đã trả thêm bao nhiêu K cho " + p.name + "? (còn nợ " + kfmt(owed) + "; nhập số âm để sửa lại)", String(owed)); if (v === null) return;
+          const d = Number(v.replace(",", ".")); if (!Number.isFinite(d)) { say("Hãy nhập số.", false); return; }
+          if (await adm("admin_mark_paid", { p_id: p.id, p_delta: d })) { await loadAll(); renderPlayers(); say("Đã ghi nhận.", true); }
+        }),
+        link("Lịch sử", async function () { const r = await adm("admin_history", { p_id: p.id }); if (r) { histFor = { p: p, items: r.items }; renderPlayers(); } }),
+        link("Xóa", async function () {
+          if (!(await UI.confirm("Xóa hẳn " + p.name + " cùng toàn bộ lịch sử? Không hoàn tác được."))) return;
+          if (await adm("admin_player_delete", { p_id: p.id })) { histFor = null; await loadAll(); renderPlayers(); say("Đã xóa.", true); }
+        }, true));
+      td.appendChild(a); tr.appendChild(td); tb.appendChild(tr);
+    });
+    wrap.appendChild(tb); el.appendChild(wrap);
+    el.appendChild(h("p", "note", "“Đã trúng” = tổng lì xì từ các ván; “Đã trả” do bạn ghi khi đưa tiền. Hai số khác nhau thì phần chênh là “Còn nợ”."));
+
+    if (histFor) {
+      const hc = h("div", "card"); hc.style.marginTop = "14px";
+      hc.appendChild(h("h3", "", "Lịch sử của " + histFor.p.name));
+      const ul = h("ul", "hist-list");
+      if (!histFor.items.length) ul.appendChild(h("li", "host-empty", "Chưa có ván nào."));
+      histFor.items.forEach(function (it) {
+        const li = h("li", "hist-item");
+        const res = it.rewardLabel ? it.rewardLabel : (it.wheel && !it.spun ? "chưa quay" : it.status === "active" ? "đang chơi" : "—");
+        li.append(h("span", "", new Date(it.at).toLocaleString("vi-VN")), h("span", "", (it.kind === "free" ? "Free" : it.level) + (it.cost ? " (−" + it.cost + " lượt)" : "")),
+          h("span", "", it.kind === "quiz" ? it.solved + "/" + (it.level === "impossible" ? 2 : it.total) : ""), h("b", "", res));
+        ul.appendChild(li);
+      });
+      hc.appendChild(ul); hc.appendChild(btn("Đóng", "btn btn-secondary", function () { histFor = null; renderPlayers(); }));
+      el.appendChild(hc);
+    }
+  }
+
+  /* ====================== CÂU HỎI ====================== */
+  function saveBar(kind, onSave) {
+    const bar = h("div", "form-actions");
+    bar.appendChild(btn("Lưu lên server", "btn btn-primary", onSave));
+    if (dirty[kind]) bar.appendChild(h("span", "dirty", "Chưa lưu lên server"));
+    return bar;
+  }
+  function renderQuestions() {
+    const el = box("questions");
+    const c = h("div", "card");
+    const sel = h("select"); LEVELS.forEach(function (l) { const o = h("option", "", Store.LEVEL_NAMES[l] + " (" + D.questions[l].length + " câu)"); o.value = l; sel.appendChild(o); });
+    sel.value = qLevel; sel.addEventListener("change", function () { if (dirty.questions && !window.confirm("Bạn chưa lưu thay đổi của mức này lên server. Bỏ thay đổi và đổi mức?")) { sel.value = qLevel; return; } if (dirty.questions) { loadAll().then(function () { qLevel = sel.value; editing = null; renderQuestions(); }); return; } qLevel = sel.value; editing = null; renderQuestions(); });
+    const top = h("div", "row"); top.append(field("Kho câu hỏi", sel), btn("+ Thêm câu hỏi", "btn btn-secondary", function () { editing = { q: null }; renderQuestions(); }));
+    c.appendChild(top);
+    const list = D.questions[qLevel];
+    const need = qLevel === "impossible" ? 1 : qLevel === "easy" ? 8 : 8;
+    if (list.length < need) c.appendChild(h("p", "note", "Mức này nên có ít nhất " + need + " câu để người chơi chọn được mọi số câu (hiện " + list.length + ")."));
+    const ol = h("ol", "host-list"); ol.style.paddingLeft = "0"; ol.style.listStyle = "none";
+    if (!list.length) ol.appendChild(h("li", "host-empty", "Chưa có câu hỏi."));
+    list.forEach(function (q, i) {
+      const li = h("li", "host-item");
+      li.append(h("span", "host-num", String(i + 1)), h("span", "host-q", q.text));
+      li.append(link("Sửa", function () { editing = { q: q }; renderQuestions(); }), link("Xóa", function () {
+        if (!window.confirm("Xóa câu hỏi này?\n\n" + q.text)) return;
+        D.questions[qLevel] = list.filter(function (x) { return x !== q; }); dirty.questions = true; editing = null; renderQuestions();
+      }, true));
+      ol.appendChild(li);
+    });
+    c.appendChild(ol);
+    c.appendChild(saveBar("questions", async function () {
+      const clean = Store.cleanListFor(qLevel, D.questions[qLevel]);
+      if (clean.length !== D.questions[qLevel].length) { say("Có câu hỏi không hợp lệ, hãy kiểm tra lại.", false); return; }
+      const q = {}; q[qLevel] = clean;
+      if (await adm("admin_import", { p_data: { questions: q } })) { await loadAll(); renderQuestions(); say("Đã lưu " + clean.length + " câu hỏi mức " + Store.LEVEL_NAMES[qLevel] + " lên server.", true); }
+    }));
+    el.appendChild(c);
+    if (editing) el.appendChild(qLevel === "impossible" ? typedForm() : mcqForm());
+  }
+
+  function mcqForm() {
+    const q = editing.q, c = h("div", "card"); c.style.marginTop = "14px";
+    c.appendChild(h("h3", "", q ? "Sửa câu hỏi" : "Thêm câu hỏi"));
+    const text = h("textarea"); text.rows = 2; text.maxLength = Store.LIMITS.question; text.value = q ? q.text : "";
+    c.appendChild(field("Câu hỏi", text));
+    form.images = q ? q.answers.map(function (a) { return a.image || null; }) : [null, null, null, null];
+    const grid = h("div", "grid2"), texts = [], radios = [];
+    for (let i = 0; i < 4; i++) {
+      const b = h("div", "ans-block");
+      const t = input("text", q ? q.answers[i].text : "", { maxlength: Store.LIMITS.answer, placeholder: "Đáp án " + LETTERS[i] });
+      const r = input("radio", "", { name: "correct" }); r.checked = q ? q.correct === i : i === 0;
+      const rl = h("label"); rl.append(r, document.createTextNode(" Đáp án " + LETTERS[i] + " là đúng"));
+      const f = input("file", "", { accept: "image/*" });
+      const img = h("img"); img.alt = ""; img.hidden = !form.images[i]; if (form.images[i]) img.src = form.images[i];
+      const clr = btn("Xóa ảnh", "link-btn danger", function () { form.images[i] = null; img.hidden = true; f.value = ""; }); clr.style.justifySelf = "start";
+      f.addEventListener("change", async function () {
+        if (!f.files[0]) return;
+        try { form.images[i] = await fileToDataUrl(f.files[0], 480); img.src = form.images[i]; img.hidden = false; } catch (e) { say(e.message, false); }
+      });
+      b.append(rl, t, f, img, clr); grid.appendChild(b); texts.push(t); radios.push(r);
+    }
+    c.appendChild(grid);
+    const ex = h("textarea"); ex.rows = 2; ex.maxLength = Store.LIMITS.explain; ex.value = q ? q.explain || "" : "";
+    c.appendChild(field("Giải thích (hiện khi trả lời đúng, không bắt buộc)", ex));
+    const err = h("p", "feedback bad"); c.appendChild(err);
+    const acts = h("div", "form-actions");
+    acts.append(btn("Xong", "btn btn-primary", function () {
+      const item = { id: q ? q.id : Store.uid(), text: text.value.trim(), explain: ex.value.trim(), correct: radios.findIndex(function (r) { return r.checked; }),
+        answers: texts.map(function (t, i) { return { text: t.value.trim(), image: form.images[i] }; }) };
+      if (!item.text) { err.textContent = "Chưa nhập câu hỏi."; return; }
+      if (item.answers.some(function (a) { return !a.text && !a.image; })) { err.textContent = "Mỗi đáp án cần có chữ hoặc ảnh."; return; }
+      if (item.correct < 0) { err.textContent = "Hãy chọn đáp án đúng."; return; }
+      applyQuestion(q, item);
+    }), btn("Hủy", "btn btn-secondary", function () { editing = null; renderQuestions(); }));
+    c.appendChild(acts); return c;
+  }
+
+  function typedForm() {
+    const q = editing.q, c = h("div", "card"); c.style.marginTop = "14px";
+    c.appendChild(h("h3", "", q ? "Sửa câu hỏi Impossible" : "Thêm câu hỏi Impossible"));
+    const text = h("textarea"); text.rows = 2; text.maxLength = Store.LIMITS.question; text.value = q ? q.text : "";
+    c.appendChild(field("Câu hỏi (gồm 2 ý, mỗi ý có đáp án là một ngày)", text));
+    const ins = [];
+    [0, 1].forEach(function (n) {
+      const p = q ? q.parts[n] : null, row = h("div", "row");
+      const d = input("number", p ? p.d : "", { min: 1, max: 31 }), m = input("number", p ? p.m : "", { min: 1, max: 12 }), y = input("number", p ? p.y : "", { min: 1, max: 9999 });
+      row.append(field("Ý " + (n + 1) + " – ngày", d), field("tháng", m), field("năm", y)); c.appendChild(row); ins.push([d, m, y]);
+    });
+    const err = h("p", "feedback bad"); c.appendChild(err);
+    const acts = h("div", "form-actions");
+    acts.append(btn("Xong", "btn btn-primary", function () {
+      const parts = ins.map(function (r) { return { d: Number(r[0].value), m: Number(r[1].value), y: Number(r[2].value) }; });
+      const item = { id: q ? q.id : Store.uid(), text: text.value.trim(), parts: parts };
+      if (!item.text) { err.textContent = "Chưa nhập câu hỏi."; return; }
+      if (Store.cleanListFor("impossible", [item]).length !== 1) { err.textContent = "Ngày không hợp lệ (vd 31/2 không tồn tại)."; return; }
+      applyQuestion(q, item);
+    }), btn("Hủy", "btn btn-secondary", function () { editing = null; renderQuestions(); }));
+    c.appendChild(acts); return c;
+  }
+
+  function applyQuestion(old, item) {
+    const list = D.questions[qLevel];
+    if (old) D.questions[qLevel] = list.map(function (x) { return x === old ? item : x; });
+    else if (list.length >= Store.LIMITS.maxQuestions) { say("Tối đa " + Store.LIMITS.maxQuestions + " câu mỗi mức.", false); return; }
+    else D.questions[qLevel] = list.concat([item]);
+    dirty.questions = true; editing = null; renderQuestions();
+  }
+
+  // Đọc ảnh -> thu nhỏ -> JPEG data URL (giữ dung lượng nhỏ)
+  async function fileToDataUrl(file, maxSide) {
+    if (!file || !/^image\//.test(file.type)) throw new Error("File không phải ảnh.");
+    if (file.size > 10 * 1024 * 1024) throw new Error("Ảnh quá lớn (tối đa 10 MB).");
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise(function (ok, bad) { const im = new Image(); im.onload = function () { ok(im); }; im.onerror = function () { bad(new Error("Không đọc được ảnh.")); }; im.src = url; });
+      const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const cv = document.createElement("canvas"); cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
+      const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
+      return cv.toDataURL("image/jpeg", 0.72);
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  /* ====================== VÒNG QUAY ====================== */
+  function renderWheels() {
+    const el = box("wheels"), c = h("div", "card");
+    const sel = h("select"); Store.WHEEL_LEVELS.forEach(function (l) { const o = h("option", "", Store.WHEEL_NAMES[l]); o.value = l; sel.appendChild(o); });
+    sel.value = wLevel;
+    sel.addEventListener("change", function () { if (dirty.wheel) { if (!window.confirm("Bỏ thay đổi chưa lưu của vòng quay này?")) { sel.value = wLevel; return; } loadAll().then(function () { wLevel = sel.value; renderWheels(); }); return; } wLevel = sel.value; renderWheels(); });
+    c.appendChild(field("Vòng quay", sel));
+    const items = D.wheels[wLevel] = (D.wheels[wLevel] || []).map(function (x) { return Object.assign({}, x); });
+    const total = function () { return items.reduce(function (a, x) { return a + (Number(x.count) || 0); }, 0); };
+    const info = h("p", "note"); const upd = function () { info.textContent = "Tổng " + total() + "/" + Store.WHEEL_MAX + " ô (cần ít nhất 2). Tỉ lệ trúng = số ô của giá trị ÷ tổng số ô."; };
+    items.forEach(function (it, i) {
+      const r = h("div", "wrow");
+      const lab = input("text", it.label, { maxlength: 30, placeholder: "vd 5K hoặc Chúc may mắn" }); lab.className = "w-label";
+      const cnt = input("number", it.count, { min: 1, max: Store.WHEEL_MAX }); cnt.className = "w-count";
+      const col = input("color", it.color || Store.PALETTE[i % Store.PALETTE.length]);
+      lab.addEventListener("input", function () { it.label = lab.value; dirty.wheel = true; });
+      cnt.addEventListener("input", function () { it.count = Number(cnt.value); dirty.wheel = true; upd(); });
+      col.addEventListener("input", function () { it.color = col.value; dirty.wheel = true; });
+      r.append(lab, cnt, h("span", "", "ô"), col, link("Xóa", function () { items.splice(i, 1); D.wheels[wLevel] = items; dirty.wheel = true; renderWheels(); }, true));
+      c.appendChild(r);
+    });
+    upd(); c.appendChild(info);
+    c.appendChild(btn("+ Thêm giá trị", "btn btn-secondary", function () { items.push({ id: Store.uid(), label: "", count: 1, color: Store.PALETTE[items.length % Store.PALETTE.length] }); D.wheels[wLevel] = items; dirty.wheel = true; renderWheels(); }));
+    c.appendChild(saveBar("wheel", async function () {
+      const clean = Store.cleanWheelItems(items);
+      if (clean.reduce(function (a, x) { return a + x.count; }, 0) < 2) { say("Vòng quay cần ít nhất 2 ô.", false); return; }
+      const w = {}; w[wLevel] = clean;
+      if (await adm("admin_import", { p_data: { wheels: w } })) { dirty.wheel = false; await loadAll(); renderWheels(); say("Đã lưu vòng quay " + Store.WHEEL_NAMES[wLevel] + ".", true); }
+    }));
+    el.appendChild(c);
+    el.appendChild(h("p", "note", "Mẹo: ghi giá trị dạng “5K” hoặc “2,5K”. Hệ thống đọc số trước chữ K để cộng vào lì xì của người chơi; ô chữ như “Chúc may mắn” tính là 0."));
+  }
+
+  /* ====================== CÀI ĐẶT ====================== */
+  function renderSettings() {
+    const el = box("settings"), s = D.settings || {};
+    const c = h("div", "card"); c.appendChild(h("h2", "", "Lượt chơi và phần thưởng"));
+    const g = h("div", "grid2");
+    const ce = input("number", cfg.costs.easy, { min: 0 }), ch = input("number", cfg.costs.hard, { min: 0 }), ci = input("number", cfg.costs.impossible, { min: 0 });
+    const st = input("number", cfg.startTurns, { min: 0 }), fs = input("number", cfg.freeSpins, { min: 0 });
+    const ip = input("text", cfg.impossiblePrize, { maxlength: 20 });
+    g.append(field("Lượt tốn mỗi ván Easy", ce), field("Lượt tốn mỗi ván Hard", ch), field("Lượt tốn mỗi ván Impossible", ci),
+             field("Lượt cho người chơi mới", st), field("Số lần quay Free / người", fs), field("Lì xì Impossible khi thắng", ip));
+    c.appendChild(g);
+    c.appendChild(h("h3", "", "Quiz")); c.lastChild.style.marginTop = "14px";
+    const g2 = h("div", "grid2");
+    const tm = input("number", s.timePerQuestion !== undefined ? s.timePerQuestion : 20, { min: 0, max: 300 });
+    const bpE = input("text", (s.bigPrize || {}).easy || "36K", { maxlength: 20 }), bpH = input("text", (s.bigPrize || {}).hard || "72K", { maxlength: 20 });
+    const shE = input("checkbox"), shH = input("checkbox"); shE.checked = !s.shuffleAnswers || s.shuffleAnswers.easy !== false; shH.checked = !s.shuffleAnswers || s.shuffleAnswers.hard !== false;
+    g2.append(field("Giây mỗi câu (0 = không giới hạn)", tm), field("Lì xì khi đúng hết 8 câu Easy", bpE), field("Lì xì khi đúng hết 8 câu Hard", bpH));
+    const lE = h("label"); lE.append(shE, document.createTextNode(" Đảo vị trí đáp án Easy")); const lH = h("label"); lH.append(shH, document.createTextNode(" Đảo vị trí đáp án Hard"));
+    g2.append(lE, lH); c.appendChild(g2);
+    c.appendChild(h("p", "note", "Số lượt chỉ tính khi ván BẮT ĐẦU (server trừ ngay). Đổi ở đây chỉ áp dụng cho các ván sau."));
+    c.appendChild(btn("Lưu cài đặt", "btn btn-primary", async function () {
+      const a = await adm("admin_settings_save", { p_costs: { easy: Number(ce.value), hard: Number(ch.value), impossible: Number(ci.value) }, p_start_turns: Number(st.value), p_free_spins: Number(fs.value), p_impossible_prize: ip.value });
+      if (!a) return;
+      const b = await adm("admin_import", { p_data: { settings: { timePerQuestion: Math.max(0, Math.min(300, Math.round(Number(tm.value) || 0))), shuffleAnswers: { easy: shE.checked, hard: shH.checked }, bigPrize: { easy: bpE.value.trim() || "36K", hard: bpH.value.trim() || "72K" } } } });
+      if (b) { await loadAll(); renderSettings(); say("Đã lưu cài đặt.", true); }
+    }));
+    el.appendChild(c);
+
+    const lc = h("div", "card"); lc.style.marginTop = "14px";
+    lc.appendChild(h("h2", "", "Ảnh hiện khi thua Impossible"));
+    const prev = h("img", "lose-prev"); prev.alt = ""; prev.hidden = !D.loseImage; if (D.loseImage) prev.src = D.loseImage;
+    const lf = input("file", "", { accept: "image/*" });
+    lf.addEventListener("change", async function () {
+      if (!lf.files[0]) return;
+      try { const url = await fileToDataUrl(lf.files[0], 900); if (await adm("admin_import", { p_data: { loseImage: url } })) { D.loseImage = url; renderSettings(); say("Đã lưu ảnh.", true); } } catch (e) { say(e.message, false); }
+    });
+    lc.append(prev, lf);
+    if (D.loseImage) lc.appendChild(btn("Bỏ ảnh", "link-btn danger", async function () { if (await adm("admin_import", { p_data: { loseImage: "" } })) { D.loseImage = null; renderSettings(); } }));
+    el.appendChild(lc);
+
+    const kc = h("div", "card"); kc.style.marginTop = "14px";
+    kc.appendChild(h("h2", "", "Đổi mật khẩu host"));
+    const nk = input("password", "", { autocomplete: "new-password" }), nk2 = input("password", "", { autocomplete: "new-password" });
+    kc.append(field("Mật khẩu mới (≥ 12 ký tự cho an toàn)", nk), field("Nhập lại", nk2));
+    kc.appendChild(btn("Đổi mật khẩu", "btn btn-secondary", async function () {
+      if (nk.value !== nk2.value) { say("Hai mật khẩu không khớp.", false); return; }
+      if (nk.value.length < 12 && !window.confirm("Mật khẩu dưới 12 ký tự khá yếu. Vẫn đổi?")) return;
+      if (await adm("admin_set_key", { p_new: nk.value })) { KEY = nk.value; nk.value = nk2.value = ""; say("Đã đổi mật khẩu host.", true); }
+    }));
+    el.appendChild(kc);
+  }
+
+  /* ====================== NẠP / SAO LƯU ====================== */
+  let pending = null;
+  function summarize(d) {
+    const lines = [];
+    LEVELS.forEach(function (l) { if (d.questions[l]) lines.push("• Câu hỏi " + Store.LEVEL_NAMES[l] + ": " + d.questions[l].length + " câu (sẽ THAY kho hiện có trên server)"); });
+    Object.keys(d.wheels).forEach(function (w) { lines.push("• Vòng quay " + Store.WHEEL_NAMES[w] + ": " + d.wheels[w].length + " giá trị (sẽ thay)"); });
+    if (d.settings) lines.push("• Cài đặt quiz (thời gian, đảo đáp án, lì xì 8 câu)");
+    if (typeof d.loseImage === "string") lines.push("• Ảnh thua Impossible");
+    if (d.skipped) lines.push("• Bỏ qua " + d.skipped + " câu hỏi không hợp lệ");
+    return lines.join("\n");
+  }
+  function renderData() {
+    const el = box("data"), c = h("div", "card");
+    c.appendChild(h("h2", "", "Nạp dữ liệu cũ lên server"));
+    c.appendChild(h("p", "note", "Chọn nguồn, xem tóm tắt rồi mới xác nhận. Mức hoặc vòng quay nào không có trong nguồn sẽ được giữ nguyên trên server."));
+    const acts = h("div", "form-actions");
+    acts.appendChild(btn("Từ dữ liệu cũ trong trình duyệt này", "btn btn-primary", function () {
+      try { setPending(Store.parseImport(Store.exportJSON()), "dữ liệu trong trình duyệt (gồm bộ mẫu seed.js nếu bạn chưa sửa)"); } catch (e) { say(e.message, false); }
+    }));
+    const f = input("file", "", { accept: ".json,application/json" });
+    f.addEventListener("change", function () {
+      const file = f.files[0]; if (!file) return;
+      if (file.size > 20 * 1024 * 1024) { say("File quá lớn.", false); return; }
+      file.text().then(function (t) { try { setPending(Store.parseImport(t), "file " + file.name); } catch (e) { say(e.message, false); } });
+    });
+    c.appendChild(acts); c.appendChild(field("…hoặc từ file .json (bản cũ: Setting > Soạn câu hỏi > Xuất file)", f));
+    const out = h("div"); out.id = "pending"; c.appendChild(out);
+    el.appendChild(c);
+
+    const bc = h("div", "card"); bc.style.marginTop = "14px";
+    bc.appendChild(h("h2", "", "Sao lưu từ server"));
+    bc.appendChild(h("p", "note", "Tải toàn bộ câu hỏi (kèm đáp án), vòng quay, cài đặt về máy. File này chứa đáp án đúng, đừng đưa lên repo công khai."));
+    bc.appendChild(btn("Tải bản sao lưu (.json)", "btn btn-secondary", async function () {
+      const r = await adm("admin_export"); if (!r) return;
+      const blob = new Blob([JSON.stringify(r)], { type: "application/json" }), a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "quizwheel-backup-" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+    }));
+    el.appendChild(bc);
+    if (pending) showPending();
+  }
+  function setPending(parsed, from) { pending = { d: parsed, from: from }; showPending(); }
+  function showPending() {
+    const out = $("#pending"); out.textContent = "";
+    const d = pending.d;
+    out.appendChild(h("h3", "", "Sắp nạp từ " + pending.from));
+    out.appendChild(h("pre", "preview", summarize(d) || "Không có gì để nạp."));
+    const a = h("div", "form-actions");
+    a.append(btn("Nạp lên server", "btn btn-primary", async function () {
+      if (!(await UI.confirm("Nạp dữ liệu này lên server? Phần có trong tóm tắt sẽ ghi đè phần đang có."))) return;
+      const data = { questions: d.questions, wheels: d.wheels };
+      if (d.settings) data.settings = d.settings;
+      if (typeof d.loseImage === "string") data.loseImage = d.loseImage;
+      const r = await adm("admin_import", { p_data: data });
+      if (r) { pending = null; await loadAll(); renderData(); say("Đã nạp xong (" + r.questions + " câu hỏi). Xem lại ở các tab Câu hỏi và Vòng quay.", true); }
+    }), btn("Hủy", "btn btn-secondary", function () { pending = null; renderData(); }));
+    out.appendChild(a);
+  }
+
+  window.addEventListener("beforeunload", function (e) { if (KEY && (dirty.questions || dirty.wheel)) { e.preventDefault(); e.returnValue = ""; } });
+  document.addEventListener("DOMContentLoaded", function () {
+    $("#login-form").addEventListener("submit", login);
+    $("#btn-out").addEventListener("click", function () { logout(""); });
+    if (!Api.configured) $("#login-err").textContent = ERR.config;
+  });
+})();
