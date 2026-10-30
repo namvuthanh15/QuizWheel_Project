@@ -9,6 +9,7 @@
   let D = { questions: { easy: [], hard: [], impossible: [] }, wheels: {}, settings: null, loseImage: null };
   let cfg = { costs: { easy: 1, hard: 1, impossible: 0 }, startTurns: 3, freeSpins: 1, impossiblePrize: "100K" };
   let tab = "players", qLevel = "easy", wLevel = "free", editing = null, histFor = null;
+  let shareBox = null;   // { name, pin|null, withPin } – chỉ giữ trong bộ nhớ tab này, không lưu vào LocalStorage/URL
   const dirty = { questions: false, wheel: false };
   const form = { images: [null, null, null, null] };
 
@@ -41,7 +42,7 @@
     await loadAll(); showTab("players");
   }
   function logout(msg) {
-    KEY = ""; players = []; $("#sec-app").hidden = true; $("#btn-out").hidden = true; $("#sec-login").hidden = false;
+    KEY = ""; players = []; shareBox = null; $("#sec-app").hidden = true; $("#btn-out").hidden = true; $("#sec-login").hidden = false;
     $("#login-err").textContent = msg || "";
   }
 
@@ -59,6 +60,7 @@
   /* ---------- Tab ---------- */
   const TABS = [["players", "Người chơi"], ["questions", "Câu hỏi"], ["wheels", "Vòng quay"], ["settings", "Cài đặt"], ["data", "Nạp / sao lưu"]];
   function showTab(name) {
+    if (name !== "players") shareBox = null;
     tab = name; say("");
     const bar = $("#tabs"); bar.textContent = "";
     TABS.forEach(function (t) {
@@ -76,6 +78,55 @@
   function link(text, fn, danger) { return btn(text, "link-btn" + (danger ? " danger" : ""), fn); }
   function kfmt(v) { return String(Math.round(Number(v) * 10) / 10) + "K"; }
 
+  /* ---------- Khung "Gửi cho người chơi" ---------- */
+  // Link chỉ chứa TÊN (?u=...). PIN không bao giờ nằm trong link.
+  function playerLink(name) {
+    const u = new URL("index.html", location.href);
+    u.search = ""; u.hash = "";
+    u.searchParams.set("u", name);
+    return u.toString();
+  }
+  function shareText(b) {
+    const url = playerLink(b.name);
+    if (b.withPin && b.pin) return "Vào " + url + " rồi nhập PIN " + b.pin + " để chơi QuizWheel nhé.";
+    return "Vào " + url + " để chơi QuizWheel nhé. Tên “" + b.name + "” đã điền sẵn, bạn chỉ cần nhập PIN (mình gửi PIN riêng cho bạn).";
+  }
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+    return new Promise(function (resolve, reject) {
+      const ta = h("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      document.body.removeChild(ta); ok ? resolve() : reject(new Error("copy"));
+    });
+  }
+  function shareCard() {
+    const b = shareBox, c = h("div", "card"); c.style.marginTop = "14px";
+    c.appendChild(h("h3", "", "Gửi cho " + b.name));
+    const pre = h("pre", "preview", shareText(b));
+    const redraw = function () { pre.textContent = shareText(b); };
+    c.appendChild(pre);
+    if (b.pin) {
+      const lab = h("label", "wrow"), cb = h("input"); cb.type = "checkbox"; cb.checked = b.withPin;
+      cb.addEventListener("change", function () { b.withPin = cb.checked; redraw(); });
+      lab.append(cb, h("span", "", "Kèm PIN trong lời nhắn (kém an toàn: ai đọc được tin nhắn là vào được)"));
+      c.appendChild(lab);
+      c.appendChild(h("p", "note", "PIN của người này: " + b.pin + " — gửi riêng (nhắn riêng hoặc nói miệng). Trang không lưu PIN, thoát hoặc đổi tab là mất."));
+    } else {
+      c.appendChild(h("p", "note", "Link này chỉ có tên, không có PIN. PIN cũ không xem lại được; nếu người chơi quên, bấm “Đổi PIN” để đặt PIN mới."));
+    }
+    const acts = h("div", "form-actions");
+    acts.appendChild(btn("Sao chép lời nhắn", "btn btn-primary", function () {
+      copyText(shareText(b)).then(function () { UI.toast("Đã sao chép lời nhắn."); }, function () { say("Không sao chép được, hãy bôi đen đoạn trên rồi copy.", false); });
+    }));
+    acts.appendChild(btn("Chỉ sao chép link", "btn btn-secondary", function () {
+      copyText(playerLink(b.name)).then(function () { UI.toast("Đã sao chép link."); }, function () { say("Không sao chép được.", false); });
+    }));
+    acts.appendChild(btn("Đóng", "btn btn-secondary", function () { shareBox = null; renderPlayers(); }));
+    c.appendChild(acts);
+    return c;
+  }
+
   /* ====================== NGƯỜI CHƠI ====================== */
   function renderPlayers() {
     const el = box("players");
@@ -86,9 +137,10 @@
     row.append(field("Tên", n), field("PIN (4–12 ký tự)", pin), field("Số lượt ban đầu", t));
     row.appendChild(btn("Tạo", "btn btn-primary", async function () {
       const r = await adm("admin_player_create", { p_name: n.value, p_pin: pin.value, p_turns: t.value === "" ? null : Number(t.value) });
-      if (r) { await loadAll(); say("Đã tạo người chơi " + n.value.trim() + ". Nhớ gửi PIN cho họ.", true); renderPlayers(); }
+      if (r) { const nm = n.value.trim(), pn = pin.value; shareBox = { name: nm, pin: pn, withPin: false }; await loadAll(); say("Đã tạo người chơi " + nm + ". Gửi link bên dưới rồi nhắn PIN riêng cho họ.", true); renderPlayers(); }
     }));
     c.appendChild(row); el.appendChild(c);
+    if (shareBox) el.appendChild(shareCard());
 
     const wrap = h("div", "tbl-wrap"); wrap.style.marginTop = "14px";
     const tb = h("table", "tbl");
@@ -109,9 +161,10 @@
           if (await adm("admin_player_update", { p_id: p.id, p_turns_delta: d })) { await loadAll(); renderPlayers(); say("Đã chỉnh lượt.", true); }
         }),
         link("Reset Free", async function () { if (await adm("admin_player_update", { p_id: p.id, p_free_used: 0 })) { await loadAll(); renderPlayers(); say("Đã cho " + p.name + " quay Free lại.", true); } }),
+        link("Lấy link", function () { shareBox = { name: p.name, pin: null, withPin: false }; say(""); renderPlayers(); }),
         link("Đổi PIN", async function () {
           const v = window.prompt("PIN mới cho " + p.name + " (4–12 ký tự):", ""); if (v === null) return;
-          if (await adm("admin_player_update", { p_id: p.id, p_pin: v })) say("Đã đổi PIN (người này bị đăng xuất).", true);
+          if (await adm("admin_player_update", { p_id: p.id, p_pin: v })) { shareBox = { name: p.name, pin: v, withPin: false }; say("Đã đổi PIN (người này bị đăng xuất). Gửi lại link và PIN mới cho họ.", true); renderPlayers(); }
         }),
         link(p.active ? "Khóa" : "Mở khóa", async function () { if (await adm("admin_player_update", { p_id: p.id, p_active: !p.active })) { await loadAll(); renderPlayers(); } }),
         link("Đã trả", async function () {

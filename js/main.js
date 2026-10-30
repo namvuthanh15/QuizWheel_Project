@@ -2,6 +2,16 @@
 // Từ phiên bản Supabase: mọi thứ quan trọng (lượt, câu hỏi, đáp án, kết quả quay) nằm ở server; file này chỉ điều phối giao diện.
 (function () {
   const session = { player: null, busy: false };
+
+  // Link host gửi có dạng index.html?u=Nam: chỉ điền sẵn ô Tên, KHÔNG tự đăng nhập (PIN vẫn phải gõ).
+  const prefillName = (function () {
+    const raw = new URLSearchParams(location.search).get("u");
+    return raw ? raw.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 30) : "";
+  })();
+  // So tên kiểu đơn giản (bỏ dấu, bỏ hoa thường, gộp khoảng trắng) – chỉ dùng để đoán xem máy này đang đăng nhập đúng người trong link chưa.
+  function normName(s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/\s+/g, " ").trim();
+  }
   const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history"];
 
   /* ---------- Người chơi hiện tại + thanh trạng thái ---------- */
@@ -39,7 +49,12 @@
   function showLogin(msg) {
     UI.$("#login-error").textContent = msg || "";
     UI.$("#login-pin").value = "";
+    if (prefillName && !UI.$("#login-name").value) UI.$("#login-name").value = prefillName;
     go("login");
+    setTimeout(function () {
+      const el = UI.$(UI.$("#login-name").value ? "#login-pin" : "#login-name");
+      if (el) el.focus();
+    }, 0);
   }
 
   function refreshPrices() {
@@ -88,7 +103,13 @@
     if (!c.ok) { showLogin(Api.errText(c.error)); return; }
     if (Api.hasToken()) {
       const st = await Api.state();
-      if (st.ok) { await afterLogin(st); return; }
+      if (st.ok) {
+        // Mở link của người khác trên máy đang đăng nhập sẵn -> đăng xuất để họ nhập PIN của mình.
+        if (prefillName && normName(st.player && st.player.name) !== normName(prefillName)) {
+          await Api.logout(); setPlayer(null); showLogin(""); return;
+        }
+        await afterLogin(st); return;
+      }
     }
     showLogin("");
   }
