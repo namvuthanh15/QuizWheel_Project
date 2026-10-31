@@ -328,3 +328,9 @@ html:not([lang="vi"]) .home-title-text { display: block; }
 .hist-list { list-style: none; margin: 10px 0 16px; padding: 0; display: grid; gap: 6px; }
 .hist-item { display: grid; grid-template-columns: 1.6fr 1fr .6fr 1fr; gap: 8px; align-items: center; padding: 8px 12px; background: var(--card-2); border: 2px solid var(--ink); border-radius: 12px; font-size: .92rem; overflow-wrap: anywhere; }
 @media (max-width: 560px) { .hist-item { grid-template-columns: 1fr 1fr; } .topbar { flex-wrap: wrap; gap: 6px; padding: 10px 14px; } }
+
+/* Câu hỏi 3–6 đáp án và câu tự luận */
+.answer-grid[hidden], .essay-box[hidden] { display: none; }
+.answer-grid[data-n="3"] .answer-cell:last-child, .answer-grid[data-n="5"] .answer-cell:last-child { grid-column: 1 / -1; }
+.essay-box { display: grid; gap: 12px; margin: 6px 0 14px; }
+.essay-box input { font-size: 1.2rem; }

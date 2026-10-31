@@ -55,7 +55,7 @@
   function keyFor(base, level) { return level === "easy" ? base : base + "." + level; }
   const WHEEL_MAX = 36;                              // tổng số ô tối đa trên vòng quay
   const PALETTE = ["#ff5a3c", "#ffb81f", "#2fb36b", "#2f8fe8", "#a855f7", "#ff8a1f", "#ec4899", "#14b8a6"];
-  const LIMITS = { question: 200, answer: 60, explain: 200, maxQuestions: 200 };
+  const LIMITS = { question: 200, answer: 60, explain: 200, maxQuestions: 200, ansMin: 3, ansMax: 6, accepted: 100, acceptedMax: 10 };
   const SHUFFLE_LEVELS = ["easy", "hard"];       // mức trắc nghiệm có thể bật/tắt đảo vị trí đáp án
   const DEFAULT_SETTINGS = { timePerQuestion: 20, shuffleAnswers: { easy: true, hard: true }, bigPrize: { easy: "36K", hard: "72K" } };   // bigPrize: lì xì khi đúng hết 8 câu
 
@@ -69,9 +69,17 @@
   function cleanQuestion(raw) {
     if (!raw || typeof raw !== "object") return null;
     const text = typeof raw.text === "string" ? raw.text.trim().slice(0, LIMITS.question) : "";
-    if (!text || !Array.isArray(raw.answers) || raw.answers.length !== 4) return null;
-    const answers = [];
-    for (let i = 0; i < 4; i++) {
+    const explain = typeof raw.explain === "string" ? raw.explain.trim().slice(0, LIMITS.explain) : "";
+    const id = typeof raw.id === "string" && raw.id ? raw.id.slice(0, 40) : uid();
+    if (raw.type === "essay") {                       // Tự luận: người chơi gõ chữ, so với các "đáp án chấp nhận"
+      const acc = (Array.isArray(raw.accepted) ? raw.accepted : []).map(function (s) { return typeof s === "string" ? s.trim().slice(0, LIMITS.accepted) : ""; })
+        .filter(Boolean).slice(0, LIMITS.acceptedMax);
+      if (!text || !acc.length) return null;
+      return { id: id, type: "essay", text: text, accepted: acc, explain: explain };
+    }
+    if (!text || !Array.isArray(raw.answers) || raw.answers.length < LIMITS.ansMin || raw.answers.length > LIMITS.ansMax) return null;
+    const n = raw.answers.length, answers = [];
+    for (let i = 0; i < n; i++) {
       const a = raw.answers[i];
       if (!a || typeof a !== "object") return null;
       const t = typeof a.text === "string" ? a.text.trim().slice(0, LIMITS.answer) : "";
@@ -79,13 +87,9 @@
       if (!t && !image) return null;                  // mỗi đáp án cần chữ hoặc ảnh
       answers.push({ text: t, image: image });
     }
-    const correct = Number.isInteger(raw.correct) && raw.correct >= 0 && raw.correct < 4 ? raw.correct : -1;
+    const correct = Number.isInteger(raw.correct) && raw.correct >= 0 && raw.correct < n ? raw.correct : -1;
     if (correct < 0) return null;
-    return {
-      id: typeof raw.id === "string" && raw.id ? raw.id.slice(0, 40) : uid(),
-      text: text, answers: answers, correct: correct,
-      explain: typeof raw.explain === "string" ? raw.explain.trim().slice(0, LIMITS.explain) : ""
-    };
+    return { id: id, text: text, answers: answers, correct: correct, explain: explain };
   }
 
   // Ảnh từ server: chỉ nhận data URL ảnh hoặc link https (host đăng ảnh lên Supabase)

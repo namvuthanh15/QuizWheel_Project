@@ -373,6 +373,11 @@
           <div class="progress"><div class="progress-bar" id="quiz-progress"></div></div>
           <h2 id="quiz-question"></h2>
           <div class="answer-grid" id="quiz-answers"></div>
+          <div class="essay-box" id="quiz-essay" hidden>
+            <label class="field"><span data-i18n="quiz.essayLabel">Câu trả lời của bạn</span>
+              <input type="text" id="essay-input" maxlength="300" autocomplete="off" autocapitalize="off" spellcheck="false" data-i18n-ph="quiz.essayPh" placeholder="Gõ câu trả lời rồi bấm Trả lời"></label>
+            <button class="btn btn-primary" id="essay-submit" type="button" data-i18n="quiz.essaySubmit">Trả lời</button>
+          </div>
           <p class="feedback" id="quiz-feedback" role="status" aria-live="polite"></p>
           <p class="explain" id="quiz-explain" hidden></p>
           <button class="btn btn-primary" id="quiz-next" data-i18n="quiz.next" hidden>Câu tiếp theo</button>

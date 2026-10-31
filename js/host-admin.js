@@ -1,7 +1,7 @@
 // host-admin.js – trang host (host.html): quản lý người chơi, kho câu hỏi, vòng quay, cài đặt, nạp dữ liệu cũ lên Supabase.
 // Mọi thao tác gọi hàm admin_* trên server kèm MẬT KHẨU HOST (giữ trong biến, không lưu vào LocalStorage/URL).
 (function () {
-  const LETTERS = "ABCD", LEVELS = ["easy", "hard", "impossible"];
+  const LETTERS = "ABCDEF", LEVELS = ["easy", "hard", "impossible"];
   const $ = function (s) { return document.querySelector(s); };
   const h = UI.el;
   let KEY = "";
@@ -16,7 +16,16 @@
   const ERR = { auth: "Sai mật khẩu host.", locked: "Nhập sai quá nhiều lần, bị khóa 15 phút.", nokey: "Chưa đặt mật khẩu host (chạy 02-admin-key.sql).",
     network: "Không kết nối được Supabase.", server: "Máy chủ báo lỗi.", config: "Chưa cấu hình js/config.js.",
     bad_name: "Tên phải 1–30 ký tự.", bad_pin: "PIN phải 4–12 ký tự.", exists: "Tên này đã có người dùng.", no_player: "Không tìm thấy người chơi.",
-    short_key: "Mật khẩu mới phải từ 8 ký tự.", bad_data: "Dữ liệu không hợp lệ." };
+    short_key: "Mật khẩu mới phải từ 8 ký tự.", bad_data: "Dữ liệu không hợp lệ.",
+    need_password: "Việc này cần nhập mật khẩu host (không dùng được bằng thiết bị đã lưu).", bad_key: "Mật khẩu mới không được bắt đầu bằng “qwdev.”.",
+    trust_off: "Tính năng lưu thiết bị đang tắt (bật lại trong tab Cài đặt)." };
+
+  // ---- Thiết bị tin cậy: chỉ lưu MÃ THIẾT BỊ ngẫu nhiên (hết hạn 7 ngày, thu hồi được), KHÔNG lưu mật khẩu ----
+  const KEY_DEV = "quizwheel.v2.hostDevice";
+  function readDevice() { try { const d = JSON.parse(localStorage.getItem(KEY_DEV)); return d && typeof d.token === "string" && d.token.indexOf("qwdev.") === 0 && d.exp > Date.now() ? d : null; } catch (e) { return null; } }
+  function writeDevice(d) { try { localStorage.setItem(KEY_DEV, JSON.stringify(d)); } catch (e) {} }
+  function clearDevice() { try { localStorage.removeItem(KEY_DEV); } catch (e) {} }
+  function isDeviceKey() { return KEY.indexOf("qwdev.") === 0; }
 
   function say(msg, good) { const m = $("#msg"); m.textContent = msg || ""; m.className = "feedback " + (good ? "good" : "bad"); }
   function errMsg(r) { return (ERR[r.error] || "Lỗi: " + r.error) + (r.message ? " (" + r.message + ")" : ""); }
@@ -38,10 +47,33 @@
     $("#login-go").disabled = false;
     if (!r.ok) { $("#login-err").textContent = errMsg(r); $("#key").value = ""; return; }
     KEY = k; $("#key").value = "";
+    let note = "";
+    if (!$("#trust-row").hidden && $("#trust").checked) {
+      const t = await Api.call("admin_trust_device", { p_key: k });
+      if (t.ok) { writeDevice({ token: t.token, exp: Date.parse(t.expiresAt) || (Date.now() + 7 * 864e5) }); note = "Đã lưu thiết bị này trong 7 ngày."; }
+      else note = "Không lưu được thiết bị: " + errMsg(t);
+    }
+    enterApp(note);
+  }
+  async function enterApp(note) {
     $("#sec-login").hidden = true; $("#sec-app").hidden = false; $("#btn-out").hidden = false;
     await loadAll(); showTab("players");
+    if (note) say(note, note.indexOf("Không") !== 0);
+  }
+  // Vào/tải lại trang: nếu còn mã thiết bị hợp lệ thì vào thẳng, không hỏi mật khẩu.
+  async function autoLogin() {
+    const d = readDevice();
+    if (!d) { clearDevice(); return false; }
+    $("#login-go").disabled = true; $("#login-err").textContent = "Đang vào bằng thiết bị đã lưu…";
+    const r = await Api.call("admin_login", { p_key: d.token });
+    $("#login-go").disabled = false; $("#login-err").textContent = "";
+    if (r.ok) { KEY = d.token; enterApp(""); return true; }
+    if (r.error === "network" || r.error === "server") { $("#login-err").textContent = errMsg(r) + " Bạn có thể nhập mật khẩu để vào."; return false; }
+    clearDevice(); $("#login-err").textContent = "Thiết bị này đã hết hạn hoặc bị thu hồi. Hãy nhập mật khẩu."; return false;
   }
   function logout(msg) {
+    const d = readDevice(); if (d) Api.call("admin_forget_device", { p_key: d.token });   // quên thiết bị trên server rồi xóa mã ở máy này
+    clearDevice();
     KEY = ""; players = []; shareBox = null; $("#sec-app").hidden = true; $("#btn-out").hidden = true; $("#sec-login").hidden = false;
     $("#login-err").textContent = msg || "";
   }
@@ -249,7 +281,7 @@
     if (!list.length) ol.appendChild(h("li", "host-empty", "Chưa có câu hỏi."));
     list.forEach(function (q, i) {
       const li = h("li", "host-item");
-      li.append(h("span", "host-num", String(i + 1)), h("span", "host-q", q.text));
+      li.append(h("span", "host-num", String(i + 1)), h("span", "host-q", (q.type === "essay" ? "[Tự luận] " : (q.answers && q.answers.length !== 4 ? "[" + q.answers.length + " đáp án] " : "")) + q.text));
       li.append(link("Sửa", function () { editing = { q: q }; renderQuestions(); }), link("Xóa", function () {
         if (!window.confirm("Xóa câu hỏi này?\n\n" + q.text)) return;
         D.questions[qLevel] = list.filter(function (x) { return x !== q; }); dirty.questions = true; editing = null; renderQuestions();
@@ -264,42 +296,103 @@
       if (await adm("admin_import", { p_data: { questions: q } })) { await loadAll(); renderQuestions(); say("Đã lưu " + clean.length + " câu hỏi mức " + Store.LEVEL_NAMES[qLevel] + " lên server.", true); }
     }));
     el.appendChild(c);
-    if (editing) el.appendChild(qLevel === "impossible" ? typedForm() : mcqForm());
+    if (editing) el.appendChild(questionForm());
+  }
+
+  // Chọn loại câu hỏi (chỉ khi tạo mới, mức Easy/Hard); mức Impossible giữ nguyên dạng nhập ngày
+  function questionForm() {
+    const q = editing.q;
+    if (qLevel === "impossible") return typedForm();
+    const type = q ? (q.type === "essay" ? "essay" : "mcq") : (editing.type || "mcq");
+    const wrap = h("div");
+    if (!q) {
+      const tabs = h("div", "tabs"); tabs.style.margin = "14px 0 0";
+      [["mcq", "Trắc nghiệm (A, B, C…)"], ["essay", "Tự luận (người chơi gõ câu trả lời)"]].forEach(function (t) {
+        tabs.appendChild(btn(t[1], "btn btn-secondary" + (type === t[0] ? " active" : ""), function () { editing.type = t[0]; renderQuestions(); }));
+      });
+      wrap.appendChild(tabs);
+    }
+    wrap.appendChild(type === "essay" ? essayForm() : mcqForm());
+    return wrap;
   }
 
   function mcqForm() {
     const q = editing.q, c = h("div", "card"); c.style.marginTop = "14px";
-    c.appendChild(h("h3", "", q ? "Sửa câu hỏi" : "Thêm câu hỏi"));
+    c.appendChild(h("h3", "", q ? "Sửa câu hỏi trắc nghiệm" : "Thêm câu hỏi trắc nghiệm"));
     const text = h("textarea"); text.rows = 2; text.maxLength = Store.LIMITS.question; text.value = q ? q.text : "";
     c.appendChild(field("Câu hỏi", text));
-    form.images = q ? q.answers.map(function (a) { return a.image || null; }) : [null, null, null, null];
-    const grid = h("div", "grid2"), texts = [], radios = [];
-    for (let i = 0; i < 4; i++) {
-      const b = h("div", "ans-block");
-      const t = input("text", q ? q.answers[i].text : "", { maxlength: Store.LIMITS.answer, placeholder: "Đáp án " + LETTERS[i] });
-      const r = input("radio", "", { name: "correct" }); r.checked = q ? q.correct === i : i === 0;
-      const rl = h("label"); rl.append(r, document.createTextNode(" Đáp án " + LETTERS[i] + " là đúng"));
-      const f = input("file", "", { accept: "image/*" });
-      const img = h("img"); img.alt = ""; img.hidden = !form.images[i]; if (form.images[i]) img.src = form.images[i];
-      const clr = btn("Xóa ảnh", "link-btn danger", function () { form.images[i] = null; img.hidden = true; f.value = ""; }); clr.style.justifySelf = "start";
-      f.addEventListener("change", async function () {
-        if (!f.files[0]) return;
-        try { form.images[i] = await fileToDataUrl(f.files[0], 480); img.src = form.images[i]; img.hidden = false; } catch (e) { say(e.message, false); }
-      });
-      b.append(rl, t, f, img, clr); grid.appendChild(b); texts.push(t); radios.push(r);
+    const MIN = Store.LIMITS.ansMin, MAX = Store.LIMITS.ansMax;
+    const vals = [];                                    // giữ nội dung các ô khi đổi số đáp án
+    for (let i = 0; i < MAX; i++) vals.push(q && q.answers[i] ? { text: q.answers[i].text || "", image: q.answers[i].image || null } : { text: "", image: null });
+    let n = q ? q.answers.length : 4, correct = q ? q.correct : 0;
+    const cnt = h("select");
+    for (let k = MIN; k <= MAX; k++) { const o = h("option", "", k + " đáp án (" + LETTERS.slice(0, k).split("").join(", ") + ")"); o.value = String(k); cnt.appendChild(o); }
+    cnt.value = String(n);
+    c.appendChild(field("Số đáp án (tối thiểu " + MIN + ", tối đa " + MAX + ")", cnt));
+    const grid = h("div", "grid2"); c.appendChild(grid);
+    function draw() {
+      grid.textContent = "";
+      for (let i = 0; i < n; i++) {
+        (function (i) {
+          const b = h("div", "ans-block");
+          const t = input("text", vals[i].text, { maxlength: Store.LIMITS.answer, placeholder: "Đáp án " + LETTERS[i] });
+          t.addEventListener("input", function () { vals[i].text = t.value; });
+          const r = input("radio", "", { name: "correct" }); r.checked = correct === i;
+          r.addEventListener("change", function () { if (r.checked) correct = i; });
+          const rl = h("label"); rl.append(r, document.createTextNode(" Đáp án " + LETTERS[i] + " là đúng"));
+          const f = input("file", "", { accept: "image/*" });
+          const img = h("img"); img.alt = ""; img.hidden = !vals[i].image; if (vals[i].image) img.src = vals[i].image;
+          const clr = btn("Xóa ảnh", "link-btn danger", function () { vals[i].image = null; img.hidden = true; f.value = ""; }); clr.style.justifySelf = "start";
+          f.addEventListener("change", async function () {
+            if (!f.files[0]) return;
+            try { vals[i].image = await fileToDataUrl(f.files[0], 480); img.src = vals[i].image; img.hidden = false; } catch (e) { say(e.message, false); }
+          });
+          b.append(rl, t, f, img, clr); grid.appendChild(b);
+        })(i);
+      }
     }
-    c.appendChild(grid);
+    cnt.addEventListener("change", function () {
+      n = Number(cnt.value);
+      if (correct >= n) { correct = 0; say("Đáp án đúng đã được đặt lại về A vì số đáp án giảm.", false); }
+      draw();
+    });
+    draw();
     const ex = h("textarea"); ex.rows = 2; ex.maxLength = Store.LIMITS.explain; ex.value = q ? q.explain || "" : "";
     c.appendChild(field("Giải thích (hiện khi trả lời đúng, không bắt buộc)", ex));
     const err = h("p", "feedback bad"); c.appendChild(err);
     const acts = h("div", "form-actions");
     acts.append(btn("Xong", "btn btn-primary", function () {
-      const item = { id: q ? q.id : Store.uid(), text: text.value.trim(), explain: ex.value.trim(), correct: radios.findIndex(function (r) { return r.checked; }),
-        answers: texts.map(function (t, i) { return { text: t.value.trim(), image: form.images[i] }; }) };
+      const item = { id: q ? q.id : Store.uid(), text: text.value.trim(), explain: ex.value.trim(), correct: correct,
+        answers: vals.slice(0, n).map(function (v) { return { text: v.text.trim(), image: v.image }; }) };
       if (!item.text) { err.textContent = "Chưa nhập câu hỏi."; return; }
       if (item.answers.some(function (a) { return !a.text && !a.image; })) { err.textContent = "Mỗi đáp án cần có chữ hoặc ảnh."; return; }
-      if (item.correct < 0) { err.textContent = "Hãy chọn đáp án đúng."; return; }
+      if (item.correct < 0 || item.correct >= n) { err.textContent = "Hãy chọn đáp án đúng."; return; }
       applyQuestion(q, item);
+    }), btn("Hủy", "btn btn-secondary", function () { editing = null; renderQuestions(); }));
+    c.appendChild(acts); return c;
+  }
+
+  // Tự luận (bản thử nghiệm): người chơi gõ chữ, server so với danh sách "đáp án chấp nhận"
+  function essayForm() {
+    const q = editing.q, c = h("div", "card"); c.style.marginTop = "14px";
+    c.appendChild(h("h3", "", q ? "Sửa câu hỏi tự luận" : "Thêm câu hỏi tự luận"));
+    const text = h("textarea"); text.rows = 2; text.maxLength = Store.LIMITS.question; text.value = q ? q.text : "";
+    c.appendChild(field("Câu hỏi", text));
+    const acc = h("textarea"); acc.rows = 4; acc.value = q ? (q.accepted || []).join("\n") : "";
+    c.appendChild(field("Đáp án chấp nhận (mỗi dòng một đáp án, tối đa " + Store.LIMITS.acceptedMax + ")", acc));
+    c.appendChild(h("p", "note", "So khớp không phân biệt chữ hoa/thường, dấu tiếng Việt, dấu câu và khoảng trắng thừa (“Hà Nội.” = “ha noi”). Cách diễn đạt khác hẳn sẽ bị tính sai, nên hãy liệt kê các cách viết phổ biến, mỗi cách một dòng."));
+    const ex = h("textarea"); ex.rows = 2; ex.maxLength = Store.LIMITS.explain; ex.value = q ? q.explain || "" : "";
+    c.appendChild(field("Giải thích (hiện khi trả lời đúng, không bắt buộc)", ex));
+    const err = h("p", "feedback bad"); c.appendChild(err);
+    const acts = h("div", "form-actions");
+    acts.append(btn("Xong", "btn btn-primary", function () {
+      const lines = acc.value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+      const item = { id: q ? q.id : Store.uid(), type: "essay", text: text.value.trim(), accepted: lines, explain: ex.value.trim() };
+      if (!item.text) { err.textContent = "Chưa nhập câu hỏi."; return; }
+      if (!lines.length) { err.textContent = "Cần ít nhất một đáp án chấp nhận."; return; }
+      if (lines.length > Store.LIMITS.acceptedMax) { err.textContent = "Tối đa " + Store.LIMITS.acceptedMax + " đáp án chấp nhận."; return; }
+      if (lines.some(function (l) { return l.length > Store.LIMITS.accepted; })) { err.textContent = "Mỗi đáp án tối đa " + Store.LIMITS.accepted + " ký tự."; return; }
+      applyQuestion(q, Store.cleanListFor(qLevel, [item])[0] || item);
     }), btn("Hủy", "btn btn-secondary", function () { editing = null; renderQuestions(); }));
     c.appendChild(acts); return c;
   }
@@ -425,13 +518,39 @@
     const kc = h("div", "card"); kc.style.marginTop = "14px";
     kc.appendChild(h("h2", "", "Đổi mật khẩu host"));
     const nk = input("password", "", { autocomplete: "new-password" }), nk2 = input("password", "", { autocomplete: "new-password" });
-    kc.append(field("Mật khẩu mới (≥ 12 ký tự cho an toàn)", nk), field("Nhập lại", nk2));
+    const ck = input("password", "", { autocomplete: "current-password" });
+    kc.append(field("Mật khẩu hiện tại", ck), field("Mật khẩu mới (≥ 12 ký tự cho an toàn)", nk), field("Nhập lại", nk2));
+    kc.appendChild(h("p", "note", "Đổi mật khẩu sẽ thu hồi mọi thiết bị đã lưu."));
     kc.appendChild(btn("Đổi mật khẩu", "btn btn-secondary", async function () {
       if (nk.value !== nk2.value) { say("Hai mật khẩu không khớp.", false); return; }
       if (nk.value.length < 12 && !window.confirm("Mật khẩu dưới 12 ký tự khá yếu. Vẫn đổi?")) return;
-      if (await adm("admin_set_key", { p_new: nk.value })) { KEY = nk.value; nk.value = nk2.value = ""; say("Đã đổi mật khẩu host.", true); }
+      const newPw = nk.value;
+      const r = await Api.call("admin_set_key", { p_key: ck.value, p_new: newPw });
+      if (!r.ok) { say(r.error === "auth" ? "Sai mật khẩu hiện tại." : errMsg(r), false); return; }
+      clearDevice(); ck.value = nk.value = nk2.value = "";
+      if (isDeviceKey()) { logout("Đã đổi mật khẩu. Hãy đăng nhập lại bằng mật khẩu mới."); return; }
+      KEY = newPw; say("Đã đổi mật khẩu host. Mọi thiết bị đã lưu phải nhập lại.", true);
     }));
     el.appendChild(kc);
+
+    const tc = h("div", "card"); tc.style.marginTop = "14px";
+    tc.appendChild(h("h2", "", "Thiết bị tin cậy (7 ngày)"));
+    tc.appendChild(h("p", "note", "Khi bật, trang đăng nhập có ô “Lưu thiết bị này an toàn trong 7 ngày”. Thiết bị đã lưu vào web và tải lại trang không cần mật khẩu. Tắt tính năng là mọi thiết bị đã lưu bị đăng xuất ngay."));
+    const tcb = h("input"); tcb.type = "checkbox"; tcb.disabled = true;
+    const tcl = h("label", "wrow"); tcl.append(tcb, h("span", "", "Cho phép lưu thiết bị"));
+    tc.appendChild(tcl);
+    Api.call("admin_trust_get").then(function (r) { tcb.checked = !!(r && r.enabled); tcb.disabled = false; });
+    tcb.addEventListener("change", async function () {
+      const on = tcb.checked, r = await adm("admin_trust_set", { p_enabled: on });
+      if (!r) { tcb.checked = !on; return; }
+      if (!on) { clearDevice(); if (isDeviceKey()) { logout("Đã tắt lưu thiết bị. Hãy nhập mật khẩu."); return; } }
+      say(on ? "Đã bật tính năng lưu thiết bị." : "Đã tắt, mọi thiết bị đã lưu bị đăng xuất.", true);
+    });
+    tc.appendChild(btn("Đăng xuất mọi thiết bị đã lưu", "btn btn-secondary", async function () {
+      if (!(await UI.confirm("Thu hồi mọi thiết bị đã lưu (kể cả máy này)? Lần sau ai vào cũng phải nhập mật khẩu."))) return;
+      if (await adm("admin_trust_revoke")) { clearDevice(); if (isDeviceKey()) logout("Đã thu hồi mọi thiết bị. Hãy nhập mật khẩu."); else say("Đã thu hồi mọi thiết bị đã lưu.", true); }
+    }));
+    el.appendChild(tc);
   }
 
   /* ====================== NẠP / SAO LƯU ====================== */
@@ -496,6 +615,8 @@
   document.addEventListener("DOMContentLoaded", function () {
     $("#login-form").addEventListener("submit", login);
     $("#btn-out").addEventListener("click", function () { logout(""); });
-    if (!Api.configured) $("#login-err").textContent = ERR.config;
+    if (!Api.configured) { $("#login-err").textContent = ERR.config; return; }
+    Api.call("admin_trust_get").then(function (r) { $("#trust-row").hidden = !(r && r.ok && r.enabled); });
+    autoLogin();
   });
 })();

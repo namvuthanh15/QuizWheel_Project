@@ -2,7 +2,7 @@
 // Trình duyệt chỉ: xin câu hiện tại (không có đáp án đúng) -> gửi lựa chọn -> nhận "đúng/sai" -> hiển thị.
 // Quy tắc đáp án: KHÔNG BAO GIỜ tô sáng đáp án đúng khi người chơi chọn sai hoặc hết giờ. Mỗi câu chỉ chọn MỘT lần.
 (function () {
-  const LETTERS = "ABCD";
+  const LETTERS = "ABCDEF";
   const PASS = 100;
   // Bảng luật dự phòng (khi chưa tải được cấu hình server) – luật thật nằm ở app_config.rules trên server, lấy qua Quiz.rules.
   const RULES = {
@@ -22,7 +22,7 @@
   function currentRules() { const r = Store.remote() && Store.remote().rules; return r && typeof r === "object" ? r : RULES; }
 
   const state = { playId: "", level: "", total: 0, index: 0, solved: 0, score: 0, locked: false, busy: false,
-                  timeLeft: 0, timed: false, timerId: null, onDone: null, result: null, pending: null, typed: false };
+                  timeLeft: 0, timed: false, timerId: null, onDone: null, result: null, pending: null, typed: false, essay: false };
 
   function fmt(n) { return String(Math.round(n * 10) / 10); }
   function stopTimer() { if (state.timerId !== null) { clearInterval(state.timerId); state.timerId = null; } }
@@ -50,6 +50,7 @@
     state.locked = false; state.pending = null;
     state.timed = r.remaining !== null && r.remaining !== undefined;
     state.timeLeft = state.timed ? r.remaining : 0;
+    state.essay = r.kind === "essay";
     if (r.typed) renderTyped(r); else renderQuestion(r);
     startTimer();
   }
@@ -65,8 +66,15 @@
     UI.$("#quiz-explain").hidden = true; UI.$("#quiz-next").hidden = true;
     UI.$("#quiz-progress").style.width = (q.index / q.total * 100) + "%";
     updateHud();
-    const grid = UI.$("#quiz-answers");
+    const grid = UI.$("#quiz-answers"), essay = UI.$("#quiz-essay");
     grid.textContent = "";
+    grid.dataset.n = String((q.answers || []).length);
+    grid.hidden = state.essay; essay.hidden = !state.essay;
+    if (state.essay) {
+      bindEssay();
+      UI.$("#essay-input").value = ""; UI.$("#essay-input").disabled = false; UI.$("#essay-submit").disabled = false;
+      setTimeout(function () { UI.$("#essay-input").focus(); }, 0);
+    }
     (q.answers || []).forEach(function (a, i) {
       const image = Store.safeImage(a.image);
       const cell = UI.el("button", "answer-cell" + (image ? "" : " no-img"));
@@ -87,38 +95,56 @@
   function endQuestion(finished) {
     state.locked = true; stopTimer();
     for (let i = 0; i < cells().length; i++) cells()[i].disabled = true;
+    if (state.essay) setEssayDisabled(true);
     const next = UI.$("#quiz-next");
     next.textContent = I18n.t(finished ? "quiz.seeResult" : "quiz.next");
     next.hidden = false; next.focus();
   }
 
-  // choice: vị trí 0-3 người chơi bấm; null = hết giờ
-  async function choose(choice) {
+  // Tự luận: gõ chữ rồi bấm "Trả lời" hoặc Enter. force = true khi hết giờ (gửi cả khi ô trống).
+  let essayBound = false;
+  function bindEssay() {
+    if (essayBound) return; essayBound = true;
+    UI.$("#essay-submit").addEventListener("click", function () { submitEssay(false); });
+    UI.$("#essay-input").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); submitEssay(false); } });
+  }
+  function setEssayDisabled(on) { UI.$("#essay-input").disabled = on; UI.$("#essay-submit").disabled = on; }
+  function submitEssay(force) {
+    if (state.locked || state.busy || !state.essay) return;
+    const v = UI.$("#essay-input").value.trim();
+    if (!v && !force) return;
+    choose(null, { text: v });
+  }
+
+  // choice: vị trí người chơi bấm (0 đến n-1); null = hết giờ hoặc câu tự luận (khi đó parts = { text })
+  async function choose(choice, parts) {
     if (state.locked || state.busy) return;
     state.busy = true; stopTimer();
     for (let i = 0; i < cells().length; i++) cells()[i].disabled = true;
-    const r = await Api.answer(state.playId, state.index, choice);
+    if (state.essay) setEssayDisabled(true);
+    const r = await Api.answer(state.playId, state.index, choice, parts);
     state.busy = false;
     if (!r.ok) {
       if (r.error === "stale") { await loadQuestion(); return; }
       if (r.error === "network" || r.error === "server") {            // mạng lỗi: mở lại để thử gửi lần nữa (server chặn trùng nhờ số thứ tự câu)
         UI.toast(Api.errText(r.error));
         for (let i = 0; i < cells().length; i++) cells()[i].disabled = false;
+        if (state.essay) setEssayDisabled(false);
         return;
       }
       return fail(r.error);
     }
     state.solved = r.solved !== undefined ? r.solved : state.solved + (r.correct ? 1 : 0);
     state.score = Math.round(state.solved * PASS / state.total * 10) / 10;
-    const cell = choice === null ? null : cells()[choice];
-    if (r.correct && cell) {
-      cell.classList.add("right"); cell.querySelector(".cell-mark").textContent = "✓";
+    const cell = (choice === null || choice === undefined) ? null : cells()[choice];
+    if (r.correct && (cell || state.essay)) {
+      if (cell) { cell.classList.add("right"); cell.querySelector(".cell-mark").textContent = "✓"; }
       feedback(I18n.t("quiz.right", { pts: fmt(PASS / state.total) }), "good");
       if (r.explain) { UI.$("#quiz-explain").textContent = r.explain; UI.$("#quiz-explain").hidden = false; }
-    } else if (r.timedOut || choice === null) {
+    } else if (r.timedOut || (choice === null && !state.essay)) {
       feedback(I18n.t("quiz.timeUp"), "bad");
-    } else if (cell) {
-      cell.classList.add("wrong"); cell.querySelector(".cell-mark").textContent = "✗";   // KHÔNG tiết lộ đáp án đúng
+    } else if (cell || state.essay) {
+      if (cell) { cell.classList.add("wrong"); cell.querySelector(".cell-mark").textContent = "✗"; }   // KHÔNG tiết lộ đáp án đúng
       feedback(I18n.t("quiz.wrong"), "bad");
       Sfx.wrong();
     }
@@ -254,7 +280,7 @@
   }
   function timeUp() {
     stopTimer();
-    if (state.typed) submitTyped(); else choose(null);   // hết giờ: gửi "không chọn" (impossible: chấm phần đã nhập – server coi quá giờ là 0)
+    if (state.typed) submitTyped(); else if (state.essay) submitEssay(true); else choose(null);   // hết giờ: gửi "không chọn" (impossible: chấm phần đã nhập – server coi quá giờ là 0)
   }
 
   function reset() { stopTimer(); showPanel(null); }
