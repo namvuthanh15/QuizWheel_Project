@@ -55,6 +55,7 @@
     answer: function (playId, index, choice, parts) {
       return rpc("api_answer", { p_token: token, p_play: playId, p_index: index, p_choice: choice === undefined ? null : choice, p_parts: parts || null });
     },
+    abandon: function (playId) { return rpc("api_abandon", { p_token: token, p_play: playId }); },
     spin: function (playId) { return rpc("api_spin", { p_token: token, p_play: playId }); },
     history: function () { return rpc("api_history", { p_token: token }); }
   };

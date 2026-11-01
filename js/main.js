@@ -117,9 +117,16 @@
   /* ---------- Luồng chơi ---------- */
   function playWheel(playId, wheel) { go("wheel", { level: wheel, once: true, playId: playId }); }
 
+  // Sau khi người chơi xác nhận thoát ván: về màn chọn mức (nếu vì lý do nào đó còn ván dở / vòng quay chưa quay thì đưa về đúng chỗ đó)
+  async function afterLeave() {
+    const st = await Api.state();
+    if (st.ok && (st.active || st.pendingSpin)) { await afterLogin(st); return; }
+    go("levels");
+  }
+
   function runQuiz(play) {
     Wheel.stop(); Sfx.screen("quiz");
-    Quiz.run(play, function (res) { if (res.wheel) playWheel(res.playId, res.wheel); });
+    Quiz.run(play, function (res) { if (res.wheel) playWheel(res.playId, res.wheel); }, afterLeave);
   }
 
   // Lỗi khi bắt đầu ván. Còn ván dở (hoặc vòng quay chưa quay) thì đưa người chơi về đúng chỗ đó.
@@ -210,6 +217,7 @@
       if (it.rewardLabel) result = it.rewardLabel;
       else if (it.wheel && !it.spun) result = I18n.t("history.pendingSpin");
       else if (it.status === "active") result = I18n.t("history.active");
+      else if (it.abandoned) result = I18n.t("history.abandoned");
       else result = "—";
       li.append(UI.el("span", "hist-when", when), UI.el("span", "hist-name", name), UI.el("span", "hist-score", score), UI.el("b", "hist-result", result));
       box.appendChild(li);
@@ -268,6 +276,8 @@
     });
     UI.$("#typed-form").addEventListener("submit", function (e) { e.preventDefault(); Quiz.submitTyped(); });
     UI.$("#quiz-next").addEventListener("click", Quiz.next);
+    UI.$("#quiz-leave").addEventListener("click", Quiz.leave);
+    UI.$("#typed-leave").addEventListener("click", Quiz.leave);
 
     UI.$("#w-preview").addEventListener("click", function () { go("wheel", { level: UI.$("#w-level").value, once: false }); });
     UI.$("#wheel-edit").addEventListener("click", function () { go("host"); Host.showTab("wheel", Wheel.level()); });

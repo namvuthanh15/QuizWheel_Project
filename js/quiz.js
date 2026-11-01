@@ -22,7 +22,7 @@
   function currentRules() { const r = Store.remote() && Store.remote().rules; return r && typeof r === "object" ? r : RULES; }
 
   const state = { playId: "", level: "", total: 0, index: 0, solved: 0, score: 0, locked: false, busy: false,
-                  timeLeft: 0, timed: false, timerId: null, onDone: null, result: null, pending: null, typed: false, essay: false };
+                  timeLeft: 0, timed: false, timerId: null, onDone: null, result: null, pending: null, typed: false, essay: false, runId: 0, leaving: false, onLeave: null };
 
   function fmt(n) { return String(Math.round(n * 10) / 10); }
   function stopTimer() { if (state.timerId !== null) { clearInterval(state.timerId); state.timerId = null; } }
@@ -32,8 +32,8 @@
   function fail(code) { stopTimer(); UI.toast(Api.errText(code)); UI.showScreen("levels"); }
 
   // play: { playId, level, total, typed } (kết quả của api_start hoặc api_state.active). onDone(res) khi người chơi bấm "Quay thưởng".
-  async function run(play, onDone) {
-    stopTimer();
+  async function run(play, onDone, onLeave) {
+    stopTimer(); state.runId++; state.leaving = false; state.onLeave = onLeave || null;
     state.playId = play.playId; state.level = play.level; state.total = play.total || 1;
     state.index = 0; state.solved = 0; state.score = 0; state.onDone = onDone || null; state.result = null; state.pending = null;
     state.typed = Store.isTyped(play.level);
@@ -42,8 +42,10 @@
 
   async function loadQuestion() {
     state.busy = true;
+    const rid = state.runId;
     const r = await Api.question(state.playId);
     state.busy = false;
+    if (rid !== state.runId) return;                 // đã thoát ván trong lúc chờ server
     if (!r.ok) return fail(r.error);
     state.index = r.index; state.total = r.total; state.solved = r.solved || 0;
     state.score = Math.round(state.solved * PASS / state.total * 10) / 10;
@@ -122,8 +124,10 @@
     state.busy = true; stopTimer();
     for (let i = 0; i < cells().length; i++) cells()[i].disabled = true;
     if (state.essay) setEssayDisabled(true);
+    const rid = state.runId;
     const r = await Api.answer(state.playId, state.index, choice, parts);
     state.busy = false;
+    if (rid !== state.runId) return;                 // đã thoát ván trong lúc chờ server
     if (!r.ok) {
       if (r.error === "stale") { await loadQuestion(); return; }
       if (r.error === "network" || r.error === "server") {            // mạng lỗi: mở lại để thử gửi lần nữa (server chặn trùng nhờ số thứ tự câu)
@@ -212,8 +216,10 @@
     const parts = rows.map(function (f) { return { d: f[0].value.trim(), m: f[1].value.trim(), y: f[2].value.trim() }; });   // server chấm (chỉ nhận chữ số)
     allInputs().forEach(function (inp) { inp.disabled = true; });
     UI.$("#typed-submit").disabled = true;
+    const rid = state.runId;
     const r = await Api.answer(state.playId, 0, null, parts);
     state.busy = false;
+    if (rid !== state.runId) return;                 // đã thoát ván trong lúc chờ server
     if (!r.ok) {
       if (r.error === "network" || r.error === "server") {
         UI.toast(Api.errText(r.error));
@@ -283,10 +289,31 @@
     if (state.typed) submitTyped(); else if (state.essay) submitEssay(true); else choose(null);   // hết giờ: gửi "không chọn" (impossible: chấm phần đã nhập – server coi quá giờ là 0)
   }
 
+  // Nút "Quay lại": hỏi xác nhận, đóng ván trên server (mất lượt, mất tiến trình) rồi về màn chọn mức.
+  // Đồng hồ KHÔNG dừng khi hộp thoại đang mở (tránh câu giờ).
+  async function leave() {
+    if (state.leaving || !state.playId) return;
+    state.leaving = true;
+    const ok = await UI.confirm(I18n.t("quiz.leaveWarn"), I18n.t("quiz.leaveOk"));
+    if (!ok) { state.leaving = false; return; }
+    state.runId++;                                   // vô hiệu mọi phản hồi đang bay (hết giờ, đang nộp đáp án...)
+    stopTimer(); state.locked = true;
+    const r = await Api.abandon(state.playId);
+    state.leaving = false;
+    if (!r.ok && r.error !== "not_active" && r.error !== "no_play") {
+      UI.toast(Api.errText(r.error));                // lỗi mạng: ván vẫn còn, tải lại câu hiện tại để chơi tiếp
+      if (r.error === "auth") { fail(r.error); return; }
+      state.locked = false; await loadQuestion(); return;
+    }
+    state.playId = ""; state.busy = false;
+    const cb = state.onLeave; state.onLeave = null;
+    if (cb) cb(); else UI.showScreen("levels");
+  }
+
   function reset() { stopTimer(); showPanel(null); }
 
   window.Quiz = {
-    run: run, next: next, proceed: proceed, submitTyped: submitTyped, reset: reset,
+    run: run, leave: leave, next: next, proceed: proceed, submitTyped: submitTyped, reset: reset,
     get rules() { return currentRules(); }
   };
 })();

@@ -334,3 +334,8 @@ html:not([lang="vi"]) .home-title-text { display: block; }
 .answer-grid[data-n="3"] .answer-cell:last-child, .answer-grid[data-n="5"] .answer-cell:last-child { grid-column: 1 / -1; }
 .essay-box { display: grid; gap: 12px; margin: 6px 0 14px; }
 .essay-box input { font-size: 1.2rem; }
+
+/* Nút Quay lại trong màn quiz */
+.leave-btn { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 6px 14px; font: inherit; font-weight: 800; color: var(--ink); background: var(--card-2); border: 3px solid var(--ink); border-radius: 999px; cursor: pointer; box-shadow: 0 3px 0 var(--ink); }
+.leave-btn:hover { filter: brightness(.95); }
+.leave-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }

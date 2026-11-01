@@ -169,6 +169,7 @@
       "quiz.noQuiz": "Mức này chưa có phần quiz.",
       "quiz.q": "Câu", "quiz.score": "Điểm", "quiz.next": "Câu tiếp theo", "quiz.seeResult": "Xem kết quả",
       "quiz.result": "Kết quả", "quiz.spin": "Quay thưởng", "quiz.spinLevel": "Quay thưởng {level}", "quiz.again": "Chơi tiếp",
+      "quiz.leave": "← Quay lại", "quiz.leaveWarn": "Nếu thoát bây giờ, bạn sẽ MẤT lượt đã dùng và toàn bộ tiến trình của màn này (không được hoàn lượt, không được quay thưởng). Bạn có chắc muốn thoát?", "quiz.leaveOk": "Thoát và mất lượt",
       "quiz.essayLabel": "Câu trả lời của bạn", "quiz.essayPh": "Gõ câu trả lời rồi bấm Trả lời", "quiz.essaySubmit": "Trả lời",
       "quiz.ansAria": "Đáp án {l}",
       "quiz.right": "Chính xác! +{pts} điểm", "quiz.wrong": "Sai rồi! Câu này không được điểm.", "quiz.timeUp": "Hết giờ! Câu này không được điểm.",
@@ -204,7 +205,7 @@
       "main.resume": "Tiếp tục ván đang dở của bạn.", "main.poolLow": "Mức này cần ít nhất {count} câu hỏi trong kho (hiện có {have}). Hãy báo host.",
       "history.title": "Lịch sử chơi", "history.loading": "Đang tải…", "history.empty": "Bạn chưa chơi ván nào.",
       "history.sum": "Đã trúng {won} · Host đã trả {paid} · Còn chờ nhận {owed}",
-      "history.pendingSpin": "Chưa quay", "history.active": "Đang chơi",
+      "history.pendingSpin": "Chưa quay", "history.active": "Đang chơi", "history.abandoned": "Đã bỏ giữa chừng",
 
 
       "store.badJson": "File không phải JSON hợp lệ.", "store.noList": "File không có danh sách câu hỏi.", "store.noValid": "Không có câu hỏi nào hợp lệ trong file."
@@ -371,6 +372,7 @@
       "quiz.noQuiz": "This tier has no quiz yet.",
       "quiz.q": "Question", "quiz.score": "Score", "quiz.next": "Next question", "quiz.seeResult": "See results",
       "quiz.result": "Results", "quiz.spin": "Spin for prize", "quiz.spinLevel": "Spin for prize: {level}", "quiz.again": "Play again",
+      "quiz.leave": "← Back", "quiz.leaveWarn": "If you leave now you will LOSE the turn you used and all progress in this round (no refund, no bonus spin). Are you sure you want to leave?", "quiz.leaveOk": "Leave and lose the turn",
       "quiz.essayLabel": "Your answer", "quiz.essayPh": "Type your answer, then press Answer", "quiz.essaySubmit": "Answer",
       "quiz.ansAria": "Answer {l}",
       "quiz.right": "Correct! +{pts} points", "quiz.wrong": "Wrong! No points for this question.", "quiz.timeUp": "Time's up! No points for this question.",
@@ -406,7 +408,7 @@
       "main.resume": "Resuming your unfinished game.", "main.poolLow": "This tier needs at least {count} questions in the pool ({have} now). Tell the host.",
       "history.title": "Play history", "history.loading": "Loading…", "history.empty": "You haven't played yet.",
       "history.sum": "Won {won} · Paid by host {paid} · Still owed {owed}",
-      "history.pendingSpin": "Not spun yet", "history.active": "In progress",
+      "history.pendingSpin": "Not spun yet", "history.active": "In progress", "history.abandoned": "Left early",
 
 
       "store.badJson": "The file is not valid JSON.", "store.noList": "The file has no question list.", "store.noValid": "No valid questions in the file."
