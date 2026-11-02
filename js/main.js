@@ -12,7 +12,7 @@
   function normName(s) {
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/\s+/g, " ").trim();
   }
-  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history"];
+  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history", "lixi"];
 
   /* ---------- Người chơi hiện tại + thanh trạng thái ---------- */
   function setPlayer(p) { session.player = p || null; paintUser(); }
@@ -34,7 +34,10 @@
   // opts chỉ dùng cho màn hình vòng quay: { level, once, playId }
   function go(name, opts) {
     if (NEED_LOGIN.indexOf(name) >= 0 && Api.configured && !session.player) { name = "login"; }
+    // Người chơi chưa rút lì xì thì phải rút trước khi vào các màn chơi thường
+    if (session.player && session.player.lixiPending && (name === "levels" || name === "count" || name === "history")) name = "lixi";
     if (name !== "quiz") Quiz.reset();
+    if (name === "lixi") Lixi.show(onLixiDone, function () { go("levels"); });
     if (name === "host" && !Store.isHostMode()) return;
     if (name === "host") Host.open();
     if (name === "settings") Lang.close();
@@ -71,7 +74,13 @@
     setPlayer(st.player);
     if (st.active) { UI.toast(I18n.t("main.resume")); runQuiz({ playId: st.active.playId, level: st.active.level, total: st.active.total }); return; }
     if (st.pendingSpin) { UI.toast(I18n.t("main.resume")); playWheel(st.pendingSpin.playId, st.pendingSpin.wheel); return; }
+    if (st.player && st.player.lixiPending) { go("lixi"); return; }
     go("home");
+  }
+
+  // Rút lì xì xong: cập nhật số lượt trên thanh trên cùng, mở khóa các màn chơi
+  function onLixiDone(r) {
+    if (session.player) { session.player.lixiPending = false; session.player.turns = r.turns; paintUser(); }
   }
 
   async function doLogin(e) {

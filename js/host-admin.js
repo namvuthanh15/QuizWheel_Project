@@ -194,24 +194,27 @@
     const c = h("div", "card");
     c.appendChild(h("h2", "", "Tạo người chơi"));
     const row = h("div", "row");
-    const n = input("text", "", { maxlength: 30 }), pin = input("text", "", { maxlength: 12, autocomplete: "off" }), t = input("number", "", { min: 0, placeholder: "mặc định " + cfg.startTurns });
-    row.append(field("Tên", n), field("PIN (4–12 ký tự)", pin), field("Số lượt ban đầu", t));
+    const n = input("text", "", { maxlength: 30 }), pin = input("text", "", { maxlength: 12, autocomplete: "off" });
+    row.append(field("Tên", n), field("PIN (4–12 ký tự)", pin));
     row.appendChild(btn("Tạo", "btn btn-primary", async function () {
-      const r = await adm("admin_player_create", { p_name: n.value, p_pin: pin.value, p_turns: t.value === "" ? null : Number(t.value) });
+      const r = await adm("admin_player_create", { p_name: n.value, p_pin: pin.value });
       if (r) { const nm = n.value.trim(), pn = pin.value; shareBox = { name: nm, pin: pn, withPin: false }; await loadAll(); say("Đã tạo người chơi " + nm + ". Gửi link bên dưới rồi nhắn PIN riêng cho họ.", true); renderPlayers(); }
     }));
-    c.appendChild(row); el.appendChild(c);
+    c.appendChild(row);
+    c.appendChild(h("p", "note", "Người chơi mới bắt đầu với 0 lượt. Lần đăng nhập đầu tiên họ rút lì xì (2–10 lượt, server random, chỉ rút một lần). Lượt Free vẫn theo cài đặt."));
+    el.appendChild(c);
     if (shareBox) el.appendChild(shareCard());
 
     const wrap = h("div", "tbl-wrap"); wrap.style.marginTop = "14px";
     const tb = h("table", "tbl");
-    const head = h("tr"); ["Tên", "Lượt", "Free đã dùng", "Đã trúng", "Đã trả", "Còn nợ", "Ván", "Lần cuối", "Thao tác"].forEach(function (x) { head.appendChild(h("th", "", x)); });
+    const head = h("tr"); ["Tên", "Lượt", "Free đã dùng", "Rút lì xì", "Đã trúng", "Đã trả", "Còn nợ", "Ván", "Lần cuối", "Thao tác"].forEach(function (x) { head.appendChild(h("th", "", x)); });
     tb.appendChild(head);
-    if (!players.length) { const tr = h("tr"), td = h("td", "", "Chưa có người chơi."); td.colSpan = 9; tr.appendChild(td); tb.appendChild(tr); }
+    if (!players.length) { const tr = h("tr"), td = h("td", "", "Chưa có người chơi."); td.colSpan = 10; tr.appendChild(td); tb.appendChild(tr); }
     players.forEach(function (p) {
       const tr = h("tr", p.active ? "" : "off");
       const owed = Math.max(0, Number(p.rewardK) - Number(p.paidK));
       tr.append(h("td", "", p.name + (p.active ? "" : " (khóa)")), h("td", "num", String(p.turns)), h("td", "num", String(p.freeUsed)),
+        h("td", "num", p.lixi == null ? "Chưa rút" : "+" + p.lixi + " lượt"),
         h("td", "num", kfmt(p.rewardK)), h("td", "num", kfmt(p.paidK)), h("td", "num", owed > 0 ? kfmt(owed) : "—"), h("td", "num", String(p.plays)),
         h("td", "", p.lastAt ? new Date(p.lastAt).toLocaleString("vi-VN") : "—"));
       const td = h("td"); const a = h("div", "acts");
@@ -222,6 +225,10 @@
           if (await adm("admin_player_update", { p_id: p.id, p_turns_delta: d })) { await loadAll(); renderPlayers(); say("Đã chỉnh lượt.", true); }
         }),
         link("Reset Free", async function () { if (await adm("admin_player_update", { p_id: p.id, p_free_used: 0 })) { await loadAll(); renderPlayers(); say("Đã cho " + p.name + " quay Free lại.", true); } }),
+        link("Cho rút lì xì lại", async function () {
+          if (!(await UI.confirm("Cho " + p.name + " rút lì xì lại? Lượt đã nhận trước đó vẫn giữ nguyên (chỉnh bằng ± Lượt nếu cần)."))) return;
+          if (await adm("admin_lixi_reset", { p_id: p.id })) { await loadAll(); renderPlayers(); say(p.name + " sẽ được rút lì xì ở lần đăng nhập tới.", true); }
+        }),
         link("Lấy link", function () { shareBox = { name: p.name, pin: null, withPin: false }; say(""); renderPlayers(); }),
         link("Đổi PIN", async function () {
           const v = window.prompt("PIN mới cho " + p.name + " (4–12 ký tự):", ""); if (v === null) return;
@@ -481,10 +488,10 @@
     const c = h("div", "card"); c.appendChild(h("h2", "", "Lượt chơi và phần thưởng"));
     const g = h("div", "grid2");
     const ce = input("number", cfg.costs.easy, { min: 0 }), ch = input("number", cfg.costs.hard, { min: 0 }), ci = input("number", cfg.costs.impossible, { min: 0 });
-    const st = input("number", cfg.startTurns, { min: 0 }), fs = input("number", cfg.freeSpins, { min: 0 });
+    const fs = input("number", cfg.freeSpins, { min: 0 });
     const ip = input("text", cfg.impossiblePrize, { maxlength: 20 });
     g.append(field("Lượt tốn mỗi ván Easy", ce), field("Lượt tốn mỗi ván Hard", ch), field("Lượt tốn mỗi ván Impossible", ci),
-             field("Lượt cho người chơi mới", st), field("Số lần quay Free / người", fs), field("Lì xì Impossible khi thắng", ip));
+             field("Số lần quay Free / người", fs), field("Lì xì Impossible khi thắng", ip));
     c.appendChild(g);
     c.appendChild(h("h3", "", "Quiz")); c.lastChild.style.marginTop = "14px";
     const g2 = h("div", "grid2");
@@ -496,7 +503,7 @@
     g2.append(lE, lH); c.appendChild(g2);
     c.appendChild(h("p", "note", "Số lượt chỉ tính khi ván BẮT ĐẦU (server trừ ngay). Đổi ở đây chỉ áp dụng cho các ván sau."));
     c.appendChild(btn("Lưu cài đặt", "btn btn-primary", async function () {
-      const a = await adm("admin_settings_save", { p_costs: { easy: Number(ce.value), hard: Number(ch.value), impossible: Number(ci.value) }, p_start_turns: Number(st.value), p_free_spins: Number(fs.value), p_impossible_prize: ip.value });
+      const a = await adm("admin_settings_save", { p_costs: { easy: Number(ce.value), hard: Number(ch.value), impossible: Number(ci.value) }, p_start_turns: 0, p_free_spins: Number(fs.value), p_impossible_prize: ip.value });
       if (!a) return;
       const b = await adm("admin_import", { p_data: { settings: { timePerQuestion: Math.max(0, Math.min(300, Math.round(Number(tm.value) || 0))), shuffleAnswers: { easy: shE.checked, hard: shH.checked }, bigPrize: { easy: bpE.value.trim() || "36K", hard: bpH.value.trim() || "72K" } } } });
       if (b) { await loadAll(); renderSettings(); say("Đã lưu cài đặt.", true); }

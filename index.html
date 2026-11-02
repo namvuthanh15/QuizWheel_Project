@@ -54,7 +54,18 @@
       </div>
     </section>
 
-    <!-- ===== MÀN HÌNH: LỊCH SỬ CỦA NGƯỜI CHƠI ===== -->
+    <!-- ===== MÀN HÌNH: RÚT LÌ XÌ (người chơi mới, chỉ 1 lần) ===== -->
+    <section class="screen" id="screen-lixi" hidden>
+      <div class="card lixi-card">
+        <h2 data-i18n="lixi.title">Rút lì xì nhận lượt chơi</h2>
+        <p id="lixi-hint" data-i18n="lixi.hint">Chọn một bao lì xì. Mỗi bao có từ 2 đến 10 lượt chơi, bạn chỉ được rút một lần!</p>
+        <div class="lixi-grid" id="lixi-grid"></div>
+        <p class="lixi-result" id="lixi-result" role="status" aria-live="polite" hidden></p>
+        <button class="btn btn-primary" id="lixi-go" type="button" data-i18n="lixi.go" hidden>Bắt đầu chơi</button>
+      </div>
+    </section>
+
+    <!-- ===== MÀN HÌNH: LỊCH SỬ CỦA NGƯỜI CHƠI =====
     <section class="screen" id="screen-history" hidden>
       <div class="card history-card">
         <h2 data-i18n="history.title">Lịch sử chơi</h2>
@@ -481,6 +492,7 @@
   <script src="js/host.js"></script>
   <script src="js/publish.js"></script>
   <script src="js/wheel.js"></script>
+  <script src="js/lixi.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/lang.js"></script>
   <script src="js/sfx-data.js"></script>
