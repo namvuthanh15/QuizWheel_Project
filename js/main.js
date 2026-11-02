@@ -12,7 +12,7 @@
   function normName(s) {
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/\s+/g, " ").trim();
   }
-  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history", "lixi"];
+  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history", "lixi", "bags"];
 
   /* ---------- Người chơi hiện tại + thanh trạng thái ---------- */
   function setPlayer(p) { session.player = p || null; paintUser(); }
@@ -38,6 +38,7 @@
     if (session.player && session.player.lixiPending && (name === "levels" || name === "count" || name === "history")) name = "lixi";
     if (name !== "quiz") Quiz.reset();
     if (name === "lixi") Lixi.show(onLixiDone, function () { go("levels"); });
+    if (name === "bags") Bags.show(opts, function () { go("levels"); });
     if (name === "host" && !Store.isHostMode()) return;
     if (name === "host") Host.open();
     if (name === "settings") Lang.close();
@@ -74,6 +75,7 @@
     setPlayer(st.player);
     if (st.active) { UI.toast(I18n.t("main.resume")); runQuiz({ playId: st.active.playId, level: st.active.level, total: st.active.total }); return; }
     if (st.pendingSpin) { UI.toast(I18n.t("main.resume")); playWheel(st.pendingSpin.playId, st.pendingSpin.wheel); return; }
+    if (st.pendingBag) { UI.toast(I18n.t("main.resume")); go("bags", { playId: st.pendingBag.playId, count: st.pendingBag.count }); return; }
     if (st.player && st.player.lixiPending) { go("lixi"); return; }
     go("home");
   }
@@ -124,12 +126,15 @@
   }
 
   /* ---------- Luồng chơi ---------- */
-  function playWheel(playId, wheel) { go("wheel", { level: wheel, once: true, playId: playId }); }
+  // Vòng quay (Easy/Hard) quay ra số bao; bấm "Rút lì xì" thì sang màn chọn bao
+  function playWheel(playId, wheel) {
+    go("wheel", { level: wheel, once: true, playId: playId, onBags: function (pid, n) { go("bags", { playId: pid, count: n }); } });
+  }
 
   // Sau khi người chơi xác nhận thoát ván: về màn chọn mức (nếu vì lý do nào đó còn ván dở / vòng quay chưa quay thì đưa về đúng chỗ đó)
   async function afterLeave() {
     const st = await Api.state();
-    if (st.ok && (st.active || st.pendingSpin)) { await afterLogin(st); return; }
+    if (st.ok && (st.active || st.pendingSpin || st.pendingBag)) { await afterLogin(st); return; }
     go("levels");
   }
 
@@ -224,6 +229,7 @@
       const score = it.kind === "quiz" ? it.solved + "/" + (it.level === "impossible" ? 2 : it.total) : "";
       let result;
       if (it.rewardLabel) result = it.rewardLabel;
+      else if (it.bagPending) result = I18n.t("history.bagPending");
       else if (it.wheel && !it.spun) result = I18n.t("history.pendingSpin");
       else if (it.status === "active") result = I18n.t("history.active");
       else if (it.abandoned) result = I18n.t("history.abandoned");

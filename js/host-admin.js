@@ -83,7 +83,7 @@
     if (p) players = p.players;
     if (ex) {
       D.questions = { easy: ex.questions.easy || [], hard: ex.questions.hard || [], impossible: ex.questions.impossible || [] };
-      D.wheels = ex.wheels || {}; D.settings = ex.settings; D.loseImage = ex.loseImage || null;
+      D.wheels = ex.wheels || {}; D.bagValues = ex.bagValues || {}; bagDraft = {}; D.settings = ex.settings; D.loseImage = ex.loseImage || null;
     }
     if (st) cfg = { costs: st.costs, startTurns: st.startTurns, freeSpins: st.freeSpins, impossiblePrize: st.impossiblePrize };
     dirty.questions = dirty.wheel = false;
@@ -450,12 +450,117 @@
   }
 
   /* ====================== VÒNG QUAY ====================== */
+
+  /* ---------- Bao lì xì (các vòng Easy/Hard) ---------- */
+  let bagDraft = {};                                     // chữ host đang gõ ở ô "giá trị lì xì" của từng vòng (giữ khi vẽ lại màn hình)
+  // "10, 20K 50k;100" -> { values: [10,20,50,100], bad: [] }. Cách nhau bằng dấu cách, xuống dòng hoặc ";". Dấu "," giữa số là số thập phân ("2,5K").
+  function parseBagValues(text) {
+    const out = [], bad = [];
+    String(text || "").split(/[\s;]+/).forEach(function (tok) {
+      tok = tok.replace(/,+$/, "").trim(); if (!tok) return;
+      const m = /^(\d+(?:[.,]\d+)?)\s*[kK]?$/.exec(tok), v = m ? parseFloat(m[1].replace(",", ".")) : NaN;
+      if (!m || !(v > 0) || v > 100000) bad.push(tok); else if (out.indexOf(v) < 0) out.push(v);
+    });
+    out.sort(function (a, b) { return a - b; });
+    return { values: out, bad: bad };
+  }
+  function fmtNum(v) { const s = String(Math.round(v * 10) / 10); return s.replace(".", ","); }
+  // Mô phỏng đúng thuật toán của server: trọng số 1/v², không trùng khi còn giá trị chưa dùng. Trả về giá trị trung bình của bao được chọn ngẫu nhiên.
+  function simBagMean(vals, n, trials) {
+    let total = 0;
+    for (let t = 0; t < trials; t++) {
+      let pool = [], sum = 0;
+      for (let k = 0; k < n; k++) {
+        if (!pool.length) pool = vals.slice();
+        let tot = 0; pool.forEach(function (v) { tot += 1 / (v * v); });
+        let r = Math.random() * tot, idx = pool.length - 1;
+        for (let i = 0; i < pool.length; i++) { r -= 1 / (pool[i] * pool[i]); if (r < 0) { idx = i; break; } }
+        sum += pool[idx]; pool.splice(idx, 1);
+      }
+      total += sum / n;
+    }
+    return total / trials;
+  }
+  function bagPreview(items, values) {
+    const lines = [];
+    const sw = values.reduce(function (a, v) { return a + 1 / (v * v); }, 0);
+    lines.push("Tỉ lệ xuất hiện của từng giá trị khi chỉ có 1 bao:");
+    values.forEach(function (v) { lines.push("  " + (fmtNum(v) + "K").padEnd(8) + fmtNum(1 / (v * v) / sw * 100) + "%"); });
+    const total = items.reduce(function (a, x) { return a + (Number(x.count) || 0); }, 0) || 1;
+    const byN = {};
+    items.forEach(function (x) { const n = Number(x.bags) || 0; byN[n] = (byN[n] || 0) + (Number(x.count) || 0); });
+    lines.push(""); lines.push("Theo số bao quay được (tiền trung bình của bao người chơi chọn):");
+    let expect = 0;
+    Object.keys(byN).map(Number).sort(function (a, b) { return a - b; }).forEach(function (n) {
+      const p = byN[n] / total;
+      if (n === 0) { lines.push("  0 bao   " + fmtNum(p * 100) + "% số ô   → không được rút"); return; }
+      const mean = values.length ? simBagMean(values, n, 20000) : 0;
+      expect += p * mean;
+      lines.push("  " + (n + " bao").padEnd(8) + fmtNum(p * 100) + "% số ô   → trung bình ≈ " + fmtNum(mean) + "K" + (n > values.length ? "   (có bao trùng giá trị vì nhiều bao hơn số giá trị)" : ""));
+    });
+    lines.push(""); lines.push("Tiền trung bình mỗi ván của vòng này ≈ " + fmtNum(expect) + "K");
+    return lines.join("\n");
+  }
+
+  function bagEditor(el, c) {
+    const items = D.wheels[wLevel] = (D.wheels[wLevel] || []).map(function (x) { return Object.assign({}, x); });
+    c.appendChild(h("h3", "", "1) Vòng quay: quay ra số bao được rút"));
+    c.appendChild(h("p", "note", "Mỗi hàng là một kết quả của vòng quay: số bao (0 đến 9) và số ô trên vòng. Tỉ lệ = số ô ÷ tổng số ô. Hàng “0 bao” nghĩa là không được rút lì xì."));
+    const total = function () { return items.reduce(function (a, x) { return a + (Number(x.count) || 0); }, 0); };
+    const info = h("p", "note");
+    const upd = function () { info.textContent = "Tổng " + total() + "/" + Store.WHEEL_MAX + " ô (cần ít nhất 2)."; };
+    items.forEach(function (it, i) {
+      const r = h("div", "wrow");
+      const nb = input("number", it.bags == null ? 1 : it.bags, { min: 0, max: 9 }); nb.className = "w-count";
+      const cnt = input("number", it.count, { min: 1, max: Store.WHEEL_MAX }); cnt.className = "w-count";
+      const col = input("color", it.color || Store.PALETTE[i % Store.PALETTE.length]);
+      if (it.bags == null) it.bags = 1;
+      nb.addEventListener("input", function () { it.bags = Math.max(0, Math.min(9, Math.round(Number(nb.value) || 0))); dirty.wheel = true; });
+      cnt.addEventListener("input", function () { it.count = Number(cnt.value); dirty.wheel = true; upd(); });
+      col.addEventListener("input", function () { it.color = col.value; dirty.wheel = true; });
+      r.append(nb, h("span", "", "bao ×"), cnt, h("span", "", "ô"), col, link("Xóa", function () { items.splice(i, 1); D.wheels[wLevel] = items; dirty.wheel = true; renderWheels(); }, true));
+      c.appendChild(r);
+    });
+    upd(); c.appendChild(info);
+    c.appendChild(btn("+ Thêm số bao", "btn btn-secondary", function () { items.push({ id: Store.uid(), bags: 1, label: "1 bao", count: 1, color: Store.PALETTE[items.length % Store.PALETTE.length] }); D.wheels[wLevel] = items; dirty.wheel = true; renderWheels(); }));
+
+    c.appendChild(h("h3", "", "2) Giá trị lì xì trong bao (đơn vị K)"));
+    c.appendChild(h("p", "note", "Mỗi giá trị cách nhau bằng dấu cách hoặc xuống dòng; nhập 50, 50K hay 50k đều được (số lẻ dùng dấu phẩy, ví dụ 2,5K). Giá trị càng lớn càng hiếm (tỉ lệ ∝ 1 ÷ giá trị²). Các bao trong một ván không trùng giá trị khi còn giá trị chưa dùng."));
+    if (bagDraft[wLevel] === undefined) bagDraft[wLevel] = ((D.bagValues || {})[wLevel] || []).map(fmtNum).join(" ");
+    const ta = h("textarea"); ta.rows = 3; ta.placeholder = "vd: 10 20 50 100"; ta.value = bagDraft[wLevel];
+    ta.addEventListener("input", function () { bagDraft[wLevel] = ta.value; dirty.wheel = true; });
+    c.appendChild(ta);
+
+    const pv = h("pre", "preview"); pv.hidden = true;
+    const err = h("p", "feedback bad");
+    c.appendChild(btn("Xem thử tỉ lệ", "btn btn-secondary", function () {
+      const p = parseBagValues(ta.value); err.textContent = "";
+      if (p.bad.length) { err.textContent = "Giá trị không hợp lệ: " + p.bad.join(", "); return; }
+      if (!p.values.length) { err.textContent = "Chưa nhập giá trị lì xì nào."; return; }
+      pv.hidden = false; pv.textContent = bagPreview(Store.cleanWheelItems(items), p.values);
+    }));
+    c.appendChild(err); c.appendChild(pv);
+
+    c.appendChild(saveBar("wheel", async function () {
+      const clean = Store.cleanWheelItems(items);
+      if (clean.reduce(function (a, x) { return a + x.count; }, 0) < 2) { say("Vòng quay cần ít nhất 2 ô.", false); return; }
+      const p = parseBagValues(ta.value);
+      if (p.bad.length) { say("Giá trị lì xì không hợp lệ: " + p.bad.join(", "), false); return; }
+      if (clean.some(function (x) { return x.bags > 0; }) && !p.values.length) { say("Cần nhập ít nhất 1 giá trị lì xì cho các ô có bao.", false); return; }
+      if (p.values.length > 20) { say("Tối đa 20 giá trị lì xì mỗi vòng.", false); return; }
+      const w = {}, bv = {}; w[wLevel] = clean; bv[wLevel] = p.values;
+      if (await adm("admin_import", { p_data: { wheels: w, bagValues: bv } })) { dirty.wheel = false; bagDraft = {}; await loadAll(); renderWheels(); say("Đã lưu vòng " + Store.WHEEL_NAMES[wLevel] + ".", true); }
+    }));
+    el.appendChild(c);
+  }
+
   function renderWheels() {
     const el = box("wheels"), c = h("div", "card");
     const sel = h("select"); Store.WHEEL_LEVELS.forEach(function (l) { const o = h("option", "", Store.WHEEL_NAMES[l]); o.value = l; sel.appendChild(o); });
     sel.value = wLevel;
     sel.addEventListener("change", function () { if (dirty.wheel) { if (!window.confirm("Bỏ thay đổi chưa lưu của vòng quay này?")) { sel.value = wLevel; return; } loadAll().then(function () { wLevel = sel.value; renderWheels(); }); return; } wLevel = sel.value; renderWheels(); });
     c.appendChild(field("Vòng quay", sel));
+    if (wLevel !== "free") { bagEditor(el, c); return; }      // Easy/Hard: quay ra số bao, rồi rút lì xì
     const items = D.wheels[wLevel] = (D.wheels[wLevel] || []).map(function (x) { return Object.assign({}, x); });
     const total = function () { return items.reduce(function (a, x) { return a + (Number(x.count) || 0); }, 0); };
     const info = h("p", "note"); const upd = function () { info.textContent = "Tổng " + total() + "/" + Store.WHEEL_MAX + " ô (cần ít nhất 2). Tỉ lệ trúng = số ô của giá trị ÷ tổng số ô."; };
@@ -611,6 +716,7 @@
       if (!(await UI.confirm("Nạp dữ liệu này lên server? Phần có trong tóm tắt sẽ ghi đè phần đang có."))) return;
       const data = { questions: d.questions, wheels: d.wheels };
       if (d.settings) data.settings = d.settings;
+      if (d.bagValues) data.bagValues = d.bagValues;
       if (typeof d.loseImage === "string") data.loseImage = d.loseImage;
       const r = await adm("admin_import", { p_data: data });
       if (r) { pending = null; await loadAll(); renderData(); say("Đã nạp xong (" + r.questions + " câu hỏi). Xem lại ở các tab Câu hỏi và Vòng quay.", true); }

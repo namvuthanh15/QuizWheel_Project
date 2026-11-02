@@ -32,7 +32,12 @@
   function fmtK(v) { return v >= 1 ? String(Math.floor(v)) : String(Math.round(v * 10) / 10).replace(".", I18n.lang() === "vi" ? "," : "."); }
   function rangeText(wheels, fallback) {
     let nums = [];
-    wheels.forEach(function (w) { nums = nums.concat(kNumbers(window.Store.loadWheel(w))); });
+    const rem = window.Store.remote && window.Store.remote();
+    wheels.forEach(function (w) {
+      const br = rem && rem.bagRange && rem.bagRange[w];       // vòng lì xì: khoảng tiền lấy từ giá trị trong bao (chỉ min/max)
+      if (Array.isArray(br) && br.length === 2) nums = nums.concat([Number(br[0]), Number(br[1])]);
+      else nums = nums.concat(kNumbers(window.Store.loadWheel(w)));
+    });
     if (!nums.length) return fallback;
     const lo = fmtK(Math.min.apply(null, nums)), hi = fmtK(Math.max.apply(null, nums));
     return lo === hi ? lo + "K" : lo + " - " + hi + "K";
@@ -176,12 +181,17 @@
     for (let i = 0; i < raw.length && total < WHEEL_MAX; i++) {
       const r = raw[i];
       if (!r || typeof r !== "object") continue;
-      const label = typeof r.label === "string" ? r.label.trim().slice(0, 30) : "";
+      // Ô của vòng lì xì có "bags" (số bao được rút, 0..9); tên ô tự đặt là "N bao"
+      const bn = (r.bags === null || r.bags === undefined || r.bags === "") ? NaN : Math.round(Number(r.bags));
+      const hasBags = Number.isFinite(bn) && bn >= 0 && bn <= 9;
+      const label = hasBags ? bn + " bao" : (typeof r.label === "string" ? r.label.trim().slice(0, 30) : "");
       let count = Math.round(Number(r.count));
       if (!label || !Number.isFinite(count) || count < 1) continue;
       count = Math.min(count, WHEEL_MAX - total);      // không vượt tổng 36 ô
-      out.push({ id: typeof r.id === "string" && r.id ? r.id.slice(0, 40) : uid(), label: label, count: count,
-                 color: typeof r.color === "string" && /^#[0-9a-fA-F]{6}$/.test(r.color) ? r.color : PALETTE[out.length % PALETTE.length] });
+      const item = { id: typeof r.id === "string" && r.id ? r.id.slice(0, 40) : uid(), label: label, count: count,
+                 color: typeof r.color === "string" && /^#[0-9a-fA-F]{6}$/.test(r.color) ? r.color : PALETTE[out.length % PALETTE.length] };
+      if (hasBags) item.bags = bn;
+      out.push(item);
       total += count;
     }
     return out;
@@ -300,7 +310,8 @@
         WHEEL_LEVELS.forEach(function (l) { if (Array.isArray(obj.wheels[l])) wheels[l] = cleanWheel(obj.wheels[l]); });
       }
       const loseImage = obj && "loseImage" in obj ? (isImage(obj.loseImage) ? obj.loseImage : null) : undefined;   // undefined = file không nhắc tới
-      return { questions: questions, wheels: wheels, loseImage: loseImage, settings: obj && obj.settings ? cleanSettings(obj.settings) : null,
+      const bagValues = obj && obj.bagValues && typeof obj.bagValues === "object" ? obj.bagValues : null;
+      return { questions: questions, wheels: wheels, bagValues: bagValues, loseImage: loseImage, settings: obj && obj.settings ? cleanSettings(obj.settings) : null,
                skipped: rawTotal - okTotal, total: okTotal };
     }
   };

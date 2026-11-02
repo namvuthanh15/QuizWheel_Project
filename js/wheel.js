@@ -6,7 +6,7 @@
   const MIN_SLICES = 2, SPIN_MS = REDUCED ? 1200 : 4500, SPIN_TURNS = REDUCED ? 1 : 6, TWO_PI = Math.PI * 2, POINTER = -Math.PI / 2;   // kim ở trên cùng
 
   // level: mức đang hiển thị; once = true khi đang chơi thật (chỉ được quay 1 lần), false khi host xem thử
-  const state = { level: "free", playId: "", once: false, done: false, items: [], slices: [], rotation: 0, spinning: false };
+  const state = { level: "free", playId: "", once: false, done: false, items: [], slices: [], rotation: 0, spinning: false, bags: null, onBags: null };
   let canvas, ctx;
   let runId = 0;                                   // mỗi lần quay có 1 mã; đổi mã = hủy lần quay cũ
 
@@ -83,7 +83,8 @@
 
     // 1) Chọn kết quả. Chơi thật: SERVER quay và chốt kết quả (gọi lại cũng ra đúng kết quả đó). Host xem thử: quay giả tại máy.
     let winner = Math.floor(Math.random() * state.slices.length);
-    let serverItem = null;
+    let serverItem = null, serverBags = null;
+    state.bags = null;
     if (state.playId) {
       const r = await Api.spin(state.playId);
       if (myRun !== runId) return;                                    // đã rời màn hình trong lúc chờ
@@ -93,6 +94,7 @@
         return;
       }
       serverItem = r.item || {};
+      serverBags = typeof r.bags === "number" ? r.bags : null;          // vòng lì xì: số bao được rút (0..9); vòng Free thì không có
       const same = [];
       state.slices.forEach(function (sl, i) { if (sl.id === serverItem.id) same.push(i); });
       if (!same.length) state.slices.forEach(function (sl, i) { if (sl.label === serverItem.label) same.push(i); });
@@ -111,8 +113,14 @@
       if (t < 1) { requestAnimationFrame(frame); return; }
       state.spinning = false;                                         // 3) xong animation mới công bố
       state.done = true;
+      state.bags = serverBags;
       UI.$("#spin-btn").disabled = state.once || state.slices.length < MIN_SLICES;   // chơi thật: hết lượt
       syncButtons();
+      if (serverBags !== null) {                                       // vòng lì xì: không có phần thưởng ngay, chỉ công bố số bao
+        if (serverBags > 0) { out.textContent = I18n.t("wheel.bagsResult", { n: serverBags }); out.classList.add("show"); Sfx.wow(); }
+        else { out.textContent = I18n.t("wheel.noBags"); out.classList.add("show"); UI.reveal(I18n.t("wheel.noBags")); }
+        return;
+      }
       const shown = serverItem && winner < 0 ? serverItem : state.slices[indexUnderPointer(state.rotation)];  // đọc lại từ vị trí kim
       out.textContent = I18n.t("wheel.result", { x: shown.label });
       out.classList.add("show");
@@ -145,7 +153,9 @@
 
   // Nút "Chơi tiếp" hiện khi đã quay xong (hoặc vòng quay không dùng được) ở chế độ chơi thật
   function syncButtons() {
-    UI.$("#wheel-again").hidden = !(state.once && (state.done || state.slices.length < MIN_SLICES));
+    const hasBags = state.once && state.done && state.bags > 0;
+    UI.$("#wheel-again").hidden = !(state.once && (state.done || state.slices.length < MIN_SLICES)) || hasBags;
+    UI.$("#wheel-bags").hidden = !hasBags;
     UI.$("#wheel-edit").hidden = state.once;
   }
 
@@ -155,6 +165,7 @@
     if (state.spinning) return;
     opts = opts || {};
     if (opts.level && Store.WHEEL_LEVELS.indexOf(opts.level) >= 0) state.level = opts.level;
+    state.bags = null; state.onBags = typeof opts.onBags === "function" ? opts.onBags : null;
     state.once = !!opts.once; state.done = false; state.playId = opts.once && opts.playId ? opts.playId : "";
     UI.$("#wheel-level").textContent = Store.WHEEL_LABELS[state.level] || "";
     state.items = Store.loadWheel(state.level);
@@ -170,6 +181,7 @@
   function init() {
     canvas = UI.$("#wheel-canvas"); ctx = canvas.getContext("2d");
     UI.$("#spin-btn").addEventListener("click", spin);
+    UI.$("#wheel-bags").addEventListener("click", function () { if (state.onBags && state.bags > 0) state.onBags(state.playId, state.bags); });
     open();
   }
 

@@ -7,14 +7,14 @@
   function el(id) { return document.getElementById(id); }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
-  function envelope(i) {
+  function envelope(i, unit, onClick) {
     const b = document.createElement("button");
     b.type = "button"; b.className = "lx"; b.dataset.slot = String(i); b.style.setProperty("--i", String(i));
     b.setAttribute("aria-label", I18n.t("lixi.aria", { n: i + 1 }));
-    b.innerHTML = '<span class="lx-paper"><b class="lx-num"></b><small data-i18n="lixi.unit"></small></span>' +
+    b.innerHTML = '<span class="lx-paper"><b class="lx-num"></b><small></small></span>' +
       '<span class="lx-body"></span><span class="lx-flap"></span><span class="lx-seal">福</span>';
-    b.querySelector("small").textContent = I18n.t("lixi.unit");
-    b.addEventListener("click", function () { pick(i); });
+    b.querySelector("small").textContent = unit || I18n.t("lixi.unit");
+    b.addEventListener("click", function () { (onClick || pick)(i); });
     return b;
   }
 
@@ -82,5 +82,5 @@
   document.addEventListener("DOMContentLoaded", function () {
     el("lixi-go").addEventListener("click", function () { if (state.onGo) state.onGo(); });
   });
-  window.Lixi = { show: show };
+  window.Lixi = { show: show, envelope: envelope, sparks: sparks };
 })();

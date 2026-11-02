@@ -65,6 +65,17 @@
       </div>
     </section>
 
+    <!-- ===== MÀN HÌNH: RÚT BAO LÌ XÌ THƯỞNG (sau vòng quay) ===== -->
+    <section class="screen" id="screen-bags" hidden>
+      <div class="card lixi-card">
+        <h2 data-i18n="bags.title">Chọn một bao lì xì</h2>
+        <p id="bags-hint"></p>
+        <div class="lixi-grid" id="bags-grid"></div>
+        <p class="lixi-result" id="bags-result" role="status" aria-live="polite" hidden></p>
+        <button class="btn btn-primary" id="bags-go" type="button" data-i18n="bags.go" hidden>Tiếp tục</button>
+      </div>
+    </section>
+
     <!-- ===== MÀN HÌNH: LỊCH SỬ CỦA NGƯỜI CHƠI =====
     <section class="screen" id="screen-history" hidden>
       <div class="card history-card">
@@ -403,6 +414,7 @@
           <div class="form-actions">
             <button class="btn btn-primary" id="quiz-continue" type="button" data-i18n="quiz.spin">Quay thưởng</button>
             <button class="btn btn-primary" id="quiz-back" type="button" data-nav="levels" data-i18n="quiz.again" hidden>Chơi tiếp</button>
+          <button class="btn btn-primary" id="wheel-bags" type="button" data-i18n="wheel.pickBag" hidden>Rút lì xì</button>
           </div>
         </div>
       </div>
@@ -493,6 +505,7 @@
   <script src="js/publish.js"></script>
   <script src="js/wheel.js"></script>
   <script src="js/lixi.js"></script>
+  <script src="js/bags.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/lang.js"></script>
   <script src="js/sfx-data.js"></script>
