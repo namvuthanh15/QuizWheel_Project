@@ -390,3 +390,15 @@ html:not([lang="vi"]) .home-title-text { display: block; }
 @keyframes lx-pop { 0% { transform: translateY(-62%) scale(.6); } 100% { transform: translateY(-62%) scale(1.15); } }
 @keyframes lx-confetti { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); } }
 @media (prefers-reduced-motion: reduce) { .lx.win, .lx.win .lx-body, .lx.win .lx-paper, .lx.win .lx-num { animation: none; } .lx-confetti { display: none; } }
+
+/* Mở nhiều bao cùng lúc: tờ lì xì hiện ngay trong bao (không tràn lên bao ở hàng trên) */
+#bags-grid { margin-top: 18px; }
+#bags-hint + #bags-all { margin-top: 4px; }
+#bags-result { position: relative; }
+#bags-grid .lx.open { transform: scale(1.04); }
+#bags-grid .lx.win { animation: lx-win2 1s ease-out both; }
+#bags-grid .lx.win .lx-body { animation-iteration-count: 2; }
+#bags-grid .lx.open .lx-paper { z-index: 5; transform: translateY(-6%); box-shadow: 0 4px 12px rgba(0, 0, 0, .3); animation: lx-slip .9s cubic-bezier(.2, 1.2, .4, 1) both; }
+@keyframes lx-win2 { 0% { transform: scale(1); } 35% { transform: scale(1.2); } 100% { transform: scale(1.04); } }
+@keyframes lx-slip { 0% { transform: translateY(0) scale(.7); } 55% { transform: translateY(-50%) scale(1.2); } 100% { transform: translateY(-6%) scale(1); } }
+@media (prefers-reduced-motion: reduce) { #bags-grid .lx.win, #bags-grid .lx.open .lx-paper { animation: none; } }

@@ -489,23 +489,23 @@
     const total = items.reduce(function (a, x) { return a + (Number(x.count) || 0); }, 0) || 1;
     const byN = {};
     items.forEach(function (x) { const n = Number(x.bags) || 0; byN[n] = (byN[n] || 0) + (Number(x.count) || 0); });
-    lines.push(""); lines.push("Theo số bao quay được (tiền trung bình của bao người chơi chọn):");
+    lines.push(""); lines.push("Theo số bao quay được (người chơi mở HẾT các bao và nhận TỔNG giá trị):");
     let expect = 0;
     Object.keys(byN).map(Number).sort(function (a, b) { return a - b; }).forEach(function (n) {
       const p = byN[n] / total;
       if (n === 0) { lines.push("  0 bao   " + fmtNum(p * 100) + "% số ô   → không được rút"); return; }
-      const mean = values.length ? simBagMean(values, n, 20000) : 0;
-      expect += p * mean;
-      lines.push("  " + (n + " bao").padEnd(8) + fmtNum(p * 100) + "% số ô   → trung bình ≈ " + fmtNum(mean) + "K" + (n > values.length ? "   (có bao trùng giá trị vì nhiều bao hơn số giá trị)" : ""));
+      const mean = values.length ? simBagMean(values, n, 20000) : 0, sum = mean * n;
+      expect += p * sum;
+      lines.push("  " + (n + " bao").padEnd(8) + fmtNum(p * 100) + "% số ô   → mỗi bao ≈ " + fmtNum(mean) + "K, tổng nhận ≈ " + fmtNum(sum) + "K" + (n > values.length ? "   (có bao trùng giá trị vì nhiều bao hơn số giá trị)" : ""));
     });
-    lines.push(""); lines.push("Tiền trung bình mỗi ván của vòng này ≈ " + fmtNum(expect) + "K");
+    lines.push(""); lines.push("Tiền trung bình host phát ra mỗi ván của vòng này ≈ " + fmtNum(expect) + "K");
     return lines.join("\n");
   }
 
   function bagEditor(el, c) {
     const items = D.wheels[wLevel] = (D.wheels[wLevel] || []).map(function (x) { return Object.assign({}, x); });
-    c.appendChild(h("h3", "", "1) Vòng quay: quay ra số bao được rút"));
-    c.appendChild(h("p", "note", "Mỗi hàng là một kết quả của vòng quay: số bao (0 đến 9) và số ô trên vòng. Tỉ lệ = số ô ÷ tổng số ô. Hàng “0 bao” nghĩa là không được rút lì xì."));
+    c.appendChild(h("h3", "", "1) Vòng quay: quay ra số bao lì xì (người chơi mở hết số bao này)"));
+    c.appendChild(h("p", "note", "Mỗi hàng là một kết quả của vòng quay: số bao (0 đến 9) và số ô trên vòng. Tỉ lệ = số ô ÷ tổng số ô. Quay được N bao thì người chơi mở hết N bao và nhận tổng giá trị của chúng. Hàng “0 bao” nghĩa là không có lì xì."));
     const total = function () { return items.reduce(function (a, x) { return a + (Number(x.count) || 0); }, 0); };
     const info = h("p", "note");
     const upd = function () { info.textContent = "Tổng " + total() + "/" + Store.WHEEL_MAX + " ô (cần ít nhất 2)."; };
@@ -524,7 +524,7 @@
     upd(); c.appendChild(info);
     c.appendChild(btn("+ Thêm số bao", "btn btn-secondary", function () { items.push({ id: Store.uid(), bags: 1, label: "1 bao", count: 1, color: Store.PALETTE[items.length % Store.PALETTE.length] }); D.wheels[wLevel] = items; dirty.wheel = true; renderWheels(); }));
 
-    c.appendChild(h("h3", "", "2) Giá trị lì xì trong bao (đơn vị K)"));
+    c.appendChild(h("h3", "", "2) Giá trị lì xì có thể xuất hiện trong bao (đơn vị K)"));
     c.appendChild(h("p", "note", "Mỗi giá trị cách nhau bằng dấu cách hoặc xuống dòng; nhập 50, 50K hay 50k đều được (số lẻ dùng dấu phẩy, ví dụ 2,5K). Giá trị càng lớn càng hiếm (tỉ lệ ∝ 1 ÷ giá trị²). Các bao trong một ván không trùng giá trị khi còn giá trị chưa dùng."));
     if (bagDraft[wLevel] === undefined) bagDraft[wLevel] = ((D.bagValues || {})[wLevel] || []).map(fmtNum).join(" ");
     const ta = h("textarea"); ta.rows = 3; ta.placeholder = "vd: 10 20 50 100"; ta.value = bagDraft[wLevel];
