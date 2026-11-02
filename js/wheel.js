@@ -6,7 +6,7 @@
   const MIN_SLICES = 2, SPIN_MS = REDUCED ? 1200 : 4500, SPIN_TURNS = REDUCED ? 1 : 6, TWO_PI = Math.PI * 2, POINTER = -Math.PI / 2;   // kim ở trên cùng
 
   // level: mức đang hiển thị; once = true khi đang chơi thật (chỉ được quay 1 lần), false khi host xem thử
-  const state = { level: "free", playId: "", once: false, done: false, items: [], slices: [], rotation: 0, spinning: false, bags: null, onBags: null };
+  const state = { level: "free", playId: "", once: false, done: false, items: [], slices: [], rotation: 0, spinning: false, bags: null, onBags: null, advanceId: 0 };
   let canvas, ctx;
   let runId = 0;                                   // mỗi lần quay có 1 mã; đổi mã = hủy lần quay cũ
 
@@ -117,7 +117,14 @@
       UI.$("#spin-btn").disabled = state.once || state.slices.length < MIN_SLICES;   // chơi thật: hết lượt
       syncButtons();
       if (serverBags !== null) {                                       // vòng lì xì: không có phần thưởng ngay, chỉ công bố số bao
-        if (serverBags > 0) { out.textContent = I18n.t("wheel.bagsResult", { n: serverBags }); out.classList.add("show"); Sfx.wow(); }
+        if (serverBags > 0) {
+          out.textContent = I18n.t("wheel.bagsResult", { n: serverBags }); out.classList.add("show"); Sfx.wow();
+          clearTimeout(state.advanceId);                               // đọc kết quả khoảng 1,8 giây rồi tự sang màn rút lì xì
+          state.advanceId = setTimeout(function () {
+            state.advanceId = 0;
+            if (myRun === runId && state.onBags && state.bags > 0) state.onBags(state.playId, state.bags);
+          }, 1800);
+        }
         else { out.textContent = I18n.t("wheel.noBags"); out.classList.add("show"); UI.reveal(I18n.t("wheel.noBags")); }
         return;
       }
@@ -132,6 +139,7 @@
 
   // Rời màn hình vòng quay giữa lúc đang quay: hủy lần quay, không hiện kết quả/âm thanh ở màn hình khác
   function stop() {
+    clearTimeout(state.advanceId); state.advanceId = 0;              // rời màn hình thì hủy việc tự chuyển
     if (!state.spinning) return;
     runId++; state.spinning = false;
   }
@@ -165,6 +173,7 @@
     if (state.spinning) return;
     opts = opts || {};
     if (opts.level && Store.WHEEL_LEVELS.indexOf(opts.level) >= 0) state.level = opts.level;
+    clearTimeout(state.advanceId); state.advanceId = 0;
     state.bags = null; state.onBags = typeof opts.onBags === "function" ? opts.onBags : null;
     state.once = !!opts.once; state.done = false; state.playId = opts.once && opts.playId ? opts.playId : "";
     UI.$("#wheel-level").textContent = Store.WHEEL_LABELS[state.level] || "";
@@ -181,7 +190,10 @@
   function init() {
     canvas = UI.$("#wheel-canvas"); ctx = canvas.getContext("2d");
     UI.$("#spin-btn").addEventListener("click", spin);
-    UI.$("#wheel-bags").addEventListener("click", function () { if (state.onBags && state.bags > 0) state.onBags(state.playId, state.bags); });
+    UI.$("#wheel-bags").addEventListener("click", function () {
+      clearTimeout(state.advanceId); state.advanceId = 0;
+      if (state.onBags && state.bags > 0) state.onBags(state.playId, state.bags);
+    });
     open();
   }
 
