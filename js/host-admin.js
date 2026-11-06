@@ -7,6 +7,7 @@
   let KEY = "";
   let players = [];
   let D = { questions: { easy: [], hard: [], impossible: [] }, wheels: {}, settings: null, loseImage: null };
+  let lixiVals = [2, 3, 4, 5, 6, 7, 8, 9, 10], lixiReady = false;     // 9 bao lì xì đăng nhập lần đầu (số lượt trong mỗi bao)
   let cfg = { costs: { easy: 1, hard: 1, impossible: 0 }, startTurns: 3, freeSpins: 1, impossiblePrize: "100K" };
   let tab = "players", qLevel = "easy", wLevel = "free", editing = null, histFor = null;
   let shareBox = null;   // { name, pin|null, withPin } – chỉ giữ trong bộ nhớ tab này, không lưu vào LocalStorage/URL
@@ -86,6 +87,9 @@
       D.wheels = ex.wheels || {}; D.bagValues = ex.bagValues || {}; bagDraft = {}; D.settings = ex.settings; D.loseImage = ex.loseImage || null;
     }
     if (st) cfg = { costs: st.costs, startTurns: st.startTurns, freeSpins: st.freeSpins, impossiblePrize: st.impossiblePrize };
+    const lx = await Api.call("admin_lixi_get", { p_key: KEY });
+    lixiReady = !!(lx && lx.ok && Array.isArray(lx.values) && lx.values.length === 9);
+    if (lixiReady) lixiVals = lx.values.map(Number);
     dirty.questions = dirty.wheel = false;
   }
 
@@ -614,6 +618,30 @@
       if (b) { await loadAll(); renderSettings(); say("Đã lưu cài đặt.", true); }
     }));
     el.appendChild(c);
+
+    // ----- 9 bao lì xì rút ở lần đăng nhập đầu tiên -----
+    const lc9 = h("div", "card"); lc9.style.marginTop = "14px";
+    lc9.appendChild(h("h2", "", "Lì xì đăng nhập lần đầu (9 bao)"));
+    lc9.appendChild(h("p", "note", "Mỗi người chơi rút 1 trong 9 bao khi vào tài khoản lần đầu. Bạn đặt số lượt nằm trong từng bao bên dưới; mỗi lần có người rút, hệ thống xáo trộn 9 giá trị này vào 9 bao rồi người chơi bấm một bao. Chỉ áp dụng cho người rút từ sau khi lưu; người đã rút rồi không bị ảnh hưởng."));
+    if (!lixiReady) lc9.appendChild(h("p", "feedback bad", "Server chưa có chức năng này. Hãy chạy file sql/10-lixi-values.sql trong Supabase (SQL Editor) rồi tải lại trang."));
+    const lg = h("div", "grid2"), lin = [];
+    lixiVals.forEach(function (v, i) { const f = input("number", v, { min: 0, max: 100, step: 1 }); lin.push(f); lg.appendChild(field("Bao " + (i + 1) + " (lượt)", f)); });
+    lc9.appendChild(lg);
+    const lsum = h("p", "note");
+    const lupd = function () {
+      const vals = lin.map(function (f) { return Number(f.value); });
+      const t = vals.reduce(function (a, x) { return a + (Number.isFinite(x) ? x : 0); }, 0);
+      lsum.textContent = "Tổng 9 bao: " + t + " lượt; trung bình " + (Math.round(t / 9 * 10) / 10) + " lượt mỗi người.";
+    };
+    lin.forEach(function (f) { f.addEventListener("input", lupd); }); lupd();
+    lc9.appendChild(lsum);
+    lc9.appendChild(btn("Lưu 9 bao lì xì", "btn btn-primary", async function () {
+      const vals = lin.map(function (f) { return Number(f.value); });
+      if (vals.some(function (x) { return !Number.isInteger(x) || x < 0 || x > 100; })) { say("Mỗi bao phải là số nguyên từ 0 đến 100.", false); return; }
+      if (await adm("admin_lixi_save", { p_values: vals })) { await loadAll(); renderSettings(); say("Đã lưu 9 bao lì xì.", true); }
+    }));
+    lc9.appendChild(btn("Về mặc định (2 đến 10)", "btn btn-secondary", function () { lin.forEach(function (f, i) { f.value = String(i + 2); }); lupd(); }));
+    el.appendChild(lc9);
 
     const lc = h("div", "card"); lc.style.marginTop = "14px";
     lc.appendChild(h("h2", "", "Ảnh hiện khi thua Impossible"));
