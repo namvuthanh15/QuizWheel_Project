@@ -24,7 +24,7 @@
         body: JSON.stringify(params || {})
       });
     } catch (e) { return { ok: false, error: "network" }; }
-    let data = null;
+    let data;
     try { data = await res.json(); } catch (e) { data = null; }
     if (!res.ok || !data || typeof data !== "object") return { ok: false, error: "server", status: res.status };
     if (data.ok === false && data.error === "auth") setToken("");   // phiên hết hạn / bị khóa

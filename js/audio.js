@@ -27,7 +27,7 @@
       // Dự phòng luôn được dựng sẵn
       pools[src] = { i: 0, list: [0, 1, 2].map(function () { const a = new Audio(src); a.preload = "auto"; return a; }) };
       if (!ctx || !window.fetch) return;
-      fetch((window.SFX_DATA && window.SFX_DATA[src]) || src).then(function (r) { return r.arrayBuffer(); })
+      fetch(src).then(function (r) { return r.arrayBuffer(); })
         .then(function (data) { return new Promise(function (ok, no) { ctx.decodeAudioData(data, ok, no); }); })
         .then(function (buf) { buffers[src] = buf; })
         .catch(function () {});         // không được thì cứ dùng dự phòng

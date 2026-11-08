@@ -39,8 +39,6 @@
     if (name !== "quiz") Quiz.reset();
     if (name === "lixi") Lixi.show(onLixiDone, function () { go("levels"); });
     if (name === "bags") Bags.show(opts, function () { go("levels"); });
-    if (name === "host" && !Store.isHostMode()) return;
-    if (name === "host") Host.open();
     if (name === "settings") Lang.close();
     if (name === "levels") { refreshPrices(); refreshState(); refreshConfig(); }
     if (name === "count") buildCount(opts && opts.level);
@@ -240,11 +238,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    const hp = new URLSearchParams(location.search).get("host");
-    if (hp === "1") Store.setHostMode(true); else if (hp === "0") { Store.setHostMode(false); Publish.clearToken(); }
-    const hostOk = Store.isHostMode();
-    document.querySelectorAll("[data-host-only]").forEach(function (el) { el.hidden = !hostOk; });
-
     document.addEventListener("click", function (e) {
       const target = e.target.closest("[data-nav]");
       if (!target) return;
@@ -294,15 +287,10 @@
     UI.$("#quiz-leave").addEventListener("click", Quiz.leave);
     UI.$("#typed-leave").addEventListener("click", Quiz.leave);
 
-    UI.$("#w-preview").addEventListener("click", function () { go("wheel", { level: UI.$("#w-level").value, once: false }); });
-    UI.$("#wheel-edit").addEventListener("click", function () { go("host"); Host.showTab("wheel", Wheel.level()); });
-
     UI.$("#reveal").addEventListener("click", UI.hideReveal);
     Lang.init();
     Sfx.init();
     Wheel.init();
-    Host.init();
-    Publish.init();
     Settings.init();
     go("home");
     boot();

@@ -9,10 +9,9 @@
   let D = { questions: { easy: [], hard: [], impossible: [] }, wheels: {}, settings: null, loseImage: null };
   let lixiVals = [2, 3, 4, 5, 6, 7, 8, 9, 10], lixiReady = false;     // 9 bao lì xì đăng nhập lần đầu (số lượt trong mỗi bao)
   let cfg = { costs: { easy: 1, hard: 1, impossible: 0 }, startTurns: 3, freeSpins: 1, impossiblePrize: "100K" };
-  let tab = "players", qLevel = "easy", wLevel = "free", editing = null, histFor = null;
+  let qLevel = "easy", wLevel = "free", editing = null, histFor = null;
   let shareBox = null;   // { name, pin|null, withPin } – chỉ giữ trong bộ nhớ tab này, không lưu vào LocalStorage/URL
   const dirty = { questions: false, wheel: false };
-  const form = { images: [null, null, null, null] };
 
   const ERR = { auth: "Sai mật khẩu host.", locked: "Nhập sai quá nhiều lần, bị khóa 15 phút.", nokey: "Chưa đặt mật khẩu host (chạy 02-admin-key.sql).",
     network: "Không kết nối được Supabase.", server: "Máy chủ báo lỗi.", config: "Chưa cấu hình js/config.js.",
@@ -97,7 +96,7 @@
   const TABS = [["players", "Người chơi"], ["questions", "Câu hỏi"], ["wheels", "Vòng quay"], ["settings", "Cài đặt"], ["data", "Nạp / sao lưu"]];
   function showTab(name) {
     if (name !== "players") shareBox = null;
-    tab = name; say("");
+    say("");
     const bar = $("#tabs"); bar.textContent = "";
     TABS.forEach(function (t) {
       const b = h("button", "btn btn-secondary" + (t[0] === name ? " active" : ""), t[1]); b.type = "button";
@@ -152,7 +151,7 @@
     return new Promise(function (resolve, reject) {
       const ta = h("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
       document.body.appendChild(ta); ta.select();
-      let ok = false; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      let ok; try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
       document.body.removeChild(ta); ok ? resolve() : reject(new Error("copy"));
     });
   }

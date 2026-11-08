@@ -10,8 +10,8 @@
     vi: {
       "app.title": "QuizWheel – Quiz & Vòng quay may mắn",
       "nav.home": "Trang chủ", "nav.quiz": "Quiz",
-      "common.back": "Quay lại", "common.edit": "Sửa", "common.delete": "Xóa", "common.cancel": "Hủy",
-      "common.saveQuestion": "Lưu câu hỏi", "common.removeImage": "Xóa ảnh",
+      "common.back": "Quay lại","common.cancel": "Hủy",
+
       "footer": "QuizWheel – bản demo. Quiz và Wheel sẽ được hoàn thiện ở các milestone sau.",
 
       "home.title": "Liệu bạn có biết gì về Nem?",
@@ -21,152 +21,81 @@
       "wheel.name.free": "Free", "wheel.name.easy": "Easy · 2 câu", "wheel.name.easy4": "Easy · 4 câu", "wheel.name.easy6": "Easy · 6 câu", "wheel.name.hard": "Hard · 4 câu", "wheel.name.hard6": "Hard · 6 câu",
       "count.title": "Chọn số câu hỏi", "count.sub": "Liều ăn nhiều", "count.unit": "câu hỏi", "count.aria": "{n} câu hỏi", "count.locked": "Chưa đủ câu hỏi",
 
-      "settings.editQuestions": "Soạn câu hỏi",
       "settings.soundToggle": "Bật/tắt âm thanh", "settings.musicToggle": "Bật/tắt nhạc nền",
       "settings.soundVol": "Âm lượng Sound", "settings.musicVol": "Âm lượng Music",
       "settings.language": "Ngôn ngữ", "settings.languageList": "Danh sách ngôn ngữ",
 
-      "host.tabPublish": "Đăng web",
-      "pub.title": "Đăng dữ liệu lên web",
-      "pub.intro": "Ghi thẳng file dữ liệu vào kho GitHub của bạn, không cần xuất/nhập file.",
-      "pub.owner": "Tài khoản GitHub (owner)",
-      "pub.repo": "Tên repo",
-      "pub.branch": "Nhánh",
-      "pub.path": "Đường dẫn file",
-      "pub.pathHint": "Chỉ dùng chữ, số, . _ - và /; phải là file .js; không bắt đầu bằng / và không chứa ..",
-      "pub.token": "Mã truy cập GitHub (token)",
-      "pub.show": "Hiện mã",
-      "pub.hide": "Ẩn mã",
-      "pub.clearToken": "Xóa mã",
-      "pub.tokenCleared": "Đã xóa mã",
-      "pub.tokenNote": "Mã chỉ được giữ trong phiên này (đóng tab là mất). Nên dùng mã “fine-grained” chỉ cấp cho đúng 1 repo, quyền Contents (đọc/ghi), có thời hạn ngắn.",
-      "pub.guide.title": "Cách tạo mã (token)",
-      "pub.guide.s1": "GitHub > ảnh đại diện > Settings > Developer settings > Personal access tokens > Fine-grained tokens > Generate new token.",
-      "pub.guide.s2": "Resource owner: chọn tài khoản của bạn. Expiration: đặt ngắn (ví dụ 30 ngày).",
-      "pub.guide.s3": "Repository access: chọn Only select repositories rồi chọn đúng repo QuizWheel.",
-      "pub.guide.s4": "Permissions > Repository permissions > Contents: Read and write.",
-      "pub.guide.s5": "Bấm Generate token, sao chép mã (chỉ hiện một lần) rồi dán vào ô phía trên.",
-      "pub.guide.warn": "Không gửi mã cho ai, không dán vào chat hay vào file trong repo. Tên menu của GitHub có thể thay đổi.",
-      "pub.message": "Nội dung commit (tùy chọn)",
-      "pub.messagePh": "Cập nhật dữ liệu QuizWheel",
-      "pub.sum.title": "Tóm tắt trước khi đăng",
-      "pub.sum.q": "Câu hỏi: {e} {easy} · {h} {hard} · {i} {impossible}",
-      "pub.sum.w": "Ô vòng quay: {list}",
-      "pub.sum.loseYes": "Ảnh “thua”: có",
-      "pub.sum.loseNo": "Ảnh “thua”: không",
-      "pub.sum.size": "Dung lượng file mới: {kb} KB",
-      "pub.sum.warnBig": "Cảnh báo: file lớn hơn 1 MB nên web sẽ tải chậm hơn. Nên thu nhỏ hoặc bớt ảnh.",
-      "pub.sum.blockBig": "File lớn hơn 5 MB nên không thể đăng bằng cách này. Hãy bớt ảnh hoặc câu hỏi.",
-      "pub.sum.empty": "Chưa có câu hỏi nào ở cả 3 mức. Đăng bây giờ sẽ ghi đè dữ liệu cũ bằng dữ liệu rỗng.",
-      "pub.submit": "Đăng lên web",
-      "pub.submitBusy": "Đang đăng...",
-      "pub.confirm": "Dữ liệu này sẽ ghi đè {path} (repo {owner}/{repo}, nhánh {branch}) và HIỆN CÔNG KHAI cho mọi người, kể cả đáp án đúng.\n\nTiếp tục đăng?",
-      "pub.confirmEmpty": "Cả 3 mức đều chưa có câu hỏi. Đăng bây giờ sẽ ghi đè dữ liệu hiện có bằng dữ liệu RỖNG.\n\nBạn có chắc chắn muốn tiếp tục?",
-      "pub.confirmBig": "Lưu ý: file lớn hơn 1 MB ({kb} KB), web sẽ tải chậm hơn.",
-      "pub.st.check": "Đang kiểm tra dữ liệu...",
-      "pub.st.fetch": "Đang kiểm tra file hiện có trên GitHub...",
-      "pub.st.newFile": "Repo chưa có file này, đang tạo mới...",
-      "pub.st.put": "Đang đăng lên GitHub...",
-      "pub.st.retry": "File vừa bị thay đổi ở nơi khác, đang lấy bản mới nhất và thử lại...",
-      "pub.st.cancelled": "Đã hủy, chưa đăng gì cả.",
-      "pub.ok": "Đăng thành công! Đã cập nhật {path}.",
-      "pub.ok.created": "Đăng thành công! Đã tạo mới {path}.",
-      "pub.ok.link": "Xem commit trên GitHub",
-      "pub.ok.wait": "GitHub Pages cần khoảng 1-2 phút để dựng lại, người chơi có thể phải làm mới trang (Ctrl+F5) hoặc đợi tối đa vài phút do bộ nhớ đệm.",
-      "pub.err.notHost": "Chỉ host mới được đăng dữ liệu.",
-      "pub.err.needOwner": "Hãy nhập tài khoản GitHub (owner).",
-      "pub.err.badOwner": "Tài khoản GitHub chỉ gồm chữ, số, dấu gạch ngang (tối đa 39 ký tự).",
-      "pub.err.needRepo": "Hãy nhập tên repo.",
-      "pub.err.badRepo": "Tên repo chỉ gồm chữ, số, . _ - (tối đa 100 ký tự).",
-      "pub.err.needBranch": "Hãy nhập tên nhánh.",
-      "pub.err.badBranch": "Tên nhánh không hợp lệ (chỉ chữ, số, . _ - /; không chứa .. hoặc //).",
-      "pub.err.needPath": "Hãy nhập đường dẫn file.",
-      "pub.err.badPath": "Đường dẫn file không hợp lệ: chỉ dùng chữ, số, . _ - và /, không bắt đầu bằng /, không chứa .., và phải là file .js.",
-      "pub.err.needToken": "Hãy dán mã truy cập GitHub (token).",
-      "pub.err.badToken": "Mã có ký tự không hợp lệ (có khoảng trắng, chữ có dấu hoặc quá ngắn). Hãy sao chép lại mã.",
-      "pub.err.tooBig": "File dữ liệu lớn {mb} MB, vượt giới hạn 5 MB nên không đăng được. Hãy bớt ảnh hoặc câu hỏi.",
-      "pub.err.offline": "Máy đang offline. Hãy kết nối mạng rồi thử lại.",
-      "pub.err.network": "Không kết nối được tới GitHub. Hãy kiểm tra mạng (hoặc tắt tiện ích chặn quảng cáo/VPN) rồi thử lại.",
-      "pub.err.timeout": "GitHub không phản hồi sau {sec} giây. Hãy thử lại sau.",
-      "pub.err.401": "GitHub không chấp nhận mã truy cập (sai, đã hết hạn hoặc bị thu hồi). Hãy tạo mã mới rồi dán lại.",
-      "pub.err.403": "Mã không đủ quyền ghi. Hãy tạo mã có quyền Contents: Read and write cho đúng repo này.",
-      "pub.err.403rate": "GitHub đang giới hạn tốc độ. Hãy thử lại sau khoảng {min} phút.",
-      "pub.err.403rateNoTime": "GitHub đang giới hạn tốc độ. Hãy đợi vài phút rồi thử lại.",
-      "pub.err.404": "Không tìm thấy repo {owner}/{repo} hoặc nhánh {branch}, hoặc mã chưa được cấp quyền vào repo này. Kiểm tra lại tên tài khoản, tên repo, nhánh và mục Repository access của mã.",
-      "pub.err.isDir": "Đường dẫn {path} là một thư mục, không phải file.",
-      "pub.err.conflict": "File vừa bị sửa ở nơi khác nên GitHub từ chối ghi đè (đã tự thử lại 1 lần). Hãy bấm đăng lại; nếu vẫn lỗi, kiểm tra xem repo có đang được sửa ở chỗ khác không.",
-      "pub.err.server": "GitHub đang gặp sự cố ({status}). Hãy thử lại sau ít phút.",
-      "pub.err.other": "GitHub báo lỗi {status}: {message}",
-      "pub.err.badResponse": "Không đọc được phản hồi từ GitHub. Hãy thử lại.",
-      "pub.err.unknown": "Có lỗi không mong đợi. Hãy thử lại.",
-      "host.tabsAria": "Phần cài đặt", "host.tabQuestions": "Câu hỏi", "host.tabWheel": "Vòng quay",
-      "host.general": "Cài đặt chung",
-      "host.time": "Thời gian mỗi câu (giây, 0 = không giới hạn)",
-      "host.shuffle": "Đảo vị trí đáp án",
-      "host.shuffle.easy": "Mức Easy", "host.shuffle.hard": "Mức Hard",
-      "host.shuffle.note": "Bật: mỗi lần chơi, 4 đáp án (kèm ảnh) được xáo trộn vị trí A/B/C/D, đáp án đúng không còn cố định. Tắt: giữ đúng thứ tự bạn đã soạn.",
-      "host.noteOnce": "Mỗi câu chỉ chọn 1 lần. Đáp án đúng không bị lộ khi người chơi chọn sai.",
-      "host.pool": "Kho câu hỏi của mức",
-      "host.questions": "Câu hỏi", "host.add": "Thêm câu hỏi",
-      "host.export": "Xuất file", "host.import": "Nhập file", "host.sample": "Bộ mẫu",
-      "host.noteSaved": "Câu hỏi được lưu trong trình duyệt của bạn. Muốn chuyển sang máy khác, hãy “Xuất file” rồi “Nhập file” ở máy đó.",
-      "host.loseTitle": "Ảnh khi trả lời sai (mức Impossible)",
-      "host.loseNote": "Nếu người chơi không đúng đủ 2 ý, màn hình sẽ hiện bức ảnh này. Nếu thắng thì hiện “Chúc mừng, bạn đã thắng 100K”.",
-      "host.loseAria": "Chọn ảnh khi trả lời sai",
-      "host.hint": "Bấm “Thêm câu hỏi” hoặc “Sửa” để soạn nội dung ở đây.",
-      "host.typed.add": "Thêm câu hỏi nhập ngày", "host.typed.edit": "Sửa câu hỏi nhập ngày",
-      "host.typed.q": "Câu hỏi (gồm 2 ý)",
-      "host.typed.qph": "vd: Ý 1: Ngày Quốc khánh? Ý 2: Ngày thống nhất đất nước?",
-      "host.typed.legend": "Đáp án ý {n} (ngày / tháng / năm)",
-      "host.typed.day": "Ngày", "host.typed.month": "Tháng", "host.typed.year": "Năm",
-      "host.typed.ariaDay": "Ý {n}: ngày", "host.typed.ariaMonth": "Ý {n}: tháng", "host.typed.ariaYear": "Ý {n}: năm",
-      "host.typed.note": "Người chơi nhập ngày/tháng/năm vào 2 hàng ô trống. Ngày và tháng so khớp theo số (05 = 5); năm gõ đủ 4 số hoặc 2 số cuối đều được.",
-      "host.form.add": "Thêm câu hỏi", "host.form.edit": "Sửa câu hỏi",
-      "host.form.q": "Câu hỏi", "host.form.qph": "Nhập nội dung câu hỏi",
-      "host.form.ans": "Đáp án {l}", "host.form.correct": "Đây là đáp án đúng",
-      "host.form.ansph": "Chữ trong ô {l}", "host.form.ansAria": "Nội dung đáp án {l}", "host.form.imgAria": "Ảnh meme cho đáp án {l}",
-      "host.form.explain": "Giải thích (tùy chọn, chỉ hiện sau khi trả lời đúng)",
-      "host.wheel.title": "Giá trị trên vòng quay", "host.wheel.total": "Tổng", "host.wheel.cells": "ô",
-      "host.wheel.level": "Mức lì xì",
-      "host.wheel.note": "Mỗi giá trị có “số ô”. Giá trị nhiều ô hơn thì dễ trúng hơn. Tổng số ô tối đa là 36.",
-      "host.wheel.labelph": "Giá trị (vd: 10K)", "host.wheel.newValue": "Giá trị mới", "host.wheel.cellsAria": "Số ô", "host.wheel.color": "Màu",
-      "host.wheel.addBtn": "Thêm", "host.wheel.reset": "Khôi phục mặc định", "host.wheel.preview": "Xem thử vòng quay",
-      "host.wheel.colorOf": "Màu của {x}", "host.wheel.value": "Giá trị", "host.wheel.cellsOf": "Số ô của {x}", "host.wheel.delAria": "Xóa {x}",
-      "host.rule.typed": "Mỗi lượt bốc ngẫu nhiên {count} câu gồm {parts} ý, người chơi nhập ngày/tháng/năm bằng bàn phím. Đúng đủ {parts} ý → thắng {price}; không đủ → hiện ảnh bạn tải lên ở bên dưới.",
-      "host.rule.mcq": "Người chơi chọn số câu: {counts}. Mỗi lượt bốc ngẫu nhiên đúng số câu đó từ kho này; mỗi câu đúng được 100 ÷ số câu điểm (đúng hết = 100đ).",
-      "host.rule.line": "• {n} câu: {tiers}.", "host.rule.tier": "đúng {range} câu → {to}", "host.rule.toWheel": "vòng quay {wheel}", "host.rule.toPrize": "nhận thẳng Lì xì {price}",
-      "host.warn.pool": "Kho có {have} câu: các lựa chọn cần nhiều hơn (tối đa {max} câu) sẽ bị khóa với người chơi cho đến khi bạn soạn đủ.",
-      "host.prize": "Lì xì khi đúng hết 8 câu", "host.prize.easy": "Mức Easy", "host.prize.hard": "Mức Hard",
-      "host.prize.note": "Đúng hết 8 câu thì nhận thẳng số lì xì này (không quay), kèm hiệu ứng như lúc nhận thưởng vòng quay. Để trống = dùng giá trị mặc định.",
-      "host.warn.need": "Cần ít nhất {count} câu hỏi để mức {level} chơi được.",
-      "host.empty": "Chưa có câu hỏi nào. Bấm “Thêm câu hỏi” để bắt đầu.",
-      "host.editAria": "Sửa câu {n}", "host.delAria": "Xóa câu {n}",
-      "host.err.full": "Không lưu được: bộ nhớ trình duyệt đã đầy.",
-      "host.err.fullList": "Không lưu được: bộ nhớ trình duyệt đã đầy. Hãy xóa bớt câu hỏi/ảnh hoặc dùng “Xuất file” để lưu bản sao.",
-      "host.err.fullImgs": "Không lưu được: bộ nhớ trình duyệt đã đầy. Hãy dùng ảnh ít hơn hoặc xóa bớt câu.",
-      "host.err.fullImage": "Không lưu được ảnh: bộ nhớ trình duyệt đã đầy hoặc ảnh quá lớn.",
-      "host.err.noText": "Hãy nhập nội dung câu hỏi.",
-      "host.err.badDate": "Đáp án ý {n} chưa phải một ngày hợp lệ.",
-      "host.err.max": "Tối đa {max} câu hỏi.",
-      "host.err.needAns": "Đáp án {l} cần có chữ hoặc ảnh.",
-      "host.err.needCorrect": "Hãy chọn đáp án đúng.",
-      "host.err.notImage": "Hãy chọn một file ảnh.", "host.err.imgBig": "Ảnh quá lớn (tối đa 10MB).", "host.err.imgRead": "Không đọc được ảnh này.",
-      "host.err.fileBig": "File quá lớn (tối đa 20MB).", "host.err.importFail": "Không nhập được file.",
-      "host.confirm.del": "Xóa câu hỏi này?",
-      "host.confirm.import": "Nhập {total} câu hỏi{skipped} sẽ THAY THẾ toàn bộ câu hỏi hiện có của các mức trong file (mức {level} hiện có {have} câu). Tiếp tục?",
-      "host.import.skipped": " (bỏ qua {n} câu lỗi)",
-      "host.confirm.reset": "Khôi phục bộ câu hỏi mẫu? Toàn bộ câu hỏi bạn đã soạn sẽ bị xóa.",
-      "host.confirm.resetWheel": "Khôi phục vòng quay mặc định? Các giá trị bạn đã nhập sẽ bị xóa.",
-      "host.toast.qSaved": "Đã lưu câu hỏi", "host.toast.settingsSaved": "Đã lưu cài đặt", "host.toast.imgSaved": "Đã lưu ảnh", "host.toast.imported": "Đã nhập {n} câu hỏi",
-      "host.w.empty": "Chưa có giá trị nào.", "host.w.warn": "Cần ít nhất 2 ô để vòng quay hoạt động.",
-      "host.w.errEmpty": "Giá trị không được để trống.", "host.w.errCount": "Số ô phải từ 1 trở lên.",
-      "host.w.errMaxItem": "Tổng số ô tối đa là {max} (giá trị này tối đa {left} ô).",
-      "host.w.errMaxAdd": "Tổng số ô tối đa là {max} (còn thêm được {left} ô).",
-      "host.w.errNoValue": "Hãy nhập giá trị.",
 
-      "quiz.emptyTitle": "Chưa có câu hỏi", "quiz.emptyMsg": "Hãy vào Setting để soạn câu hỏi trước khi chơi.",
-      "quiz.needMore": "Mức này cần ít nhất {count} câu hỏi (hiện có {have}). Hãy vào Setting để soạn thêm.",
-      "quiz.noQuiz": "Mức này chưa có phần quiz.",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      "host.typed.ariaDay": "Ý {n}: ngày", "host.typed.ariaMonth": "Ý {n}: tháng", "host.typed.ariaYear": "Ý {n}: năm",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       "quiz.q": "Câu", "quiz.score": "Điểm", "quiz.next": "Câu tiếp theo", "quiz.seeResult": "Xem kết quả",
       "quiz.result": "Kết quả", "quiz.spin": "Quay thưởng", "quiz.spinLevel": "Quay thưởng {level}", "quiz.again": "Chơi tiếp",
       "wheel.bagsResult": "Bạn quay được {n} bao lì xì!", "wheel.noBags": "Lần này không có bao lì xì nào. Chúc bạn may mắn lần sau!", "wheel.pickBag": "Rút lì xì",
@@ -185,7 +114,7 @@
       "quiz.fail": "Rất tiếc, chưa đủ {pass} điểm. Bạn sẽ được quay vòng quay {level}.",
       "quiz.win": "Chúc mừng, bạn đã thắng {price}!", "quiz.bigWin": "CHÚC MỪNG THẮNG LỚN", "quiz.loseText": "Rất tiếc, bạn chưa trả lời đúng cả 2 ý.",
       "typed.title": "Nhập câu trả lời", "typed.submit": "Gửi đáp án",
-      "wheel.aria": "Vòng quay", "wheel.spin": "Quay", "wheel.values": "Các giá trị trên vòng quay", "wheel.edit": "Chỉnh vòng quay",
+      "wheel.aria": "Vòng quay", "wheel.spin": "Quay", "wheel.values": "Các giá trị trên vòng quay",
       "wheel.result": "Kết quả: {x}", "wheel.cells": "ô",
       "wheel.noteOk": "Tổng {total} ô. Tỉ lệ trúng = số ô của giá trị chia tổng số ô.",
       "wheel.noteFew": "Cần ít nhất {min} ô để quay. Hãy bấm “Chỉnh vòng quay”.",
@@ -212,14 +141,13 @@
       "history.sum": "Đã trúng {won} · Host đã trả {paid} · Còn chờ nhận {owed}",
       "history.pendingSpin": "Chưa quay", "history.active": "Đang chơi", "history.abandoned": "Đã bỏ giữa chừng",
 
-
       "store.badJson": "File không phải JSON hợp lệ.", "store.noList": "File không có danh sách câu hỏi.", "store.noValid": "Không có câu hỏi nào hợp lệ trong file."
     },
     en: {
       "app.title": "QuizWheel – Quiz & Lucky Wheel",
       "nav.home": "Home", "nav.quiz": "Quiz",
-      "common.back": "Back", "common.edit": "Edit", "common.delete": "Delete", "common.cancel": "Cancel",
-      "common.saveQuestion": "Save question", "common.removeImage": "Remove image",
+      "common.back": "Back","common.cancel": "Cancel",
+
       "footer": "QuizWheel – demo build. Quiz and Wheel will be completed in later milestones.",
 
       "home.title": "How much do you know about Nem?",
@@ -229,152 +157,81 @@
       "wheel.name.free": "Free", "wheel.name.easy": "Easy · 2 questions", "wheel.name.easy4": "Easy · 4 questions", "wheel.name.easy6": "Easy · 6 questions", "wheel.name.hard": "Hard · 4 questions", "wheel.name.hard6": "Hard · 6 questions",
       "count.title": "Choose number of questions", "count.sub": "High risk, high reward", "count.unit": "questions", "count.aria": "{n} questions", "count.locked": "Not enough questions",
 
-      "settings.editQuestions": "Edit Questions",
       "settings.soundToggle": "Toggle sound", "settings.musicToggle": "Toggle music",
       "settings.soundVol": "Sound volume", "settings.musicVol": "Music volume",
       "settings.language": "Language", "settings.languageList": "Language list",
 
-      "host.tabPublish": "Publish",
-      "pub.title": "Publish data to the web",
-      "pub.intro": "Write the data file straight into your GitHub repository, with no export/import steps.",
-      "pub.owner": "GitHub account (owner)",
-      "pub.repo": "Repository name",
-      "pub.branch": "Branch",
-      "pub.path": "File path",
-      "pub.pathHint": "Letters, digits, . _ - and / only; must be a .js file; must not start with / or contain ..",
-      "pub.token": "GitHub access token",
-      "pub.show": "Show token",
-      "pub.hide": "Hide token",
-      "pub.clearToken": "Clear token",
-      "pub.tokenCleared": "Token cleared",
-      "pub.tokenNote": "The token is kept for this session only (closing the tab erases it). Use a “fine-grained” token limited to this one repository, with Contents (read/write) permission and a short expiry.",
-      "pub.guide.title": "How to create a token",
-      "pub.guide.s1": "GitHub > profile picture > Settings > Developer settings > Personal access tokens > Fine-grained tokens > Generate new token.",
-      "pub.guide.s2": "Resource owner: choose your account. Expiration: keep it short (for example 30 days).",
-      "pub.guide.s3": "Repository access: choose Only select repositories, then pick the QuizWheel repository only.",
-      "pub.guide.s4": "Permissions > Repository permissions > Contents: Read and write.",
-      "pub.guide.s5": "Click Generate token, copy the token (shown only once) and paste it into the field above.",
-      "pub.guide.warn": "Never share the token, and never paste it into a chat or a file in the repository. GitHub's menu names may change.",
-      "pub.message": "Commit message (optional)",
-      "pub.messagePh": "Update QuizWheel data",
-      "pub.sum.title": "Summary before publishing",
-      "pub.sum.q": "Questions: {e} {easy} · {h} {hard} · {i} {impossible}",
-      "pub.sum.w": "Wheel cells: {list}",
-      "pub.sum.loseYes": "“Lose” image: yes",
-      "pub.sum.loseNo": "“Lose” image: none",
-      "pub.sum.size": "New file size: {kb} KB",
-      "pub.sum.warnBig": "Warning: the file is over 1 MB, so the site will load more slowly. Consider using smaller or fewer images.",
-      "pub.sum.blockBig": "The file is over 5 MB and cannot be published this way. Remove some images or questions.",
-      "pub.sum.empty": "There are no questions at any level. Publishing now would overwrite the old data with empty data.",
-      "pub.submit": "Publish to the web",
-      "pub.submitBusy": "Publishing...",
-      "pub.confirm": "This data will overwrite {path} (repo {owner}/{repo}, branch {branch}) and become PUBLIC to everyone, including the correct answers.\n\nContinue publishing?",
-      "pub.confirmEmpty": "No level has any question. Publishing now will overwrite the existing data with EMPTY data.\n\nAre you absolutely sure you want to continue?",
-      "pub.confirmBig": "Note: the file is over 1 MB ({kb} KB), so the site will load more slowly.",
-      "pub.st.check": "Checking data...",
-      "pub.st.fetch": "Checking the current file on GitHub...",
-      "pub.st.newFile": "The repository has no such file yet, creating it...",
-      "pub.st.put": "Publishing to GitHub...",
-      "pub.st.retry": "The file was just changed elsewhere, fetching the latest version and retrying...",
-      "pub.st.cancelled": "Cancelled, nothing was published.",
-      "pub.ok": "Published! {path} has been updated.",
-      "pub.ok.created": "Published! {path} has been created.",
-      "pub.ok.link": "View the commit on GitHub",
-      "pub.ok.wait": "GitHub Pages needs about 1-2 minutes to rebuild. Players may need to refresh the page (Ctrl+F5) or wait a few minutes because of caching.",
-      "pub.err.notHost": "Only the host can publish data.",
-      "pub.err.needOwner": "Enter the GitHub account (owner).",
-      "pub.err.badOwner": "A GitHub account has only letters, digits and hyphens (up to 39 characters).",
-      "pub.err.needRepo": "Enter the repository name.",
-      "pub.err.badRepo": "A repository name has only letters, digits and . _ - (up to 100 characters).",
-      "pub.err.needBranch": "Enter the branch name.",
-      "pub.err.badBranch": "Invalid branch name (letters, digits, . _ - / only; no .. or //).",
-      "pub.err.needPath": "Enter the file path.",
-      "pub.err.badPath": "Invalid file path: use letters, digits, . _ - and / only, do not start with /, do not use .., and it must be a .js file.",
-      "pub.err.needToken": "Paste the GitHub access token.",
-      "pub.err.badToken": "The token has invalid characters (spaces, accented letters) or is too short. Copy it again.",
-      "pub.err.tooBig": "The data file is {mb} MB, over the 5 MB limit, so it cannot be published. Remove some images or questions.",
-      "pub.err.offline": "You appear to be offline. Connect to the internet and try again.",
-      "pub.err.network": "Could not reach GitHub. Check your connection (or disable ad blockers/VPN) and try again.",
-      "pub.err.timeout": "GitHub did not respond within {sec} seconds. Try again later.",
-      "pub.err.401": "GitHub rejected the token (wrong, expired or revoked). Create a new token and paste it again.",
-      "pub.err.403": "The token is not allowed to write. Create a token with Contents: Read and write for this repository.",
-      "pub.err.403rate": "GitHub is rate limiting requests. Try again in about {min} minute(s).",
-      "pub.err.403rateNoTime": "GitHub is rate limiting requests. Wait a few minutes and try again.",
-      "pub.err.404": "Repository {owner}/{repo} or branch {branch} was not found, or the token has no access to this repository. Check the account, repository, branch and the token's Repository access.",
-      "pub.err.isDir": "{path} is a folder, not a file.",
-      "pub.err.conflict": "The file was changed elsewhere so GitHub refused the overwrite (retried once automatically). Publish again; if it still fails, check whether the repository is being edited elsewhere.",
-      "pub.err.server": "GitHub is having problems ({status}). Try again in a few minutes.",
-      "pub.err.other": "GitHub returned error {status}: {message}",
-      "pub.err.badResponse": "Could not read GitHub's response. Try again.",
-      "pub.err.unknown": "Something unexpected went wrong. Try again.",
-      "host.tabsAria": "Settings sections", "host.tabQuestions": "Questions", "host.tabWheel": "Wheel",
-      "host.general": "General settings",
-      "host.time": "Time per question (seconds, 0 = unlimited)",
-      "host.shuffle": "Shuffle answer positions",
-      "host.shuffle.easy": "Easy tier", "host.shuffle.hard": "Hard tier",
-      "host.shuffle.note": "On: each play, the 4 answers (with their images) are shuffled among A/B/C/D, so the correct answer is never in a fixed spot. Off: keeps the order you wrote.",
-      "host.noteOnce": "Each question can only be answered once. The correct answer is not revealed when a player answers wrong.",
-      "host.pool": "Question pool for tier",
-      "host.questions": "Questions", "host.add": "Add question",
-      "host.export": "Export file", "host.import": "Import file", "host.sample": "Sample set",
-      "host.noteSaved": "Questions are saved in your browser. To move them to another computer, use “Export file”, then “Import file” on that computer.",
-      "host.loseTitle": "Image shown on wrong answer (Impossible tier)",
-      "host.loseNote": "If the player doesn't get both parts right, this image is shown. If they win, it shows “Congratulations, you won 100K”.",
-      "host.loseAria": "Choose image for wrong answer",
-      "host.hint": "Click “Add question” or “Edit” to write the content here.",
-      "host.typed.add": "Add date question", "host.typed.edit": "Edit date question",
-      "host.typed.q": "Question (2 parts)",
-      "host.typed.qph": "e.g. Part 1: National Day? Part 2: Reunification Day?",
-      "host.typed.legend": "Answer for part {n} (day / month / year)",
-      "host.typed.day": "Day", "host.typed.month": "Month", "host.typed.year": "Year",
-      "host.typed.ariaDay": "Part {n}: day", "host.typed.ariaMonth": "Part {n}: month", "host.typed.ariaYear": "Part {n}: year",
-      "host.typed.note": "Players type day/month/year into 2 rows of blanks. Day and month are compared as numbers (05 = 5); the year can be 4 digits or the last 2 digits.",
-      "host.form.add": "Add question", "host.form.edit": "Edit question",
-      "host.form.q": "Question", "host.form.qph": "Enter the question text",
-      "host.form.ans": "Answer {l}", "host.form.correct": "This is the correct answer",
-      "host.form.ansph": "Text in cell {l}", "host.form.ansAria": "Text of answer {l}", "host.form.imgAria": "Meme image for answer {l}",
-      "host.form.explain": "Explanation (optional, shown only after a correct answer)",
-      "host.wheel.title": "Wheel values", "host.wheel.total": "Total", "host.wheel.cells": "slots",
-      "host.wheel.level": "Lucky money tier",
-      "host.wheel.note": "Each value has a number of “slots”. More slots means a better chance to win. The maximum total is 36 slots.",
-      "host.wheel.labelph": "Value (e.g. 10K)", "host.wheel.newValue": "New value", "host.wheel.cellsAria": "Slots", "host.wheel.color": "Color",
-      "host.wheel.addBtn": "Add", "host.wheel.reset": "Restore defaults", "host.wheel.preview": "Preview wheel",
-      "host.wheel.colorOf": "Color of {x}", "host.wheel.value": "Value", "host.wheel.cellsOf": "Slots of {x}", "host.wheel.delAria": "Delete {x}",
-      "host.rule.typed": "Each round draws {count} random question with {parts} parts; the player types the day/month/year on the keyboard. All {parts} correct → win {price}; otherwise → the image you upload below is shown.",
-      "host.rule.mcq": "The player picks the number of questions: {counts}. Each round draws exactly that many random questions from this pool; each correct answer is worth 100 ÷ (number of questions) points (all correct = 100).",
-      "host.rule.line": "• {n} questions: {tiers}.", "host.rule.tier": "{range} correct → {to}", "host.rule.toWheel": "{wheel} wheel", "host.rule.toPrize": "win {price} lucky money directly",
-      "host.warn.pool": "The pool has {have} questions: options that need more (up to {max}) stay locked for players until you write enough.",
-      "host.prize": "Lucky money for all 8 correct", "host.prize.easy": "Easy tier", "host.prize.hard": "Hard tier",
-      "host.prize.note": "Getting all 8 questions right wins this lucky money directly (no spin), with the same effect as a wheel prize. Leave empty to use the default.",
-      "host.warn.need": "At least {count} questions are needed to play the {level} tier.",
-      "host.empty": "No questions yet. Click “Add question” to start.",
-      "host.editAria": "Edit question {n}", "host.delAria": "Delete question {n}",
-      "host.err.full": "Couldn't save: browser storage is full.",
-      "host.err.fullList": "Couldn't save: browser storage is full. Delete some questions/images or use “Export file” to keep a backup.",
-      "host.err.fullImgs": "Couldn't save: browser storage is full. Use fewer images or delete some questions.",
-      "host.err.fullImage": "Couldn't save the image: browser storage is full or the image is too large.",
-      "host.err.noText": "Please enter the question text.",
-      "host.err.badDate": "The answer for part {n} is not a valid date.",
-      "host.err.max": "Maximum {max} questions.",
-      "host.err.needAns": "Answer {l} needs text or an image.",
-      "host.err.needCorrect": "Please choose the correct answer.",
-      "host.err.notImage": "Please choose an image file.", "host.err.imgBig": "Image too large (max 10MB).", "host.err.imgRead": "Couldn't read this image.",
-      "host.err.fileBig": "File too large (max 20MB).", "host.err.importFail": "Couldn't import the file.",
-      "host.confirm.del": "Delete this question?",
-      "host.confirm.import": "Importing {total} questions{skipped} will REPLACE all existing questions for the tiers in the file (the {level} tier currently has {have}). Continue?",
-      "host.import.skipped": " ({n} invalid skipped)",
-      "host.confirm.reset": "Restore the sample questions? All questions you wrote will be deleted.",
-      "host.confirm.resetWheel": "Restore the default wheel? The values you entered will be deleted.",
-      "host.toast.qSaved": "Question saved", "host.toast.settingsSaved": "Settings saved", "host.toast.imgSaved": "Image saved", "host.toast.imported": "Imported {n} questions",
-      "host.w.empty": "No values yet.", "host.w.warn": "At least 2 slots are needed for the wheel to work.",
-      "host.w.errEmpty": "The value can't be empty.", "host.w.errCount": "Slots must be 1 or more.",
-      "host.w.errMaxItem": "The maximum total is {max} slots (this value can have at most {left}).",
-      "host.w.errMaxAdd": "The maximum total is {max} slots ({left} more can be added).",
-      "host.w.errNoValue": "Please enter a value.",
 
-      "quiz.emptyTitle": "No questions yet", "quiz.emptyMsg": "Go to Setting to write questions before playing.",
-      "quiz.needMore": "This tier needs at least {count} questions ({have} available). Go to Setting to add more.",
-      "quiz.noQuiz": "This tier has no quiz yet.",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      "host.typed.ariaDay": "Part {n}: day", "host.typed.ariaMonth": "Part {n}: month", "host.typed.ariaYear": "Part {n}: year",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       "quiz.q": "Question", "quiz.score": "Score", "quiz.next": "Next question", "quiz.seeResult": "See results",
       "quiz.result": "Results", "quiz.spin": "Spin for prize", "quiz.spinLevel": "Spin for prize: {level}", "quiz.again": "Play again",
       "wheel.bagsResult": "You won {n} lucky envelopes!", "wheel.noBags": "No envelopes this time. Better luck next time!", "wheel.pickBag": "Pick an envelope",
@@ -393,7 +250,7 @@
       "quiz.fail": "Too bad, you didn't reach {pass} points. You'll spin the {level} wheel.",
       "quiz.win": "Congratulations, you won {price}!", "quiz.bigWin": "CONGRATULATIONS, BIG WIN!", "quiz.loseText": "Too bad, you didn't get both parts right.",
       "typed.title": "Enter your answer", "typed.submit": "Submit answer",
-      "wheel.aria": "Wheel", "wheel.spin": "Spin", "wheel.values": "Wheel values", "wheel.edit": "Edit wheel",
+      "wheel.aria": "Wheel", "wheel.spin": "Spin", "wheel.values": "Wheel values",
       "wheel.result": "Result: {x}", "wheel.cells": "slots",
       "wheel.noteOk": "{total} slots in total. Chance to win = the value's slots divided by the total slots.",
       "wheel.noteFew": "At least {min} slots are needed to spin. Click “Edit wheel”.",
@@ -419,7 +276,6 @@
       "history.title": "Play history", "history.loading": "Loading…", "history.empty": "You haven't played yet.",
       "history.sum": "Won {won} · Paid by host {paid} · Still owed {owed}",
       "history.pendingSpin": "Not spun yet", "history.active": "In progress", "history.abandoned": "Left early",
-
 
       "store.badJson": "The file is not valid JSON.", "store.noList": "The file has no question list.", "store.noValid": "No valid questions in the file."
     }

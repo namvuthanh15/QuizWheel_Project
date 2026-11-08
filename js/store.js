@@ -1,4 +1,4 @@
-// store.js – lưu trữ & kiểm tra dữ liệu (câu hỏi, cài đặt) bằng LocalStorage.
+// store.js – cấu hình công khai lấy từ server (giá, nhãn mức, luật, vòng quay), âm lượng, và bộ kiểm tra dữ liệu (cleanXxx) dùng chung với trang host.
 // Tên "Store" (không đặt "Storage" vì trùng với đối tượng có sẵn của trình duyệt).
 // Quy tắc: dữ liệu đọc từ LocalStorage hoặc file nhập vào đều KHÔNG đáng tin, luôn qua hàm "clean" trước khi dùng.
 (function () {
@@ -7,7 +7,6 @@
   const KEY_S = "quizwheel.v1.settings";
   const KEY_W = "quizwheel.v1.wheel";
   const KEY_A = "quizwheel.v1.audio";               // âm lượng Sound / Music (0-100), lưu riêng để nhập/xuất file câu hỏi không ghi đè
-  const KEY_H = "quizwheel.v1.hostmode";           // đánh dấu trình duyệt này là của host (mở web với ?host=1)
   const KEY_I = "quizwheel.v1.loseimage";          // ảnh hiện khi trả lời sai ở mức Impossible
   const QUESTION_LEVELS = ["easy", "hard", "impossible"];
   const TYPED_LEVELS = ["impossible"];             // mức nhập đáp án bằng bàn phím (không dùng A/B/C/D)
@@ -154,24 +153,12 @@
     };
   }
 
-  // Bộ câu hỏi mẫu (từ data/questions.js) đổi sang định dạng mới
+  // Dữ liệu mẫu đăng kèm (data/seed.js) – chỉ trang host dùng để "nạp" lên server lần đầu; trang người chơi không tải file này.
   function seedOf() { return window.QUIZWHEEL_SEED && typeof window.QUIZWHEEL_SEED === "object" ? window.QUIZWHEEL_SEED : null; }
 
   function defaultQuestions(level) {
-    const seed = seedOf();                            // ưu tiên dữ liệu đăng kèm web (data/seed.js)
-    if (seed && seed.questions && Array.isArray(seed.questions[level])) {
-      const fromSeed = cleanList(seed.questions[level], level);
-      if (fromSeed.length) return fromSeed;
-    }
-    if (isTyped(level)) {
-      return cleanList([{ id: "default-typed-1", text: "Ý 1: Ngày Quốc khánh Việt Nam. Ý 2: Ngày thống nhất đất nước (30/4).",
-        parts: [{ d: 2, m: 9, y: 1945 }, { d: 30, m: 4, y: 1975 }] }], level);
-    }
-    const src = Array.isArray(window.QUIZ_DATA) ? window.QUIZ_DATA : [];
-    return cleanList(src.map(function (q) {
-      return { id: "default-" + q.id, text: q.text, correct: q.correct, explain: q.explain,
-               answers: (q.answers || []).map(function (t) { return { text: t, image: null }; }) };
-    }), level);
+    const seed = seedOf();
+    return seed && seed.questions && Array.isArray(seed.questions[level]) ? cleanList(seed.questions[level], level) : [];
   }
 
   // ----- Vòng quay: danh sách { id, label, count (số ô), color } -----
@@ -196,22 +183,9 @@
     }
     return out;
   }
-  const DEFAULT_WHEELS = {
-    free: [{ label: "1K", count: 6 }, { label: "Chúc may mắn", count: 2 }],
-    easy: [{ label: "2K", count: 4 }, { label: "5K", count: 3 }, { label: "10K", count: 1 }, { label: "Chúc may mắn", count: 2 }],
-    hard: [{ label: "20K", count: 3 }, { label: "50K", count: 1 }, { label: "Chúc may mắn", count: 4 }],
-    // Vòng quay riêng (giá trị mẫu, host tự nhập lại trong Setting > Vòng quay)
-    easy4: [{ label: "5K", count: 3 }, { label: "10K", count: 2 }, { label: "15K", count: 1 }],
-    easy6: [{ label: "10K", count: 3 }, { label: "15K", count: 2 }, { label: "20K", count: 1 }],
-    hard6: [{ label: "30K", count: 3 }, { label: "50K", count: 2 }, { label: "80K", count: 1 }]
-  };
   function defaultWheel(level) {
     const seed = seedOf();
-    if (seed && seed.wheels && Array.isArray(seed.wheels[level])) {
-      const fromSeed = cleanWheel(seed.wheels[level]);
-      if (fromSeed.length) return fromSeed;
-    }
-    return cleanWheel(DEFAULT_WHEELS[level] || []);
+    return seed && seed.wheels && Array.isArray(seed.wheels[level]) ? cleanWheel(seed.wheels[level]) : [];
   }
 
   function read(key) {
@@ -231,25 +205,15 @@
 
   window.Store = {
     LIMITS: LIMITS, WHEEL_MAX: WHEEL_MAX, PALETTE: PALETTE,
-    QUESTION_LEVELS: QUESTION_LEVELS, SHUFFLE_LEVELS: SHUFFLE_LEVELS, TYPED_LEVELS: TYPED_LEVELS, isTyped: isTyped, WHEEL_LEVELS: WHEEL_LEVELS, PRIZE_LEVELS: PRIZE_LEVELS, WHEEL_NAMES: WHEEL_NAMES, WHEEL_PRICES: WHEEL_PRICES, WHEEL_LABELS: WHEEL_LABELS, LEVEL_LABELS: LEVEL_LABELS, LEVEL_PRICES: LEVEL_PRICES, LEVEL_NAMES: LEVEL_NAMES,
+    QUESTION_LEVELS: QUESTION_LEVELS, SHUFFLE_LEVELS: SHUFFLE_LEVELS, isTyped: isTyped, WHEEL_LEVELS: WHEEL_LEVELS, PRIZE_LEVELS: PRIZE_LEVELS, WHEEL_NAMES: WHEEL_NAMES, WHEEL_LABELS: WHEEL_LABELS, LEVEL_LABELS: LEVEL_LABELS, LEVEL_PRICES: LEVEL_PRICES, LEVEL_NAMES: LEVEL_NAMES,
     uid: uid, safeImage: safeImage,
     cleanListFor: function (level, arr) { return cleanList(arr, level); },
     cleanWheelItems: function (arr) { return cleanWheel(arr); },
-    // Chế độ host: luôn bật khi mở bằng file:// hoặc localhost; trên web công khai chỉ bật ở trình duyệt đã mở link có ?host=1
-    isHostMode() {
-      const h = location.hostname;
-      if (location.protocol === "file:" || h === "localhost" || h === "127.0.0.1" || h === "[::1]") return true;
-      return read(KEY_H) === true;
-    },
-    setHostMode(on) { if (on) write(KEY_H, true); else { try { localStorage.removeItem(KEY_H); } catch (e) {} } },
-    // null = chưa từng lưu -> dùng bộ mẫu; mảng rỗng = host đã xóa hết (giữ nguyên rỗng)
     loadQuestions(level) {
       if (!qOk(level)) return [];
       const raw = read(keyFor(KEY_Q, level));
       return raw === null ? defaultQuestions(level) : cleanList(raw, level);
     },
-    saveQuestions(level, list) { return qOk(level) && write(keyFor(KEY_Q, level), cleanList(list, level)); },
-    resetQuestions(level) { try { localStorage.removeItem(keyFor(KEY_Q, level)); } catch (e) {} return this.loadQuestions(level); },
     setRemote(cfg) { remote = cfg && typeof cfg === "object" ? cfg : null; },
     remote() { return remote; },
     poolCount(level) { return remote ? Number((remote.pool || {})[level]) || 0 : this.loadQuestions(level).length; },
@@ -260,16 +224,10 @@
       const raw = read(keyFor(KEY_W, level));
       return raw === null ? defaultWheel(level) : cleanWheel(raw);
     },
-    saveWheel(level, items) { return wOk(level) && write(keyFor(KEY_W, level), cleanWheel(items)); },
-    resetWheel(level) { try { localStorage.removeItem(keyFor(KEY_W, level)); } catch (e) {} return this.loadWheel(level); },
     loadLoseImage() {
       const v = read(KEY_I);
       if (v === null) { const seed = seedOf(); return seed && isImage(seed.loseImage) ? seed.loseImage : null; }   // chưa chỉnh riêng -> dùng ảnh đăng kèm web
       return isImage(v) ? v : null;                                                                              // "" = host chủ động bỏ ảnh
-    },
-    saveLoseImage(img) {
-      if (img === null) return write(KEY_I, "");   // ghi rỗng = "không dùng ảnh" (khác với chưa cấu hình)
-      return isImage(img) && write(KEY_I, img);
     },
     loadAudio() {
       const r = read(KEY_A) || {};
@@ -277,7 +235,6 @@
     },
     saveAudio(a) { const c = { sound: clamp(a.sound, 0, 100, 70), music: clamp(a.music, 0, 100, 70) }; write(KEY_A, c); return c; },
     loadSettings() { if (remote) return cleanSettings(remote.settings); const raw = read(KEY_S); const seed = seedOf(); return cleanSettings(raw === null && seed ? seed.settings : raw); },
-    saveSettings(s) { const c = cleanSettings(s); write(KEY_S, c); return c; },
     exportJSON() {
       const self = this, questions = {}, wheels = {};
       QUESTION_LEVELS.forEach(function (l) { questions[l] = self.loadQuestions(l); });

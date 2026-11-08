@@ -28,7 +28,6 @@ h2, h3 { margin: 0 0 10px; color: var(--text); }
 
 /* Chữ do host nhập (câu hỏi, đáp án, giải thích, giá trị vòng quay...) có thể rất dài và không có dấu cách:
    cho phép ngắt chữ ở bất kỳ chỗ nào để không làm trang bị kéo rộng ngang */
-#quiz-question, #quiz-explain, #quiz-feedback, #quiz-summary, #quiz-outcome, #quiz-verdict,
-#typed-question, #wheel-result, #wheel-context, .cell-label, .host-q, .slice-list .label, .reveal-text, .reveal * {
+#quiz-question, #quiz-explain, #quiz-feedback, #quiz-summary, #quiz-verdict, #typed-question, #wheel-result, .cell-label, .host-q, .slice-list .label, .reveal-text, .reveal * {
   overflow-wrap: anywhere;
 }

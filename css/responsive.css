@@ -1,5 +1,5 @@
 @media (max-width: 760px) {
-  .mode-grid, .wheel-layout { grid-template-columns: 1fr; }
+  .wheel-layout { grid-template-columns: 1fr; }
   .topbar { flex-direction: column; gap: 8px; padding: 12px; }
   main { padding-top: 20px; }
 }
@@ -8,7 +8,6 @@
   .game-text { -webkit-text-stroke-width: 5px; }
 }
 @media (max-width: 760px) {
-  .host-layout { grid-template-columns: 1fr; }
   .answer-grid { gap: 10px; }
   .answer-cell { min-height: 128px; }
 }
@@ -20,17 +19,10 @@
 }
 
 /* Màn hình nhỏ: hàng giá trị vòng quay được phép xuống dòng, không tràn ngang */
-@media (max-width: 520px) {
-  .w-item { flex-wrap: wrap; }
-  .w-item .w-label { min-width: 0; flex: 1 1 110px; }
-  .w-item .w-count { width: 62px; }
-}
 
 /* Tab Đăng web: điện thoại hẹp -> 1 cột; 3 tab thu nhỏ để không tràn ngang */
 @media (max-width: 520px) {
-  .pub-grid { grid-template-columns: minmax(0, 1fr); }
   .tab { padding: 8px 16px; }
-  .pub-token-row .btn { flex: 1 1 auto; }
 }
 
 /* Chọn số câu hỏi: điện thoại -> 2 ô mỗi hàng */

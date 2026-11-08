@@ -26,7 +26,7 @@
 
   function fmt(n) { return String(Math.round(n * 10) / 10); }
   function stopTimer() { if (state.timerId !== null) { clearInterval(state.timerId); state.timerId = null; } }
-  function showPanel(name) { ["empty", "play", "result"].forEach(function (p) { UI.$("#quiz-" + p).hidden = (p !== name); }); }
+  function showPanel(name) { ["play", "result"].forEach(function (p) { UI.$("#quiz-" + p).hidden = (p !== name); }); }
   function cells() { return UI.$("#quiz-answers").children; }
   function feedback(msg, kind) { const f = UI.$("#quiz-feedback"); f.textContent = msg; f.className = "feedback " + kind; }
   function fail(code) { stopTimer(); UI.toast(Api.errText(code)); UI.showScreen("levels"); }

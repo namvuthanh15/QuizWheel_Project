@@ -164,7 +164,6 @@
     const hasBags = state.once && state.done && state.bags > 0;
     UI.$("#wheel-again").hidden = !(state.once && (state.done || state.slices.length < MIN_SLICES)) || hasBags;
     UI.$("#wheel-bags").hidden = !hasBags;
-    UI.$("#wheel-edit").hidden = state.once;
   }
 
   // Gọi mỗi lần mở màn hình: nạp lại cấu hình mới nhất của host.
@@ -194,21 +193,7 @@
       clearTimeout(state.advanceId); state.advanceId = 0;
       if (state.onBags && state.bags > 0) state.onBags(state.playId, state.bags);
     });
-    open();
   }
 
-  // Kiểm tra nhanh: với mọi ô, góc dừng tính ra có khiến kim chỉ đúng ô đó không (dùng khi test)
-  function selfTest(rounds) {
-    let bad = 0;
-    for (let k = 0; k < rounds; k++) {
-      for (let w = 0; w < state.slices.length; w++) {
-        const start = Math.random() * 100 - 50;
-        state.rotation = start;
-        if (indexUnderPointer(landingRotation(w, start, 6)) !== w) bad++;
-      }
-    }
-    return { slices: state.slices.length, mismatches: bad };
-  }
-
-  window.Wheel = { init: init, open: open, stop: stop, level: function () { return state.level; }, _selfTest: selfTest };
+  window.Wheel = { init: init, open: open, stop: stop };
 })();
