@@ -165,6 +165,20 @@
       </div>
     </section>
 
+    <!-- ===== MÀN HÌNH: GACHA (máy quay số ba cuộn) ===== -->
+    <section class="screen" id="screen-gacha" hidden>
+      <div class="gacha">
+        <h1 class="game-text gacha-title" data-i18n="gacha.title">GACHA</h1>
+        <p class="gacha-sub" id="gacha-sub"></p>
+        <div class="gacha-machine" id="gacha-machine"></div>
+        <p class="gacha-result" id="gacha-result" role="status" aria-live="polite"></p>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="button" id="gacha-spin" data-i18n="gacha.spin">QUAY</button>
+          <button class="btn btn-secondary" type="button" id="gacha-back" data-i18n="gacha.back">Về chọn mức</button>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== MÀN HÌNH: QUIZ ===== -->
     <section class="screen" id="screen-quiz" hidden>
       <div class="card quiz-card">
@@ -259,6 +273,26 @@
     <div class="game-text reveal-text" id="reveal-text"></div>
   </div>
 
+  <!-- Bảng chọn ở mức Impossible: trả lời quiz hay GACHA (js/gacha.js) -->
+  <div class="modal" id="imp-modal" role="dialog" aria-modal="true" aria-labelledby="imp-title" hidden>
+    <div class="card modal-box imp-box">
+      <h2 class="game-text imp-title" id="imp-title" data-i18n="imp.title">Mức Impossible</h2>
+      <p class="imp-pick" data-i18n="imp.pick">Chọn cách chơi</p>
+      <div class="imp-options">
+        <button class="imp-card" type="button" id="imp-quiz">
+          <span class="imp-card-title" data-i18n="imp.quizTitle">Trả lời quiz</span>
+          <span class="imp-card-desc" id="imp-quiz-desc"></span>
+        </button>
+        <button class="imp-card imp-gacha" type="button" id="imp-gacha">
+          <span class="game-text imp-card-title" data-i18n="imp.gachaTitle">GACHA</span>
+          <span class="imp-card-desc" id="imp-gacha-desc"></span>
+        </button>
+      </div>
+      <p class="imp-note" id="imp-note" role="status"></p>
+      <button class="btn btn-secondary" type="button" id="imp-cancel" data-i18n="common.cancel">Hủy</button>
+    </div>
+  </div>
+
   <!-- Hộp xác nhận (UI.confirm) -->
   <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-text" hidden>
     <div class="card modal-box">
@@ -284,6 +318,7 @@
   <script src="js/wheel.js"></script>
   <script src="js/lixi.js"></script>
   <script src="js/bags.js"></script>
+  <script src="js/gacha.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/lang.js"></script>
   <script src="js/audio.js"></script>

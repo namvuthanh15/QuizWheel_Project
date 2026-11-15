@@ -7,6 +7,7 @@
   let KEY = "";
   let players = [];
   let D = { questions: { easy: [], hard: [], impossible: [] }, wheels: {}, settings: null, loseImage: null };
+  let gachaReady = false;            // server đã chạy sql/11-gacha.sql chưa
   let lixiVals = [2, 3, 4, 5, 6, 7, 8, 9, 10], lixiReady = false;     // 9 bao lì xì đăng nhập lần đầu (số lượt trong mỗi bao)
   let cfg = { costs: { easy: 1, hard: 1, impossible: 0 }, startTurns: 3, freeSpins: 1, impossiblePrize: "100K" };
   let qLevel = "easy", wLevel = "free", editing = null, histFor = null;
@@ -85,7 +86,10 @@
       D.questions = { easy: ex.questions.easy || [], hard: ex.questions.hard || [], impossible: ex.questions.impossible || [] };
       D.wheels = ex.wheels || {}; D.bagValues = ex.bagValues || {}; bagDraft = {}; D.settings = ex.settings; D.loseImage = ex.loseImage || null;
     }
-    if (st) cfg = { costs: st.costs, startTurns: st.startTurns, freeSpins: st.freeSpins, impossiblePrize: st.impossiblePrize };
+    if (st) {
+      cfg = { costs: st.costs, startTurns: st.startTurns, freeSpins: st.freeSpins, impossiblePrize: st.impossiblePrize, gachaRate: st.gachaRate };
+      gachaReady = st.gachaRate !== undefined && st.gachaRate !== null;
+    }
     const lx = await Api.call("admin_lixi_get", { p_key: KEY });
     lixiReady = !!(lx && lx.ok && Array.isArray(lx.values) && lx.values.length === 9);
     if (lixiReady) lixiVals = lx.values.map(Number);
@@ -210,15 +214,18 @@
 
     const wrap = h("div", "tbl-wrap"); wrap.style.marginTop = "14px";
     const tb = h("table", "tbl");
-    const head = h("tr"); ["Tên", "Lượt", "Free đã dùng", "Rút lì xì", "Đã trúng", "Đã trả", "Còn nợ", "Ván", "Lần cuối", "Thao tác"].forEach(function (x) { head.appendChild(h("th", "", x)); });
+    const head = h("tr"); ["Tên", "Lượt", "Free đã dùng", "Rút lì xì", "Đã trúng", "Đã trả", "Còn nợ", "Impossible", "Gacha (lượt · tỉ lệ)", "Ván", "Lần cuối", "Thao tác"].forEach(function (x) { head.appendChild(h("th", "", x)); });
     tb.appendChild(head);
-    if (!players.length) { const tr = h("tr"), td = h("td", "", "Chưa có người chơi."); td.colSpan = 10; tr.appendChild(td); tb.appendChild(tr); }
+    if (!players.length) { const tr = h("tr"), td = h("td", "", "Chưa có người chơi."); td.colSpan = 12; tr.appendChild(td); tb.appendChild(tr); }
     players.forEach(function (p) {
       const tr = h("tr", p.active ? "" : "off");
       const owed = Math.max(0, Number(p.rewardK) - Number(p.paidK));
       tr.append(h("td", "", p.name + (p.active ? "" : " (khóa)")), h("td", "num", String(p.turns)), h("td", "num", String(p.freeUsed)),
         h("td", "num", p.lixi == null ? "Chưa rút" : "+" + p.lixi + " lượt"),
-        h("td", "num", kfmt(p.rewardK)), h("td", "num", kfmt(p.paidK)), h("td", "num", owed > 0 ? kfmt(owed) : "—"), h("td", "num", String(p.plays)),
+        h("td", "num", kfmt(p.rewardK)), h("td", "num", kfmt(p.paidK)), h("td", "num", owed > 0 ? kfmt(owed) : "—"),
+        h("td", "", !gachaReady ? "—" : p.impLocked ? "Đã khóa" : "Mở"),
+        h("td", "", !gachaReady ? "—" : p.gachaLeft + " lượt · " + (p.gachaRate == null ? "mặc định " + cfg.gachaRate + "%" : p.gachaRate + "% (riêng)")),
+        h("td", "num", String(p.plays)),
         h("td", "", p.lastAt ? new Date(p.lastAt).toLocaleString("vi-VN") : "—"));
       const td = h("td"); const a = h("div", "acts");
       a.append(
@@ -231,6 +238,19 @@
         link("Cho rút lì xì lại", async function () {
           if (!(await UI.confirm("Cho " + p.name + " rút lì xì lại? Lượt đã nhận trước đó vẫn giữ nguyên (chỉnh bằng ± Lượt nếu cần)."))) return;
           if (await adm("admin_lixi_reset", { p_id: p.id })) { await loadAll(); renderPlayers(); say(p.name + " sẽ được rút lì xì ở lần đăng nhập tới.", true); }
+        }),
+        link("Mở lại Impossible", async function () {
+          if (!gachaReady) { say("Server chưa có Gacha. Hãy chạy sql/11-gacha.sql trong Supabase rồi tải lại trang.", false); return; }
+          if (!(await UI.confirm("Mở lại mức Impossible cho " + p.name + "? Gỡ khóa và cấp thêm 1 lượt Gacha."))) return;
+          if (await adm("admin_imp_reopen", { p_id: p.id })) { await loadAll(); renderPlayers(); say("Đã mở lại Impossible cho " + p.name + " (+1 lượt Gacha).", true); }
+        }),
+        link("Tỉ lệ Gacha", async function () {
+          if (!gachaReady) { say("Server chưa có Gacha. Hãy chạy sql/11-gacha.sql trong Supabase rồi tải lại trang.", false); return; }
+          const cur = p.gachaRate == null ? "" : String(p.gachaRate);
+          const v = window.prompt("Tỉ lệ trúng lớn Gacha của " + p.name + " (0–100 %). Để trống = dùng mặc định (" + cfg.gachaRate + "%). Chỉ host thấy con số này.", cur); if (v === null) return;
+          const t = v.trim(); let rate = null;
+          if (t !== "") { rate = Number(t.replace(",", ".")); if (!Number.isFinite(rate) || rate < 0 || rate > 100) { say("Hãy nhập số từ 0 đến 100.", false); return; } }
+          if (await adm("admin_gacha_rate", { p_id: p.id, p_rate: rate })) { await loadAll(); renderPlayers(); say(rate === null ? "Đã bỏ tỉ lệ riêng của " + p.name + " (dùng mặc định)." : "Đã đặt tỉ lệ trúng Gacha của " + p.name + " = " + rate + "%.", true); }
         }),
         link("Lấy link", function () { shareBox = { name: p.name, pin: null, withPin: false }; say(""); renderPlayers(); }),
         link("Đổi PIN", async function () {
@@ -260,8 +280,8 @@
       if (!histFor.items.length) ul.appendChild(h("li", "host-empty", "Chưa có ván nào."));
       histFor.items.forEach(function (it) {
         const li = h("li", "hist-item");
-        const res = it.rewardLabel ? it.rewardLabel : (it.wheel && !it.spun ? "chưa quay" : it.status === "active" ? "đang chơi" : "—");
-        li.append(h("span", "", new Date(it.at).toLocaleString("vi-VN")), h("span", "", (it.kind === "free" ? "Free" : it.level) + (it.cost ? " (−" + it.cost + " lượt)" : "")),
+        const res = it.rewardLabel ? it.rewardLabel : (it.kind === "gacha" ? "Trượt" : it.wheel && !it.spun ? "chưa quay" : it.status === "active" ? "đang chơi" : "—");
+        li.append(h("span", "", new Date(it.at).toLocaleString("vi-VN")), h("span", "", (it.kind === "free" ? "Free" : it.level + (it.kind === "gacha" ? " · Gacha" : "")) + (it.cost ? " (−" + it.cost + " lượt)" : "")),
           h("span", "", it.kind === "quiz" ? it.solved + "/" + (it.level === "impossible" ? 2 : it.total) : ""), h("b", "", res));
         ul.appendChild(li);
       });
@@ -598,9 +618,12 @@
     const ce = input("number", cfg.costs.easy, { min: 0 }), ch = input("number", cfg.costs.hard, { min: 0 }), ci = input("number", cfg.costs.impossible, { min: 0 });
     const fs = input("number", cfg.freeSpins, { min: 0 });
     const ip = input("text", cfg.impossiblePrize, { maxlength: 20 });
+    const gr = input("number", gachaReady ? cfg.gachaRate : 5, { min: 0, max: 100, step: "0.1" });
     g.append(field("Lượt tốn mỗi ván Easy", ce), field("Lượt tốn mỗi ván Hard", ch), field("Lượt tốn mỗi ván Impossible", ci),
-             field("Số lần quay Free / người", fs), field("Lì xì Impossible khi thắng", ip));
+             field("Số lần quay Free / người", fs), field("Lì xì Impossible khi thắng (cả quiz lẫn Gacha)", ip), field("Tỉ lệ thắng lớn GACHA mặc định (%)", gr));
     c.appendChild(g);
+    c.appendChild(h("p", "note", "GACHA: mỗi người có 1 lượt, quay tốn 1 lượt chơi, ba bao lì xì đỏ = thắng lớn. Xác suất ở trên áp dụng cho mọi người; muốn trêu riêng ai thì đặt ở tab Người chơi (nút “Tỉ lệ Gacha”), người chơi không thấy con số này. Quay xong (trúng hay trượt) hoặc thắng quiz thì mức Impossible bị khóa cho tới khi bạn bấm “Mở lại Impossible”."));
+    if (!gachaReady) c.appendChild(h("p", "feedback bad", "Server chưa có chức năng Gacha. Hãy chạy file sql/11-gacha.sql trong Supabase (SQL Editor) rồi tải lại trang."));
     c.appendChild(h("h3", "", "Quiz")); c.lastChild.style.marginTop = "14px";
     const g2 = h("div", "grid2");
     const tm = input("number", s.timePerQuestion !== undefined ? s.timePerQuestion : 20, { min: 0, max: 300 });
@@ -611,8 +634,11 @@
     g2.append(lE, lH); c.appendChild(g2);
     c.appendChild(h("p", "note", "Số lượt chỉ tính khi ván BẮT ĐẦU (server trừ ngay). Đổi ở đây chỉ áp dụng cho các ván sau."));
     c.appendChild(btn("Lưu cài đặt", "btn btn-primary", async function () {
+      const rate = Number(gr.value);
+      if (gachaReady && !(Number.isFinite(rate) && rate >= 0 && rate <= 100)) { say("Tỉ lệ Gacha phải là số từ 0 đến 100.", false); return; }
       const a = await adm("admin_settings_save", { p_costs: { easy: Number(ce.value), hard: Number(ch.value), impossible: Number(ci.value) }, p_start_turns: 0, p_free_spins: Number(fs.value), p_impossible_prize: ip.value });
       if (!a) return;
+      if (gachaReady && !(await adm("admin_gacha_default", { p_rate: rate }))) return;
       const b = await adm("admin_import", { p_data: { settings: { timePerQuestion: Math.max(0, Math.min(300, Math.round(Number(tm.value) || 0))), shuffleAnswers: { easy: shE.checked, hard: shH.checked }, bigPrize: { easy: bpE.value.trim() || "36K", hard: bpH.value.trim() || "72K" } } } });
       if (b) { await loadAll(); renderSettings(); say("Đã lưu cài đặt.", true); }
     }));

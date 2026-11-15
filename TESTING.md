@@ -20,3 +20,24 @@ Dùng Chromium (Playwright) với máy chủ Supabase **giả lập** (không d�
 - [ ] Màn **Lịch sử** của người chơi hiển thị đúng dữ liệu thật (trong bản giả lập thì hiển thị bình thường)
 - [ ] Host trả thưởng, đổi số lượt, sửa câu hỏi/vòng quay rồi người chơi thấy thay đổi
 - [ ] Điện thoại thật: chạm, cuộn, nhạc và âm thanh
+
+## Đã kiểm tra khi thêm GACHA (mức Impossible)
+**Server (SQL chạy thật trên PostgreSQL 16 cùng 01 đến 11):** 12 nhóm kiểm tra đạt
+- [x] `11-gacha.sql` chạy lại nhiều lần không lỗi
+- [x] Trúng lớn: ba cuộn [0,0,0], giải 100K, trừ 1 lượt, khóa Impossible, ghi ván và tiền thưởng
+- [x] Trượt: khóa luôn, không có giải, ba cuộn không bao giờ giống nhau
+- [x] Xác suất đúng thống kê: riêng 30% (867/3000), mặc định 5% (172/3000), mặc định 50% (1020/2000), 100% luôn trúng, 0% không bao giờ trúng
+- [x] Đã khóa thì không quay lại, không làm quiz Impossible, không bị trừ lượt; hết lượt chơi thì từ chối, không khóa
+- [x] Chọn quiz thì mất lượt Gacha; thua quiz không khóa; thắng quiz khóa; host mở lại thì cấp thêm 1 lượt Gacha
+- [x] Đang có ván dở thì không quay Gacha; 8 yêu cầu quay song song chỉ 1 yêu cầu thành công
+- [x] Trình duyệt không nhận được xác suất; sai mật khẩu host thì không đổi được xác suất / mở lại / mặc định
+- [x] Quyền: người chơi (anon) không đọc được bảng, không gọi được hàm nội bộ
+
+**Giao diện (máy chủ giả lập):** 34 mục đạt: bảng chọn, hủy / xác nhận, quay trúng và trượt, ba cuộn dừng đúng ô server trả về (lệch 0px), bấm dồn chỉ 1 lần quay, nhãn ĐÃ KHÓA, Lịch sử, rời màn hình khi đang quay, tiếng Anh, giảm chuyển động, điện thoại 360 và 390px.
+**Trang host:** 16 mục đạt (tỉ lệ riêng, bỏ tỉ lệ riêng, nhập sai, mở lại, tỉ lệ mặc định, server chưa chạy 11-gacha.sql). **Hồi quy** các luồng cũ: 19 mục đạt.
+
+## Cần bạn thử bằng tay với Supabase thật
+- [ ] Chạy `sql/11-gacha.sql` trong SQL Editor, tải lại `host.html`: không còn dòng nhắc chạy 11-gacha.sql
+- [ ] Đặt tỉ lệ riêng 100% cho một tài khoản thử, quay Gacha: phải trúng lớn; đặt 0%: phải trượt
+- [ ] Mở lại Impossible ở host: người chơi thấy mức hết khóa và quay được lần nữa
+- [ ] Cảm giác hoạt ảnh, âm thanh (tiếng "OMG" khi trúng, tiếng mèo cười khi trượt) trên điện thoại thật

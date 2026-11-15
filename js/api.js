@@ -34,7 +34,7 @@
   // Mã lỗi -> câu thông báo (đa ngôn ngữ)
   function errText(code) {
     const known = ["invalid", "locked", "disabled", "network", "config", "auth", "no_turns", "free_used", "pool", "active", "pending_spin",
-                   "bad_count", "bad_level", "stale", "no_play", "not_active", "no_wheel", "wheel_unavailable", "bad_slot", "no_bags"];
+                   "bad_count", "bad_level", "stale", "no_play", "not_active", "no_wheel", "wheel_unavailable", "bad_slot", "no_bags", "imp_locked", "gacha_used"];
     return I18n.t("err." + (known.indexOf(code) >= 0 ? code : "generic"));
   }
 
@@ -59,6 +59,7 @@
     lixiOpen: function (slot) { return rpc("api_lixi_open", { p_token: token, p_slot: slot }); },
     abandon: function (playId) { return rpc("api_abandon", { p_token: token, p_play: playId }); },
     spin: function (playId) { return rpc("api_spin", { p_token: token, p_play: playId }); },
+    gachaSpin: function () { return rpc("api_gacha_spin", { p_token: token }); },
     history: function () { return rpc("api_history", { p_token: token }); }
   };
 })();

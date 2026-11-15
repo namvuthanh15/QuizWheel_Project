@@ -22,6 +22,7 @@ js/
   quiz.js            quiz trắc nghiệm + nhập ngày (Impossible)
   wheel.js           vòng quay (Canvas)
   bags.js, lixi.js   rút bao lì xì sau khi quay / lúc đăng nhập lần đầu
+  gacha.js           bảng chọn Quiz/GACHA ở mức Impossible + máy quay số ba cuộn chủ đề Tết
   store.js           giá, nhãn mức, vòng quay công khai từ server, âm lượng, bộ kiểm tra dữ liệu dùng chung với trang host
   i18n.js, lang.js   đa ngôn ngữ vi/en
   audio.js, settings.js, ui.js   âm thanh, màn Setting, tiện ích giao diện
@@ -32,11 +33,19 @@ assets/              ảnh, nhạc, âm thanh
 ```
 
 ## Thiết lập từ đầu
-1. **Supabase:** tạo project, vào SQL Editor và chạy lần lượt `sql/01-schema.sql` đến `sql/10-lixi-values.sql`
+1. **Supabase:** tạo project, vào SQL Editor và chạy lần lượt `sql/01-schema.sql` đến `sql/11-gacha.sql`
    (chạy lại nhiều lần vẫn an toàn). `08a-reset-demo-data.sql` chỉ dùng khi muốn xóa dữ liệu thử. Đặt mật khẩu host bằng `02-admin-key.sql`.
 2. **`js/config.js`:** điền địa chỉ project và khóa công khai (anon key) của Supabase.
 3. **GitHub Pages:** đưa toàn bộ thư mục lên repo (để `index.html` ở gốc, giữ file `.nojekyll`), vào Settings → Pages → Deploy from a branch → nhánh `main`, thư mục `/ (root)`.
 4. Mở `host.html`, nhập mật khẩu host, vào tab **Nạp / sao lưu** để đưa câu hỏi và vòng quay lên server (từ `data/seed.js` hoặc từ file xuất).
+
+## GACHA ở mức Impossible
+Bấm Impossible sẽ hiện bảng chọn **Trả lời quiz** hoặc **GACHA** (máy quay số ba cuộn). Luật (do server giữ, chạy bằng `sql/11-gacha.sql`):
+- Mỗi người chơi có **1 lượt Gacha**; quay tốn **1 lượt chơi**. Ba bao lì xì đỏ = thắng lớn, nhận đúng giải Impossible (cài ở tab Cài đặt).
+- Quay xong (trúng **hay trượt**) mức Impossible bị **khóa**. Thắng quiz Impossible cũng khóa. Chọn làm quiz thì mất lượt Gacha.
+- Host mở lại ở tab Người chơi (nút **Mở lại Impossible**): gỡ khóa và cấp thêm 1 lượt Gacha.
+- Xác suất thắng lớn: mặc định ở tab Cài đặt, và **tỉ lệ riêng cho từng người** ở tab Người chơi (nút **Tỉ lệ Gacha**). Con số này chỉ host thấy, trình duyệt người chơi không bao giờ nhận được.
+- Kết quả ba cuộn do server chọn trước, hoạt ảnh chỉ diễn lại nên không thể gian lận bằng cách tải lại trang. Ván Gacha được ghi vào Lịch sử.
 
 ## Cập nhật nội dung
 Soạn câu hỏi, vòng quay, cài đặt và lượt chơi trực tiếp ở `host.html`; thay đổi có hiệu lực ngay cho người chơi, không cần đăng lại web.

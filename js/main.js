@@ -12,10 +12,18 @@
   function normName(s) {
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/\s+/g, " ").trim();
   }
-  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history", "lixi", "bags"];
+  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history", "lixi", "bags", "gacha"];
 
   /* ---------- Người chơi hiện tại + thanh trạng thái ---------- */
-  function setPlayer(p) { session.player = p || null; paintUser(); }
+  function setPlayer(p) { session.player = p || null; paintUser(); paintLocks(); }
+  // Mức Impossible đã khóa (đã quay Gacha / đã thắng quiz): làm xám ảnh + dán nhãn "ĐÃ KHÓA" cho tới khi host mở lại
+  function paintLocks() {
+    const btn = document.querySelector('.level-btn[data-level="impossible"]');
+    if (!btn) return;
+    const locked = !!(session.player && session.player.impLocked);
+    btn.classList.toggle("locked", locked);
+    if (locked) btn.dataset.lockText = I18n.t("imp.lockedTag"); else delete btn.dataset.lockText;
+  }
   function paintUser() {
     const p = session.player;
     UI.$("#userbar").hidden = !p;
@@ -44,6 +52,7 @@
     if (name === "count") buildCount(opts && opts.level);
     if (name === "history") buildHistory();
     if (name === "wheel") Wheel.open(opts); else Wheel.stop();
+    if (name === "gacha") Gacha.open(gachaCtx()); else Gacha.stop();
     UI.showScreen(name);
     Sfx.screen(name);
   }
@@ -149,14 +158,15 @@
   }
 
   // Hỏi xác nhận rồi mới gọi server (server trừ lượt NGAY khi bắt đầu, nên phải hỏi trước)
-  async function askAndStart(level, count) {
+  async function askAndStart(level, count, note) {
     if (session.busy) return;
     const cost = Store.cost(level), turns = session.player ? session.player.turns : 0;
     if (turns < cost) { UI.toast(Api.errText("no_turns")); return; }
     const msg = cost > 0
       ? I18n.t("confirm.quiz", { level: Store.LEVEL_NAMES[level], n: count, cost: cost, turns: turns, after: turns - cost })
       : I18n.t("confirm.quizFree", { level: Store.LEVEL_NAMES[level], n: count });
-    if (!(await UI.confirm(msg))) return;
+    const fullMsg = note ? msg + "\n\n" + note : msg;
+    if (!(await UI.confirm(fullMsg))) return;
     session.busy = true;
     try {
       const r = await Api.start(level, count);
@@ -180,8 +190,34 @@
     } finally { session.busy = false; }
   }
 
+  // Mức Impossible: bảng chọn giữa trả lời quiz và GACHA (nếu mức đang khóa thì báo và dừng)
+  async function impossibleEntry() {
+    if (session.busy) return;
+    session.busy = true;
+    let choice;
+    try {
+      const st = await refreshState();
+      if (!st.ok) { UI.toast(Api.errText(st.error)); return; }
+      const p = session.player;
+      if (p.impLocked) { UI.toast(I18n.t("imp.lockedMsg")); return; }
+      choice = await Gacha.choose({ turns: p.turns, gachaLeft: p.gachaLeft });
+    } finally { session.busy = false; }
+    if (choice === "gacha") go("gacha");
+    else if (choice === "quiz") askAndStart("impossible", Quiz.rules.impossible.counts[0], I18n.t("imp.quizWarn"));
+  }
+
+  // Máy Gacha báo lại cho main.js: kết quả (đã trừ lượt + khóa mức ở server), lỗi, thoát
+  function gachaCtx() {
+    return {
+      onResult: function (r) { if (session.player) setPlayer(Object.assign({}, session.player, { turns: r.turns, impLocked: true, gachaLeft: 0 })); },
+      onError: async function (code) { UI.toast(Api.errText(code)); await refreshState(); if (code !== "network" && code !== "server") afterLeave(); },
+      onExit: function () { go("levels"); }
+    };
+  }
+
   function playLevel(level) {
     if (level === "free") { askAndSpinFree(); return; }
+    if (level === "impossible") { impossibleEntry(); return; }
     const rule = Quiz.rules[level];
     if (!rule) { UI.toast(I18n.t("main.later")); return; }
     if (rule.counts.length > 1) go("count", { level: level });
@@ -223,10 +259,11 @@
     r.items.forEach(function (it) {
       const li = UI.el("li", "hist-item");
       const when = new Date(it.at).toLocaleString(I18n.lang() === "vi" ? "vi-VN" : "en-GB");
-      const name = it.kind === "free" ? Store.LEVEL_NAMES.free : Store.LEVEL_NAMES[it.level] || it.level;
+      const name = it.kind === "free" ? Store.LEVEL_NAMES.free : (Store.LEVEL_NAMES[it.level] || it.level) + (it.kind === "gacha" ? " · " + I18n.t("history.gacha") : "");
       const score = it.kind === "quiz" ? it.solved + "/" + (it.level === "impossible" ? 2 : it.total) : "";
       let result;
       if (it.rewardLabel) result = it.rewardLabel;
+      else if (it.kind === "gacha") result = I18n.t("history.gachaMiss");
       else if (it.bagPending) result = I18n.t("history.bagPending");
       else if (it.wheel && !it.spun) result = I18n.t("history.pendingSpin");
       else if (it.status === "active") result = I18n.t("history.active");
@@ -268,7 +305,7 @@
 
     UI.$("#quiz-continue").addEventListener("click", Quiz.proceed);
     refreshPrices();
-    I18n.onChange(function () { refreshPrices(); paintUser(); });
+    I18n.onChange(function () { refreshPrices(); paintUser(); paintLocks(); });
     I18n.onChange(function () { if (countLevel && !UI.$("#screen-count").hidden) buildCount(countLevel); });
 
     const blanks = Array.from(document.querySelectorAll(".blank"));

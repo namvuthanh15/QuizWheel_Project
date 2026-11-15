@@ -30,3 +30,11 @@
   .count-grid { gap: 16px; }
   .count-btn { width: calc(50% - 8px); max-width: 200px; }
 }
+
+@media (max-width: 520px) {
+  .imp-options { grid-template-columns: 1fr; }
+  .gm-body { padding: 14px 38px 28px 30px; }
+  .gm-pillar { width: 16px; }
+  .gm-lever { right: 2px; top: 36%; }          /* cần gạt nằm trên cột phải để không tràn khỏi màn hình */
+  .gacha-machine { width: calc(var(--cell) * 3 + 128px); }
+}
