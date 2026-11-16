@@ -117,6 +117,52 @@
   function link(text, fn, danger) { return btn(text, "link-btn" + (danger ? " danger" : ""), fn); }
   function kfmt(v) { return String(Math.round(Number(v) * 10) / 10) + "K"; }
 
+  // Menu "Thêm ▾" (dropdown có phân nhóm): mở bằng nút, đóng khi bấm ra ngoài / Esc / cuộn / đổi cỡ cửa sổ; dùng phím ↑ ↓ để chọn
+  let openMenu = null;
+  function closeMenu() {
+    if (!openMenu) return null;
+    const m = openMenu; openMenu = null; m.pop.hidden = true; m.btn.setAttribute("aria-expanded", "false"); return m.btn;
+  }
+  document.addEventListener("click", function (e) { if (openMenu && !openMenu.root.contains(e.target)) closeMenu(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && openMenu) { const b = closeMenu(); if (b) b.focus(); } });
+  // Đổi bề ngang (xoay máy, kéo cửa sổ) hoặc cuộn TRANG thì đóng menu cho khỏi lệch khỏi nút. Không đóng khi: chỉ đổi chiều cao (thanh địa chỉ điện thoại co giãn),
+  // cuộn bên trong chính menu, hoặc cuộn xảy ra ngay lúc vừa mở (trình duyệt tự cuộn tới nút).
+  window.addEventListener("resize", function () { if (openMenu && window.innerWidth !== openMenu.w) closeMenu(); });
+  window.addEventListener("scroll", function (e) {
+    if (!openMenu || (e.target instanceof Node && openMenu.pop.contains(e.target)) || performance.now() - openMenu.t < 300) return;
+    closeMenu();
+  }, true);
+  function menuButton(label, who, groups) {
+    const root = h("div", "menu"), b = h("button", "mini-btn menu-btn", label + " ▾"), pop = h("div", "menu-pop");
+    b.type = "button"; b.setAttribute("aria-haspopup", "menu"); b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-label", label + " – " + who);
+    pop.hidden = true; pop.setAttribute("role", "menu");
+    groups.forEach(function (g, i) {
+      if (i > 0) pop.appendChild(h("div", "menu-sep"));
+      if (g.title) pop.appendChild(h("div", "menu-title", g.title));
+      g.items.forEach(function (it) {
+        const mi = h("button", "menu-item" + (it[2] ? " danger" : ""), it[0]); mi.type = "button"; mi.setAttribute("role", "menuitem");
+        mi.addEventListener("click", function () { closeMenu(); it[1](); });
+        pop.appendChild(mi);
+      });
+    });
+    b.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (openMenu && openMenu.btn === b) { closeMenu(); return; }
+      closeMenu(); pop.hidden = false; b.setAttribute("aria-expanded", "true"); openMenu = { root: root, pop: pop, btn: b, t: performance.now(), w: window.innerWidth };
+      const r = b.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;      // đặt dưới nút (hết chỗ thì mở lên trên), luôn nằm trong màn hình
+      pop.style.left = Math.round(Math.min(Math.max(8, r.right - pw), window.innerWidth - pw - 8)) + "px";
+      pop.style.top = Math.round(r.bottom + 4 + ph > window.innerHeight - 8 ? Math.max(8, r.top - ph - 4) : r.bottom + 4) + "px";
+      pop.querySelector(".menu-item").focus();
+    });
+    pop.addEventListener("keydown", function (e) {
+      const items = Array.from(pop.querySelectorAll(".menu-item")), i = items.indexOf(document.activeElement);
+      if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+      else if (e.key === "Tab") { closeMenu(); }
+    });
+    root.append(b, pop); return root;
+  }
+
   /* ---------- Khung "Gửi cho người chơi" ---------- */
   // Link chỉ chứa TÊN (?u=...). PIN không bao giờ nằm trong link.
   // Địa chỉ web công khai KHÔNG lấy từ trang host nếu bạn đang mở bằng file:// hoặc localhost (người chơi không vào được).
@@ -214,61 +260,81 @@
 
     const wrap = h("div", "tbl-wrap"); wrap.style.marginTop = "14px";
     const tb = h("table", "tbl");
-    const head = h("tr"); ["Tên", "Lượt", "Free đã dùng", "Rút lì xì", "Đã trúng", "Đã trả", "Còn nợ", "Impossible", "Gacha (lượt · tỉ lệ)", "Ván", "Lần cuối", "Thao tác"].forEach(function (x) { head.appendChild(h("th", "", x)); });
+    const head = h("tr", "head-row"); ["Tên", "Lượt", "Còn nợ", "Impossible", "Lần cuối", "Thao tác"].forEach(function (x) { head.appendChild(h("th", "", x)); });
     tb.appendChild(head);
-    if (!players.length) { const tr = h("tr"), td = h("td", "", "Chưa có người chơi."); td.colSpan = 12; tr.appendChild(td); tb.appendChild(tr); }
+    if (!players.length) { const tr = h("tr"), td = h("td", "", "Chưa có người chơi."); td.colSpan = 6; tr.appendChild(td); tb.appendChild(tr); }
+    closeMenu();
     players.forEach(function (p) {
-      const tr = h("tr", p.active ? "" : "off");
       const owed = Math.max(0, Number(p.rewardK) - Number(p.paidK));
-      tr.append(h("td", "", p.name + (p.active ? "" : " (khóa)")), h("td", "num", String(p.turns)), h("td", "num", String(p.freeUsed)),
-        h("td", "num", p.lixi == null ? "Chưa rút" : "+" + p.lixi + " lượt"),
-        h("td", "num", kfmt(p.rewardK)), h("td", "num", kfmt(p.paidK)), h("td", "num", owed > 0 ? kfmt(owed) : "—"),
-        h("td", "", !gachaReady ? "—" : p.impLocked ? "Đã khóa" : "Mở"),
-        h("td", "", !gachaReady ? "—" : p.gachaLeft + " lượt · " + (p.gachaRate == null ? "mặc định " + cfg.gachaRate + "%" : p.gachaRate + "% (riêng)")),
-        h("td", "num", String(p.plays)),
-        h("td", "", p.lastAt ? new Date(p.lastAt).toLocaleString("vi-VN") : "—"));
-      const td = h("td"); const a = h("div", "acts");
-      a.append(
-        link("± Lượt", async function () {
+      // Các thao tác (giữ nguyên hành vi; chỉ đổi cách bày: 3 nút chính + menu "Thêm")
+      const act = {
+        paid: async function () {
+          const v = window.prompt("Đã trả thêm bao nhiêu K cho " + p.name + "? (còn nợ " + kfmt(owed) + "; nhập số âm để sửa lại)", String(owed)); if (v === null) return;
+          const d = Number(v.replace(",", ".")); if (!Number.isFinite(d)) { say("Hãy nhập số.", false); return; }
+          if (await adm("admin_mark_paid", { p_id: p.id, p_delta: d })) { await loadAll(); renderPlayers(); say("Đã ghi nhận.", true); }
+        },
+        turns: async function () {
           const v = window.prompt("Cộng/trừ bao nhiêu lượt cho " + p.name + "? (vd 3 hoặc -1)", "1"); if (v === null) return;
           const d = parseInt(v, 10); if (!Number.isInteger(d)) { say("Hãy nhập số nguyên.", false); return; }
           if (await adm("admin_player_update", { p_id: p.id, p_turns_delta: d })) { await loadAll(); renderPlayers(); say("Đã chỉnh lượt.", true); }
-        }),
-        link("Reset Free", async function () { if (await adm("admin_player_update", { p_id: p.id, p_free_used: 0 })) { await loadAll(); renderPlayers(); say("Đã cho " + p.name + " quay Free lại.", true); } }),
-        link("Cho rút lì xì lại", async function () {
+        },
+        hist: async function () { const r = await adm("admin_history", { p_id: p.id }); if (r) { histFor = { p: p, items: r.items }; renderPlayers(); } },
+        resetFree: async function () { if (await adm("admin_player_update", { p_id: p.id, p_free_used: 0 })) { await loadAll(); renderPlayers(); say("Đã cho " + p.name + " quay Free lại.", true); } },
+        lixiAgain: async function () {
           if (!(await UI.confirm("Cho " + p.name + " rút lì xì lại? Lượt đã nhận trước đó vẫn giữ nguyên (chỉnh bằng ± Lượt nếu cần)."))) return;
           if (await adm("admin_lixi_reset", { p_id: p.id })) { await loadAll(); renderPlayers(); say(p.name + " sẽ được rút lì xì ở lần đăng nhập tới.", true); }
-        }),
-        link("Mở lại Impossible", async function () {
+        },
+        reopen: async function () {
           if (!gachaReady) { say("Server chưa có Gacha. Hãy chạy sql/11-gacha.sql trong Supabase rồi tải lại trang.", false); return; }
           if (!(await UI.confirm("Mở lại mức Impossible cho " + p.name + "? Gỡ khóa và cấp thêm 1 lượt Gacha."))) return;
           if (await adm("admin_imp_reopen", { p_id: p.id })) { await loadAll(); renderPlayers(); say("Đã mở lại Impossible cho " + p.name + " (+1 lượt Gacha).", true); }
-        }),
-        link("Tỉ lệ Gacha", async function () {
+        },
+        rate: async function () {
           if (!gachaReady) { say("Server chưa có Gacha. Hãy chạy sql/11-gacha.sql trong Supabase rồi tải lại trang.", false); return; }
           const cur = p.gachaRate == null ? "" : String(p.gachaRate);
           const v = window.prompt("Tỉ lệ trúng lớn Gacha của " + p.name + " (0–100 %). Để trống = dùng mặc định (" + cfg.gachaRate + "%). Chỉ host thấy con số này.", cur); if (v === null) return;
           const t = v.trim(); let rate = null;
           if (t !== "") { rate = Number(t.replace(",", ".")); if (!Number.isFinite(rate) || rate < 0 || rate > 100) { say("Hãy nhập số từ 0 đến 100.", false); return; } }
-          if (await adm("admin_gacha_rate", { p_id: p.id, p_rate: rate })) { await loadAll(); renderPlayers(); say(rate === null ? "Đã bỏ tỉ lệ riêng của " + p.name + " (dùng mặc định)." : "Đã đặt tỉ lệ trúng Gacha của " + p.name + " = " + rate + "%.", true); }
-        }),
-        link("Lấy link", function () { shareBox = { name: p.name, pin: null, withPin: false }; say(""); renderPlayers(); }),
-        link("Đổi PIN", async function () {
+          if (await adm("admin_gacha_rate", { p_id: p.id, p_rate: rate })) { await loadAll(); renderPlayers(); say(rate === null ? "Đã bỏ tỉ lệ riêng của " + p.name + " (dùng mặc định)." : "Đã đặt tỉ lệ trúng Gacha của " + p.name + " (chỉ host thấy).", true); }
+        },
+        share: function () { shareBox = { name: p.name, pin: null, withPin: false }; say(""); renderPlayers(); },
+        pin: async function () {
           const v = window.prompt("PIN mới cho " + p.name + " (4–12 ký tự):", ""); if (v === null) return;
           if (await adm("admin_player_update", { p_id: p.id, p_pin: v })) { shareBox = { name: p.name, pin: v, withPin: false }; say("Đã đổi PIN (người này bị đăng xuất). Gửi lại link và PIN mới cho họ.", true); renderPlayers(); }
-        }),
-        link(p.active ? "Khóa" : "Mở khóa", async function () { if (await adm("admin_player_update", { p_id: p.id, p_active: !p.active })) { await loadAll(); renderPlayers(); } }),
-        link("Đã trả", async function () {
-          const v = window.prompt("Đã trả thêm bao nhiêu K cho " + p.name + "? (còn nợ " + kfmt(owed) + "; nhập số âm để sửa lại)", String(owed)); if (v === null) return;
-          const d = Number(v.replace(",", ".")); if (!Number.isFinite(d)) { say("Hãy nhập số.", false); return; }
-          if (await adm("admin_mark_paid", { p_id: p.id, p_delta: d })) { await loadAll(); renderPlayers(); say("Đã ghi nhận.", true); }
-        }),
-        link("Lịch sử", async function () { const r = await adm("admin_history", { p_id: p.id }); if (r) { histFor = { p: p, items: r.items }; renderPlayers(); } }),
-        link("Xóa", async function () {
+        },
+        toggle: async function () { if (await adm("admin_player_update", { p_id: p.id, p_active: !p.active })) { await loadAll(); renderPlayers(); } },
+        del: async function () {
           if (!(await UI.confirm("Xóa hẳn " + p.name + " cùng toàn bộ lịch sử? Không hoàn tác được."))) return;
           if (await adm("admin_player_delete", { p_id: p.id })) { histFor = null; await loadAll(); renderPlayers(); say("Đã xóa.", true); }
-        }, true));
-      td.appendChild(a); tr.appendChild(td); tb.appendChild(tr);
+        }
+      };
+
+      // Ô dữ liệu: gộp các cột phụ vào dòng nhỏ dưới giá trị chính (thẻ dọc trên điện thoại dùng data-label)
+      const cell = function (label, cls) { const td = h("td", cls || ""); if (label) td.setAttribute("data-label", label); return td; };
+      const value = function (td, main, sub, chip) {
+        const v = h("div", "cv"); v.appendChild(h("div", "", main));
+        if (sub || chip) { const s = h("div", "sub", sub || ""); if (chip) s.appendChild(h("span", "chip", chip)); v.appendChild(s); }
+        td.appendChild(v); return td;
+      };
+      const tr = h("tr", "prow" + (p.active ? "" : " off"));
+      const tdName = cell("", "cell-name");
+      tdName.append(h("div", "pname", p.name + (p.active ? "" : " (khóa)")),
+        h("div", "sub", "Free đã dùng " + p.freeUsed + " · " + (p.lixi == null ? "chưa rút lì xì" : "rút +" + p.lixi + " lượt") + " · " + p.plays + " ván"));
+      const tdTurns = value(cell("Lượt", "num"), String(p.turns));
+      const tdOwed = value(cell("Còn nợ", "num"), owed > 0 ? kfmt(owed) : "—", "trúng " + kfmt(p.rewardK) + " · đã trả " + kfmt(p.paidK));
+      // Tỉ lệ Gacha riêng KHÔNG hiện số ở bảng (đề phòng chia sẻ màn hình); chỉ hiện nhãn "riêng", số thật nằm trong hộp "Tỉ lệ Gacha"
+      const tdImp = !gachaReady ? value(cell("Impossible"), "—") : value(cell("Impossible"), p.impLocked ? "Đã khóa" : "Mở", "Gacha còn " + p.gachaLeft + " lượt", p.gachaRate == null ? "" : "riêng");
+      const tdLast = value(cell("Lần cuối"), p.lastAt ? new Date(p.lastAt).toLocaleString("vi-VN") : "—");
+      const tdAct = cell("", "cell-acts"); const a = h("div", "acts-main");
+      a.append(btn("Đã trả", "mini-btn primary", act.paid), btn("± Lượt", "mini-btn", act.turns), btn("Lịch sử", "mini-btn", act.hist),
+        menuButton("Thêm", p.name, [
+          { title: "Lượt chơi", items: [["Reset Free", act.resetFree], ["Cho rút lì xì lại", act.lixiAgain]] },
+          { title: "Impossible / Gacha", items: [["Mở lại Impossible", act.reopen], ["Tỉ lệ Gacha", act.rate]] },
+          { title: "Tài khoản", items: [["Lấy link", act.share], ["Đổi PIN", act.pin], [p.active ? "Khóa" : "Mở khóa", act.toggle]] },
+          { items: [["Xóa người chơi", act.del, true]] }
+        ]));
+      tdAct.appendChild(a);
+      tr.append(tdName, tdTurns, tdOwed, tdImp, tdLast, tdAct); tb.appendChild(tr);
     });
     wrap.appendChild(tb); el.appendChild(wrap);
     el.appendChild(h("p", "note", "“Đã trúng” = tổng lì xì từ các ván; “Đã trả” do bạn ghi khi đưa tiền. Hai số khác nhau thì phần chênh là “Còn nợ”."));

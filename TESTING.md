@@ -41,3 +41,11 @@ Dùng Chromium (Playwright) với máy chủ Supabase **giả lập** (không d�
 - [ ] Đặt tỉ lệ riêng 100% cho một tài khoản thử, quay Gacha: phải trúng lớn; đặt 0%: phải trượt
 - [ ] Mở lại Impossible ở host: người chơi thấy mức hết khóa và quay được lần nữa
 - [ ] Cảm giác hoạt ảnh, âm thanh (tiếng "OMG" khi trúng, tiếng mèo cười khi trượt) trên điện thoại thật
+
+## Đã kiểm tra khi gọn lại cột "Thao tác" ở trang host
+- [x] Bảng người chơi gộp còn 6 cột (Tên, Lượt, Còn nợ, Impossible, Lần cuối, Thao tác); Free đã dùng, rút lì xì, số ván, trúng / đã trả, lượt Gacha còn nằm ở dòng nhỏ dưới giá trị chính
+- [x] Tỉ lệ Gacha riêng KHÔNG hiện số ở bảng (chỉ nhãn "riêng"); số thật chỉ thấy trong hộp "Tỉ lệ Gacha"
+- [x] Mỗi dòng có 3 nút chính (Đã trả, ± Lượt, Lịch sử) và menu "Thêm ▾" chia nhóm Lượt chơi / Impossible & Gacha / Tài khoản, mục Xóa tách riêng màu đỏ
+- [x] Menu: bấm ra ngoài / Esc đóng và trả focus, ↑ ↓ chọn mục, mở menu khác thì menu cũ đóng, luôn nằm trong màn hình (hết chỗ thì mở lên trên), không đóng khi chỉ đổi chiều cao (thanh địa chỉ điện thoại) hoặc cuộn trong menu
+- [x] Mọi thao tác cũ vẫn chạy đúng (Đã trả, ± Lượt, Lịch sử, Mở lại Impossible, Tỉ lệ Gacha, Xóa có xác nhận)
+- [x] Điện thoại 360 và 390px: mỗi người chơi là một thẻ dọc (ẩn dòng tiêu đề, nhãn từng ô), nút cao tối thiểu 38px, mục menu cao tối thiểu 39px, không tràn ngang

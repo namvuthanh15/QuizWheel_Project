@@ -21,6 +21,34 @@
     .tbl .num { text-align: right; white-space: nowrap; }
     .tbl .off td { opacity: .55; }
     .acts { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+    /* --- Cột "Thao tác" gọn: 3 nút chính + menu "Thêm"; thẻ dọc trên điện thoại --- */
+    .pname { font-weight: 800; } .sub { color: var(--muted); font-size: .76rem; font-weight: 600; margin-top: 2px; }
+    .chip { display: inline-block; margin-left: 6px; padding: 0 8px; border: 2px solid var(--ink); border-radius: 999px; background: var(--yellow); color: var(--ink); font-size: .68rem; font-weight: 800; }
+    .acts-main { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+    .mini-btn { font: inherit; font-weight: 800; font-size: .82rem; padding: 5px 12px; border: 2px solid var(--ink); border-radius: 999px; background: var(--card-2); color: var(--text); cursor: pointer; box-shadow: 0 3px 0 #b9852d; white-space: nowrap; }
+    .mini-btn.primary { background: linear-gradient(180deg, #ffe46b, #ffb92a); }
+    .mini-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b9852d; }
+    .mini-btn:focus-visible, .menu-item:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+    .menu { position: relative; }
+    .menu-pop { position: fixed; z-index: 60; min-width: 220px; max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; padding: 8px; background: var(--card); border: 3px solid var(--ink); border-radius: 14px; box-shadow: 0 6px 0 #a24a00, 0 14px 24px rgba(60,20,0,.35); }
+    .menu-title { padding: 6px 10px 2px; font-size: .7rem; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+    .menu-sep { height: 1px; margin: 6px 4px; background: #e7c98a; }
+    .menu-item { display: block; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: none; text-align: left; font: inherit; font-weight: 700; color: var(--text); cursor: pointer; }
+    .menu-item:hover, .menu-item:focus-visible { background: var(--card-2); }
+    .menu-item.danger { color: #b4120a; }
+    @media (max-width: 760px) {
+      .tbl-wrap { overflow: visible; }
+      table.tbl, .tbl tbody, .tbl tr, .tbl td { display: block; width: auto; }
+      table.tbl { border: 0; background: none; border-radius: 0; }
+      .tbl tr.head-row { display: none; }
+      .tbl tr.prow { margin-bottom: 12px; padding: 12px 14px; background: #fff; border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 #b9852d; }
+      .tbl td { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 5px 0; border-bottom: 1px dashed #e7c98a; text-align: right; }
+      .tbl td::before { content: attr(data-label); flex: none; font-size: .82rem; font-weight: 700; color: var(--muted); text-align: left; }
+      .tbl td.cell-name { display: block; padding: 0 0 8px; margin-bottom: 4px; border-bottom: 2px solid var(--ink); text-align: left; }
+      .tbl td.cell-name::before, .tbl td.cell-acts::before { content: none; }
+      .tbl td.cell-acts { display: block; padding: 10px 0 0; border-bottom: 0; }
+      .mini-btn { min-height: 38px; padding: 7px 14px; }
+    }
     .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin: 8px 0; }
     .row .field { margin: 0; min-width: 120px; flex: 1; }
     .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
