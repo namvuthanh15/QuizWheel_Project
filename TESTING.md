@@ -57,7 +57,7 @@ Chạy tự động (cần Node 20+, Python 3, Playwright + Chromium; không c�
 - `python3 tests/blackjack-visual-check.py` – 52 lá, mặt sau, bố cục máy tính / 600px / điện thoại ngang: **22 mục đạt**
 - `python3 tests/blackjack-anim-check.py` – thứ tự chia, lá úp, điểm không lộ sớm, HIT/STAND, hủy giữa chừng, bấm dồn, giảm chuyển động: **50 mục đạt**
 - `python3 tests/blackjack-integration-check.py` – mở từ trang chủ, bắt buộc đăng nhập, thoát / điều hướng / đăng xuất giữa ván, đổi ngôn ngữ, âm thanh theo thiết lập, 360 / 390px: **32 mục đạt**
-- `python3 tests/blackjack-server-check.py` – chế độ server với máy chủ giả: số dư, thanh cược ¼ đến hết, thắng / Blackjack 1,5× / quá 21, tự dừng ở 21, thoát có xác nhận, ván dở, lỗi mạng, lệch kết quả, hết tiền, host tắt, bấm dồn, đổi ngôn ngữ, Lịch sử, 360px, **80 ván ngẫu nhiên**: **44 mục đạt**
+- `python3 tests/blackjack-server-check.py` – chế độ server với máy chủ giả: số dư, thanh cược ¼ đến hết, thắng / Blackjack 1,5× / quá 21, tự dừng ở 21, thoát có xác nhận, ván dở, lỗi mạng, lệch kết quả, hết tiền, host tắt, bấm dồn, đổi ngôn ngữ, Lịch sử, 360px, **80 ván ngẫu nhiên**: **51 mục đạt**
 - `python3 tests/blackjack-host-check.py` – trang host: thẻ Blackjack, kiểm tra chuỗi %, đặt lại độ khó, Lịch sử, server cũ chưa có SQL, 360px: **22 mục đạt**
 - `python3 tests/blackjack-sql-sim.py` – mô phỏng thuật toán chia bài thiên lệch + hồi phục (in bảng tỉ lệ thắng theo bậc; **không phải chạy SQL thật**)
 - Kiểm tra tĩnh: `node --check` mọi file JS, bộ khóa i18n vi/en khớp nhau (214/214), không có ảnh hoặc URL ngoài trong code Blackjack.

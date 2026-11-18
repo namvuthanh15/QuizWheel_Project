@@ -99,3 +99,7 @@ Chạy: `python3 tests/blackjack-integration-check.py`
 
 ## Sau M8 – ảnh nút Blackjack
 - Nút Blackjack ở trang chủ dùng ảnh assets/images/btn-blackjack.png (do bạn cung cấp, thu về 640x277 như btn-start/btn-setting; 2,2 MB -> 215 KB). index.html: <button id="btn-blackjack"> chứa <img>, aria-label theo i18n (home.blackjack). Đã bỏ phần nút vẽ bằng CSS trong css/blackjack.css. Để đổi ảnh sau này: thay file PNG (giữ tỉ lệ ~2,3:1, rộng 640px).
+
+## Sau M8 – rút gọn bảng luật
+- Bảng luật đổi từ đoạn văn dài thành khung NỔI 4 dòng ngắn (Cược / Tiền / Độ khó / Thoát giữa ván) + 1 dòng ghi chú "Trò may rủi, hãy cược vừa sức."; bỏ câu "bạn đóng vai người chơi còn host là nhà cái". Khung nằm đè lên phía trên bảng cược nên mở/đóng không làm xô thanh cược và nút Chia bài. Đóng bằng: bấm nút Luật lần nữa, bấm ra ngoài, nhấn Esc, hoặc bấm nút khác.
+- Sửa: js/blackjack/blackjack-render.js, js/i18n.js (bỏ bj.rules.body, thêm bj.rules.k1-k4 / v1-v4 / note, vi và en), css/blackjack.css; tests/blackjack-server-check.py (+7 kiểm tra: luật ngắn, không xô bố cục, aria-expanded, Esc, bấm ngoài, bấm lại, bấm chỗ khác). Kết quả: server 51 mục, tích hợp 32, host 22, visual 22, anim 50, engine 38/38; i18n vi/en 222/222.

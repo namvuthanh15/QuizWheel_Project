@@ -163,7 +163,9 @@
       "bj.badge.blackjack": "Blackjack!", "bj.badge.bust": "Quá 21",
       "bj.result.win": "Bạn thắng!", "bj.result.lose": "Bạn thua", "bj.result.push": "Hòa", "bj.result.blackjack": "Blackjack! Bạn thắng!", "bj.result.dealerBlackjack": "Nhà cái Blackjack", "bj.result.bust": "Bạn quá 21",
       "bj.balance": "Số dư", "bj.bet": "Cược", "bj.difficulty": "Độ khó", "bj.rules": "Luật", "bj.rules.title": "Luật Blackjack",
-      "bj.rules.body": "Cược từ ¼ số dư đến toàn bộ (bước 0,1K). Thắng +1× cược, Blackjack tự nhiên +1,5×, hòa hoàn cược, thua mất cược. Thoát giữa ván hoặc tải lại trang tính là thua. Bài được chia thật, nhưng bạn đóng vai người chơi còn host là nhà cái: càng thắng liên tiếp thì thanh Độ khó càng tăng và càng khó thắng hơn; thua thì độ khó giảm dần trở lại. Đây là trò may rủi, hãy cân nhắc mức cược.",
+      "bj.rules.k1": "Cược", "bj.rules.v1": "từ ¼ số dư đến hết (bước 0,1K)", "bj.rules.k2": "Tiền", "bj.rules.v2": "Thắng +1× · Blackjack +1,5× · Hòa hoàn cược · Thua mất cược",
+      "bj.rules.k3": "Độ khó", "bj.rules.v3": "thắng liên tiếp thì tăng, thua thì giảm dần", "bj.rules.k4": "Thoát giữa ván", "bj.rules.v4": "hoặc tải lại trang là tính thua", "bj.rules.note": "Trò may rủi, hãy cược vừa sức.",
+
       "bj.msg.noBalance": "Số dư chưa đủ để cược (tối thiểu 0,1K).", "bj.msg.loading": "Đang tải số dư…", "bj.msg.disabled": "Blackjack đang tạm tắt.", "bj.msg.leftover": "Ván dở trước đó đã được tính thua.",
       "bj.msg.syncError": "Có lỗi đồng bộ với máy chủ. Số dư đã được tải lại.", "bj.confirmExit": "Thoát giữa ván sẽ bị tính thua và mất tiền cược. Bạn vẫn muốn thoát?",
       "bj.delta.zero": "Hoàn cược",
@@ -326,7 +328,9 @@
       "bj.badge.blackjack": "Blackjack!", "bj.badge.bust": "Bust",
       "bj.result.win": "You win!", "bj.result.lose": "You lose", "bj.result.push": "Push", "bj.result.blackjack": "Blackjack! You win!", "bj.result.dealerBlackjack": "Dealer Blackjack", "bj.result.bust": "Bust! You lose",
       "bj.balance": "Balance", "bj.bet": "Bet", "bj.difficulty": "Difficulty", "bj.rules": "Rules", "bj.rules.title": "Blackjack rules",
-      "bj.rules.body": "Bet from ¼ of your balance up to all of it (0.1K steps). Win pays +1× your bet, a natural Blackjack +1.5×, a push refunds your bet, a loss costs it. Leaving mid-round or reloading counts as a loss. Cards are dealt for real, but the host is the house: the more you win in a row the higher the Difficulty bar climbs and the harder winning gets; losses lower it again. This is a game of chance, so bet wisely.",
+      "bj.rules.k1": "Bet", "bj.rules.v1": "from ¼ of your balance up to all of it (0.1K steps)", "bj.rules.k2": "Payouts", "bj.rules.v2": "Win +1× · Blackjack +1.5× · Push refunds · Loss costs your bet",
+      "bj.rules.k3": "Difficulty", "bj.rules.v3": "rises as you keep winning, eases off after losses", "bj.rules.k4": "Leaving mid-round", "bj.rules.v4": "or reloading counts as a loss", "bj.rules.note": "A game of chance: bet within your means.",
+
       "bj.msg.noBalance": "Balance too low to bet (minimum 0.1K).", "bj.msg.loading": "Loading balance…", "bj.msg.disabled": "Blackjack is switched off for now.", "bj.msg.leftover": "Your unfinished round was counted as a loss.",
       "bj.msg.syncError": "Sync problem with the server. Your balance was reloaded.", "bj.confirmExit": "Leaving mid-round counts as a loss and you lose your bet. Leave anyway?",
       "bj.delta.zero": "Bet refunded",

@@ -198,7 +198,17 @@
 .bj-range { flex: 1; min-width: 0; height: 32px; accent-color: #e7bd62; cursor: pointer; }
 .bj-range:disabled { opacity: .5; cursor: not-allowed; }
 .bj-bet-val { min-width: 4.2em; text-align: right; color: #fff; font-size: 1.15rem; text-shadow: 0 2px 0 #3a1000; }
-.bj-rules { margin: 8px 0 0; padding: 8px 10px; font-size: .85rem; line-height: 1.45; font-weight: 600; color: #fff6cc; background: rgba(0, 0, 0, .25); border-radius: 10px; }
+/* Khung luật NỔI: nằm đè lên phía trên bảng cược nên mở/đóng không làm xô thanh cược và nút Chia bài */
+.bj-bet { position: relative; }
+.bj-rules { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 20; max-height: min(60vh, 320px); overflow-y: auto; padding: 10px 14px 10px;
+  font-size: .92rem; line-height: 1.4; font-weight: 600; color: #fff6cc; background: rgba(40, 14, 4, .96); border: 2px solid rgba(231, 189, 98, .85); border-radius: 14px; box-shadow: 0 10px 24px rgba(0, 0, 0, .45); }
+.bj-rules::after { content: ""; position: absolute; right: 38px; bottom: -9px; width: 14px; height: 14px; background: rgba(40, 14, 4, .96); border-right: 2px solid rgba(231, 189, 98, .85); border-bottom: 2px solid rgba(231, 189, 98, .85); transform: rotate(45deg); }
+.bj-rules-title { display: block; margin-bottom: 4px; color: #ffd21f; font-size: 1rem; }
+.bj-rules ul { margin: 0; padding: 0; list-style: none; }
+.bj-rules li { padding: 3px 0; }
+.bj-rules li b { color: #ffd21f; }
+.bj-rules li b::after { content: ":"; }
+.bj-rules small { display: block; margin-top: 6px; font-size: .78rem; font-weight: 600; opacity: .75; }
 .bj-rules[hidden] { display: none; }
 .bj-result-delta { display: block; margin-top: 2px; font-size: .62em; font-weight: 800; }
 .bj-result-delta[hidden] { display: none; }
@@ -209,5 +219,5 @@
   .bj-bet-row { gap: 8px; }
   .bj-range { height: 40px; }  /* thanh kéo cỡ ngón tay */
 }
-@media (max-height: 520px) and (orientation: landscape) { .bj-bet { margin-top: 6px; padding: 6px 10px; } .bj-rules { display: none; } }
+@media (max-height: 520px) and (orientation: landscape) { .bj-bet { margin-top: 6px; padding: 6px 10px; } .bj-rules { max-height: 70vh; font-size: .82rem; } }
 .bj-home-btn[hidden] { display: none !important; }

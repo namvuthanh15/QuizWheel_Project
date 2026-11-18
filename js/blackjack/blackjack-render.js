@@ -23,6 +23,14 @@
     if (I && typeof I.t === "function") { const s = I.t(key); if (s && s !== key) return s; }
     return FALLBACK_VI[key] || key;
   }
+  // Khung luật nổi (không đẩy bảng cược / nút Chia bài)
+  function setRules(open) {
+    if (!refs) return;
+    refs.rules.hidden = !open;
+    const b = host.querySelector('[data-act="rules"]');
+    if (b) b.setAttribute("aria-expanded", String(!!open));
+  }
+
   // 1,5K (vi) / 1.5K (en); bỏ số 0 thừa. Số dư/cược là bội của 0,05 nên 2 chữ số thập phân là đủ.
   function fmtK(n) {
     let t = (Math.round(Number(n) * 100) / 100).toFixed(2).replace(/\.?0+$/, "");
@@ -72,7 +80,16 @@
         '<div class="bj-bet-row" data-ref="betRow"><label class="bj-bet-label" for="bj-bet-range" data-i18n="bj.bet">Cược</label>' +
           '<input type="range" id="bj-bet-range" class="bj-range" data-ref="betRange" min="1" max="1" step="1" value="1">' +
           '<b class="bj-bet-val" data-ref="betVal"></b></div>' +
-        '<p class="bj-rules" data-ref="rules" data-i18n="bj.rules.body" hidden></p>' +
+        '<div class="bj-rules" data-ref="rules" role="region" aria-labelledby="bj-rules-title" hidden>' +
+          '<b class="bj-rules-title" id="bj-rules-title" data-i18n="bj.rules.title">Luật Blackjack</b>' +
+          '<ul>' +
+            '<li><b data-i18n="bj.rules.k1">Cược</b> <span data-i18n="bj.rules.v1">từ ¼ số dư đến hết (bước 0,1K)</span></li>' +
+            '<li><b data-i18n="bj.rules.k2">Tiền</b> <span data-i18n="bj.rules.v2">Thắng +1× · Blackjack +1,5× · Hòa hoàn cược · Thua mất cược</span></li>' +
+            '<li><b data-i18n="bj.rules.k3">Độ khó</b> <span data-i18n="bj.rules.v3">thắng liên tiếp thì tăng, thua thì giảm dần</span></li>' +
+            '<li><b data-i18n="bj.rules.k4">Thoát giữa ván</b> <span data-i18n="bj.rules.v4">hoặc tải lại trang là tính thua</span></li>' +
+          '</ul>' +
+          '<small data-i18n="bj.rules.note">Trò may rủi, hãy cược vừa sức.</small>' +
+        '</div>' +
       '</div>' +
       '<div class="bj-actions">' +
         '<button type="button" class="btn bj-btn" data-act="hit" data-ref="hit" data-i18n="bj.hit" disabled>Rút bài</button>' +
@@ -81,7 +98,7 @@
       '</div>' +
     '</div>';
 
-  let host = null, refs = null, handler = null, clickFn = null, inputFn = null;
+  let host = null, refs = null, handler = null, clickFn = null, inputFn = null, docFn = null;
 
   function mount(container, opts) {
     if (!container) throw new Error("BlackjackRender.mount: thiếu container");
@@ -97,15 +114,23 @@
     for (let i = 0; i < 4; i++) { const b = Cards.createBackElement(); b.style.setProperty("--i", i); refs.deck.appendChild(b); }
     clickFn = function (e) {
       const b = e.target.closest("[data-act]");
+      if (refs.rules && !refs.rules.hidden && !(b && b.dataset.act === "rules") && !e.target.closest(".bj-rules")) setRules(false); // bấm chỗ khác trong màn hình: đóng khung luật
       if (!b || !host.contains(b) || b.disabled || b.hidden) return;
-      if (b.dataset.act === "rules") { refs.rules.hidden = !refs.rules.hidden; b.setAttribute("aria-expanded", String(!refs.rules.hidden)); return; } // chỉ là bật/tắt khung luật
+      if (b.dataset.act === "rules") { setRules(refs.rules.hidden); return; } // chỉ là bật/tắt khung luật
       if (handler) handler(b.dataset.act);
     };
     inputFn = function (e) {
       if (e.target === refs.betRange && handler) handler("bet", Number(e.target.value) / 10);
     };
+    docFn = function (e) {
+      if (!refs || refs.rules.hidden) return;
+      if (e.type === "keydown") { if (e.key === "Escape") { setRules(false); const rb = host.querySelector('[data-act="rules"]'); if (rb) rb.focus(); } return; }
+      if (!e.target.closest(".bj-rules, [data-act=\"rules\"]")) setRules(false); // bấm ra ngoài toàn trang
+    };
     host.addEventListener("click", clickFn);
     host.addEventListener("input", inputFn);
+    document.addEventListener("click", docFn);
+    document.addEventListener("keydown", docFn);
     relabel();
     return refs;
   }
@@ -113,8 +138,9 @@
   function unmount() {
     if (host && clickFn) host.removeEventListener("click", clickFn);
     if (host && inputFn) host.removeEventListener("input", inputFn);
+    if (docFn) { document.removeEventListener("click", docFn); document.removeEventListener("keydown", docFn); }
     if (host) host.innerHTML = "";
-    host = refs = handler = clickFn = inputFn = null;
+    host = refs = handler = clickFn = inputFn = docFn = null;
   }
 
   function relabel() { if (host && root.I18n && typeof root.I18n.apply === "function") root.I18n.apply(host); }
