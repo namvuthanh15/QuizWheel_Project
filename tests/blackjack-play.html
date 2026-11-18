@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackjack – chơi thử (chỉ dùng khi phát triển, M3)</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/components.css">
+<link rel="stylesheet" href="../css/blackjack.css">
+<link rel="stylesheet" href="../css/blackjack-animations.css">
+<style> body { padding: 12px; } #exitlog { color: #fff; margin: 6px 0; } </style>
+</head>
+<body>
+<div id="game"></div>
+<p id="exitlog"></p>
+<script src="../js/blackjack/blackjack-cards.js"></script>
+<script src="../js/blackjack/blackjack-engine.js"></script>
+<script src="../js/blackjack/blackjack-render.js"></script>
+<script src="../js/blackjack/blackjack-animation.js"></script>
+<script src="../js/blackjack/blackjack.js"></script>
+<script>
+  window.__exits = 0; window.__sfx = [];
+  Blackjack.init({ container: document.getElementById("game"), onExit: function () { window.__exits++; document.getElementById("exitlog").textContent = "exit x" + window.__exits; } });
+  window.BlackjackAudio = { play: function (n) { window.__sfx.push(n); } }; // giả lập âm thanh: open() tự gắn vào hoạt ảnh
+  Blackjack.open();
+  // bộ bài chỉ định: ranks theo thứ tự chia (P1, D1, P2, D2, rồi các lá rút tiếp)
+  window.__deck = function (ranks) {
+    const used = {};
+    return ranks.map(function (r) { const s = BlackjackCards.SUITS.find(function (x) { return !used[x + "-" + r]; }); used[s + "-" + r] = 1; return s + "-" + r; });
+  };
+</script>
+</body>
+</html>

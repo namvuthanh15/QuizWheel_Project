@@ -49,3 +49,28 @@ Dùng Chromium (Playwright) với máy chủ Supabase **giả lập** (không d�
 - [x] Menu: bấm ra ngoài / Esc đóng và trả focus, ↑ ↓ chọn mục, mở menu khác thì menu cũ đóng, luôn nằm trong màn hình (hết chỗ thì mở lên trên), không đóng khi chỉ đổi chiều cao (thanh địa chỉ điện thoại) hoặc cuộn trong menu
 - [x] Mọi thao tác cũ vẫn chạy đúng (Đã trả, ± Lượt, Lịch sử, Mở lại Impossible, Tỉ lệ Gacha, Xóa có xác nhận)
 - [x] Điện thoại 360 và 390px: mỗi người chơi là một thẻ dọc (ẩn dòng tiêu đề, nhãn từng ô), nút cao tối thiểu 38px, mục menu cao tối thiểu 39px, không tràn ngang
+
+
+## Blackjack (M1 đến M8)
+Chạy tự động (cần Node 20+, Python 3, Playwright + Chromium; không cần mạng thật). Kết quả lần chạy cuối (M8):
+- `node --test tests/blackjack-engine.test.js` – luật, điểm, Ace, Blackjack tự nhiên, nhà cái, hành động sai, chế độ server (feed / setHole): **38/38**
+- `python3 tests/blackjack-visual-check.py` – 52 lá, mặt sau, bố cục máy tính / 600px / điện thoại ngang: **22 mục đạt**
+- `python3 tests/blackjack-anim-check.py` – thứ tự chia, lá úp, điểm không lộ sớm, HIT/STAND, hủy giữa chừng, bấm dồn, giảm chuyển động: **50 mục đạt**
+- `python3 tests/blackjack-integration-check.py` – mở từ trang chủ, bắt buộc đăng nhập, thoát / điều hướng / đăng xuất giữa ván, đổi ngôn ngữ, âm thanh theo thiết lập, 360 / 390px: **32 mục đạt**
+- `python3 tests/blackjack-server-check.py` – chế độ server với máy chủ giả: số dư, thanh cược ¼ đến hết, thắng / Blackjack 1,5× / quá 21, tự dừng ở 21, thoát có xác nhận, ván dở, lỗi mạng, lệch kết quả, hết tiền, host tắt, bấm dồn, đổi ngôn ngữ, Lịch sử, 360px, **80 ván ngẫu nhiên**: **44 mục đạt**
+- `python3 tests/blackjack-host-check.py` – trang host: thẻ Blackjack, kiểm tra chuỗi %, đặt lại độ khó, Lịch sử, server cũ chưa có SQL, 360px: **22 mục đạt**
+- `python3 tests/blackjack-sql-sim.py` – mô phỏng thuật toán chia bài thiên lệch + hồi phục (in bảng tỉ lệ thắng theo bậc; **không phải chạy SQL thật**)
+- Kiểm tra tĩnh: `node --check` mọi file JS, bộ khóa i18n vi/en khớp nhau (214/214), không có ảnh hoặc URL ngoài trong code Blackjack.
+
+**Giới hạn của các test trên:** máy chủ trong `tests/bj_fake_server.py` là bản cài lại hợp đồng và thuật toán của `sql/12-blackjack.sql` bằng Python. Nó cho biết giao diện và logic khớp với thiết kế, **không chứng minh file SQL chạy đúng trên PostgreSQL thật**. Máy kiểm thử không có PostgreSQL.
+
+Cần bạn thử bằng tay (chưa thể thử trong môi trường này):
+- [ ] **Chạy `sql/12-blackjack.sql` trên Supabase thật** và xem có báo lỗi không (rồi chạy lại lần hai để chắc không lỗi)
+- [ ] Chơi 1 ván thật: số dư trừ đúng cược ngay khi chia; thắng +1×, Blackjack tự nhiên +1,5×, hòa hoàn cược, thua mất cược; số dư và Lịch sử khớp
+- [ ] Thoát giữa ván (nút Thoát, đóng tab, tải lại trang): ván bị tính thua, không hoàn cược, không kẹt ván mở
+- [ ] Bấm HIT / STAND thật nhanh nhiều lần, và mở hai tab cùng một tài khoản: không bị trừ cược hai lần, không ra hai ván mở
+- [ ] Host: bật/tắt Blackjack (nút trang chủ ẩn/hiện sau khi tải lại), đổi chuỗi %, Đặt lại độ khó; tab Người chơi “Còn nợ” khớp sau vài ván thắng/thua
+- [ ] Cảm giác độ khó: chơi nhiều ván ở bậc 1 xem tỉ lệ thắng có gần mục tiêu không (cần vài chục ván mới đủ mẫu)
+- [ ] Điện thoại thật và Safari: chạm, độ mượt hoạt ảnh, âm thanh Blackjack (Safari cần chạm trang một lần trước khi có tiếng), thanh cược kéo bằng ngón tay
+- [ ] Kéo thanh Sound ở Setting về 0 rồi chơi Blackjack: phải im lặng; kéo lại thì có tiếng
+- [ ] Quiz, Gacha, lì xì, Lịch sử với Supabase thật sau khi thêm Blackjack (mới hồi quy bằng máy chủ giả lập)

@@ -135,6 +135,7 @@
       "err.pool": "Kho câu hỏi của mức này chưa đủ câu. Hãy báo host.", "err.active": "Bạn còn một ván đang chơi dở.", "err.pending_spin": "Bạn còn một lần quay thưởng chưa quay.",
       "err.bad_count": "Số câu không hợp lệ.", "err.bad_level": "Mức không hợp lệ.", "err.stale": "Câu hỏi đã đổi, đang tải lại…",
       "err.no_play": "Không tìm thấy ván chơi.", "err.bad_slot": "Bao lì xì không hợp lệ.", "err.not_active": "Ván này đã kết thúc.", "err.no_wheel": "Ván này không có vòng quay.", "err.wheel_unavailable": "Vòng quay này chưa được thiết lập. Hãy báo host.",
+      "err.no_balance": "Số dư lì xì của bạn không đủ để cược.", "err.bad_bet": "Mức cược không hợp lệ. Hãy chọn lại bằng thanh cược.", "err.no_game": "Không còn ván đang chơi.", "err.cannot_hit": "Bạn không thể rút thêm bài.",
       "err.generic": "Có lỗi xảy ra. Thử lại nhé.",
       "imp.title": "Mức Impossible", "imp.pick": "Chọn cách chơi",
       "imp.quizTitle": "Trả lời quiz", "imp.quizDesc": "Nhập đúng 2 ngày để nhận {prize}. Chọn quiz thì bạn mất lượt Gacha; thắng quiz sẽ khóa mức này.",
@@ -156,6 +157,17 @@
       "history.sum": "Đã trúng {won} · Host đã trả {paid} · Còn chờ nhận {owed}",
       "history.pendingSpin": "Chưa quay", "history.active": "Đang chơi", "history.abandoned": "Đã bỏ giữa chừng",
 
+      "home.blackjack": "Blackjack",
+      "bj.title": "Blackjack", "bj.exit": "Thoát", "bj.dealer": "Nhà cái", "bj.player": "Bạn", "bj.hit": "Rút bài", "bj.stand": "Dừng bài", "bj.new": "Chia bài", "bj.deck": "Bộ bài",
+      "bj.msg.idle": "Chọn mức cược rồi nhấn \"Chia bài\"", "bj.msg.dealing": "Đang chia bài…", "bj.msg.yourTurn": "Đến lượt bạn", "bj.msg.dealerTurn": "Lượt của nhà cái",
+      "bj.badge.blackjack": "Blackjack!", "bj.badge.bust": "Quá 21",
+      "bj.result.win": "Bạn thắng!", "bj.result.lose": "Bạn thua", "bj.result.push": "Hòa", "bj.result.blackjack": "Blackjack! Bạn thắng!", "bj.result.dealerBlackjack": "Nhà cái Blackjack", "bj.result.bust": "Bạn quá 21",
+      "bj.balance": "Số dư", "bj.bet": "Cược", "bj.difficulty": "Độ khó", "bj.rules": "Luật", "bj.rules.title": "Luật Blackjack",
+      "bj.rules.body": "Cược từ ¼ số dư đến toàn bộ (bước 0,1K). Thắng +1× cược, Blackjack tự nhiên +1,5×, hòa hoàn cược, thua mất cược. Thoát giữa ván hoặc tải lại trang tính là thua. Bài được chia thật, nhưng bạn đóng vai người chơi còn host là nhà cái: càng thắng liên tiếp thì thanh Độ khó càng tăng và càng khó thắng hơn; thua thì độ khó giảm dần trở lại. Đây là trò may rủi, hãy cân nhắc mức cược.",
+      "bj.msg.noBalance": "Số dư chưa đủ để cược (tối thiểu 0,1K).", "bj.msg.loading": "Đang tải số dư…", "bj.msg.disabled": "Blackjack đang tạm tắt.", "bj.msg.leftover": "Ván dở trước đó đã được tính thua.",
+      "bj.msg.syncError": "Có lỗi đồng bộ với máy chủ. Số dư đã được tải lại.", "bj.confirmExit": "Thoát giữa ván sẽ bị tính thua và mất tiền cược. Bạn vẫn muốn thoát?",
+      "bj.delta.zero": "Hoàn cược",
+      "history.blackjack": "Blackjack", "history.bj.win": "Thắng", "history.bj.blackjack": "Blackjack", "history.bj.push": "Hòa", "history.bj.lose": "Thua", "history.bj.bust": "Quá 21", "history.bj.dealer_blackjack": "Nhà cái Blackjack", "history.bj.abandoned": "Bỏ ván",
       "store.badJson": "File không phải JSON hợp lệ.", "store.noList": "File không có danh sách câu hỏi.", "store.noValid": "Không có câu hỏi nào hợp lệ trong file."
     },
     en: {
@@ -286,6 +298,7 @@
       "err.pool": "This tier doesn't have enough questions yet. Tell the host.", "err.active": "You still have a game in progress.", "err.pending_spin": "You still have a prize spin waiting.",
       "err.bad_count": "Invalid number of questions.", "err.bad_level": "Invalid tier.", "err.stale": "The question changed, reloading…",
       "err.no_play": "Game not found.", "err.bad_slot": "Invalid envelope.", "err.not_active": "This game has already ended.", "err.no_wheel": "This game has no wheel.", "err.wheel_unavailable": "This wheel isn't set up yet. Tell the host.",
+      "err.no_balance": "Your lucky-money balance is too low to bet.", "err.bad_bet": "That bet is not valid. Pick again with the bet slider.", "err.no_game": "There is no round in progress.", "err.cannot_hit": "You cannot draw another card.",
       "err.generic": "Something went wrong. Try again.",
       "imp.title": "Impossible tier", "imp.pick": "Choose how to play",
       "imp.quizTitle": "Answer the quiz", "imp.quizDesc": "Enter the 2 correct dates to win {prize}. Choosing the quiz forfeits your Gacha spin; winning the quiz locks this tier.",
@@ -307,6 +320,17 @@
       "history.sum": "Won {won} · Paid by host {paid} · Still owed {owed}",
       "history.pendingSpin": "Not spun yet", "history.active": "In progress", "history.abandoned": "Left early",
 
+      "home.blackjack": "Blackjack",
+      "bj.title": "Blackjack", "bj.exit": "Exit", "bj.dealer": "Dealer", "bj.player": "You", "bj.hit": "Hit", "bj.stand": "Stand", "bj.new": "Deal", "bj.deck": "Deck",
+      "bj.msg.idle": "Pick your bet, then press \"Deal\"", "bj.msg.dealing": "Dealing…", "bj.msg.yourTurn": "Your turn", "bj.msg.dealerTurn": "Dealer's turn",
+      "bj.badge.blackjack": "Blackjack!", "bj.badge.bust": "Bust",
+      "bj.result.win": "You win!", "bj.result.lose": "You lose", "bj.result.push": "Push", "bj.result.blackjack": "Blackjack! You win!", "bj.result.dealerBlackjack": "Dealer Blackjack", "bj.result.bust": "Bust! You lose",
+      "bj.balance": "Balance", "bj.bet": "Bet", "bj.difficulty": "Difficulty", "bj.rules": "Rules", "bj.rules.title": "Blackjack rules",
+      "bj.rules.body": "Bet from ¼ of your balance up to all of it (0.1K steps). Win pays +1× your bet, a natural Blackjack +1.5×, a push refunds your bet, a loss costs it. Leaving mid-round or reloading counts as a loss. Cards are dealt for real, but the host is the house: the more you win in a row the higher the Difficulty bar climbs and the harder winning gets; losses lower it again. This is a game of chance, so bet wisely.",
+      "bj.msg.noBalance": "Balance too low to bet (minimum 0.1K).", "bj.msg.loading": "Loading balance…", "bj.msg.disabled": "Blackjack is switched off for now.", "bj.msg.leftover": "Your unfinished round was counted as a loss.",
+      "bj.msg.syncError": "Sync problem with the server. Your balance was reloaded.", "bj.confirmExit": "Leaving mid-round counts as a loss and you lose your bet. Leave anyway?",
+      "bj.delta.zero": "Bet refunded",
+      "history.blackjack": "Blackjack", "history.bj.win": "Win", "history.bj.blackjack": "Blackjack", "history.bj.push": "Push", "history.bj.lose": "Loss", "history.bj.bust": "Bust", "history.bj.dealer_blackjack": "Dealer Blackjack", "history.bj.abandoned": "Abandoned",
       "store.badJson": "The file is not valid JSON.", "store.noList": "The file has no question list.", "store.noValid": "No valid questions in the file."
     }
   };

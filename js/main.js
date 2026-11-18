@@ -12,7 +12,7 @@
   function normName(s) {
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase().replace(/\s+/g, " ").trim();
   }
-  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history", "lixi", "bags", "gacha"];
+  const NEED_LOGIN = ["levels", "count", "quiz", "typed", "wheel", "history", "lixi", "bags", "gacha", "blackjack"];
 
   /* ---------- Người chơi hiện tại + thanh trạng thái ---------- */
   function setPlayer(p) { session.player = p || null; paintUser(); paintLocks(); }
@@ -36,7 +36,9 @@
     if (r.ok) setPlayer(r.player); else if (r.error === "auth") { setPlayer(null); showLogin(I18n.t("err.auth")); }
     return r;
   }
-  async function refreshConfig() { const c = await Api.config(); if (c.ok) { Store.setRemote(c); refreshPrices(); } return c; }
+  async function refreshConfig() { const c = await Api.config(); if (c.ok) { Store.setRemote(c); refreshPrices(); paintBlackjackBtn(c.bjEnabled); } return c; }
+  // Host tắt Blackjack (admin_bj_config) thì ẩn nút ở trang chủ; server cũ chưa có 12-blackjack.sql thì bjEnabled không có -> giữ nguyên nút
+  function paintBlackjackBtn(enabled) { const b = UI.$("#btn-blackjack"); if (b) b.hidden = enabled === false; }
 
   /* ---------- Điều phối màn hình ---------- */
   // opts chỉ dùng cho màn hình vòng quay: { level, once, playId }
@@ -53,6 +55,7 @@
     if (name === "history") buildHistory();
     if (name === "wheel") Wheel.open(opts); else Wheel.stop();
     if (name === "gacha") Gacha.open(gachaCtx()); else Gacha.stop();
+    if (name === "blackjack") Blackjack.open(); else Blackjack.stop(); // rời màn Blackjack: hủy hoạt ảnh, dọn bàn
     UI.showScreen(name);
     Sfx.screen(name);
   }
@@ -247,7 +250,7 @@
   }
 
   /* ---------- Lịch sử của người chơi ---------- */
-  function fmtK(v) { return String(Math.round(Number(v) * 10) / 10) + "K"; }
+  function fmtK(v) { return String(Math.round(Number(v) * 100) / 100) + "K"; }
   async function buildHistory() {
     const box = UI.$("#history-list"), sum = UI.$("#history-sum");
     box.textContent = ""; sum.textContent = I18n.t("history.loading");
@@ -259,10 +262,16 @@
     r.items.forEach(function (it) {
       const li = UI.el("li", "hist-item");
       const when = new Date(it.at).toLocaleString(I18n.lang() === "vi" ? "vi-VN" : "en-GB");
-      const name = it.kind === "free" ? Store.LEVEL_NAMES.free : (Store.LEVEL_NAMES[it.level] || it.level) + (it.kind === "gacha" ? " · " + I18n.t("history.gacha") : "");
+      const isBj = it.kind === "blackjack";
+      const name = isBj ? I18n.t("history.blackjack") : it.kind === "free" ? Store.LEVEL_NAMES.free : (Store.LEVEL_NAMES[it.level] || it.level) + (it.kind === "gacha" ? " · " + I18n.t("history.gacha") : "");
       const score = it.kind === "quiz" ? it.solved + "/" + (it.level === "impossible" ? 2 : it.total) : "";
       let result;
-      if (it.rewardLabel) result = it.rewardLabel;
+      if (isBj) {                                   // 7A: ván Blackjack hiện kết quả + tiền thắng/thua (K)
+        const k = Number(it.rewardK), out = it.abandoned ? "abandoned" : it.outcome;
+        const lbl = out ? I18n.t("history.bj." + out) : I18n.t("history.active");
+        result = lbl + (out && k !== 0 ? " " + (k > 0 ? "+" : "−") + fmtK(Math.abs(k)) : "");
+      }
+      else if (it.rewardLabel) result = it.rewardLabel;
       else if (it.kind === "gacha") result = I18n.t("history.gachaMiss");
       else if (it.bagPending) result = I18n.t("history.bagPending");
       else if (it.wheel && !it.spun) result = I18n.t("history.pendingSpin");
@@ -295,6 +304,7 @@
     });
 
     UI.$("#btn-start").addEventListener("click", function () { go("levels"); });
+    UI.$("#btn-blackjack").addEventListener("click", function () { go("blackjack"); });
     UI.$("#btn-setting").addEventListener("click", function () { go("settings"); });
     UI.$("#login-form").addEventListener("submit", doLogin);
     UI.$("#btn-logout").addEventListener("click", doLogout);
@@ -304,8 +314,12 @@
     });
 
     UI.$("#quiz-continue").addEventListener("click", Quiz.proceed);
+    Blackjack.init({ container: UI.$("#bj-mount"), onExit: function () { go("home"); },
+      api: Api.configured ? Api : null,              // có Supabase => cược bằng số dư lì xì, server giữ bài; không có => chỉ chạy local (thử)
+      onAuth: function () { refreshState(); } });    // phiên hết hạn -> về màn đăng nhập (refreshState đã xử lý lỗi auth)
     refreshPrices();
     I18n.onChange(function () { refreshPrices(); paintUser(); paintLocks(); });
+    I18n.onChange(function () { Blackjack.refresh(); });
     I18n.onChange(function () { if (countLevel && !UI.$("#screen-count").hidden) buildCount(countLevel); });
 
     const blanks = Array.from(document.querySelectorAll(".blank"));

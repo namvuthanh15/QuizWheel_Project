@@ -1,0 +1,226 @@
+/* blackjack.css – giao diện Blackjack (M2): lá bài, bàn chơi, bố cục máy tính / máy tính bảng / điện thoại.
+   Mọi màu chính là biến CSS trên .bj-root (không đụng :root của QuizWheel). Hoạt ảnh nằm ở blackjack-animations.css (M3). */
+
+.bj-root, .bj-sheet {
+  --bj-table-hi: #2a7a56;
+  --bj-table: #164b35;
+  --bj-table-dark: #0c2e20;
+  --bj-gold: #e7bd62;
+  --bj-gold-deep: #c8920a;
+  --bj-red: #c92f32;
+  --bj-card: #fffaf0;
+  --bj-ink: #202020;
+  --bj-suit-black: #232323;
+  --bj-suit-red: #c92f32;
+  --bj-card-w: clamp(60px, 7.6vw, 92px);
+}
+
+/* ===================== LÁ BÀI ===================== */
+.bj-card {
+  position: relative; flex: none; width: var(--bj-card-w); aspect-ratio: 5 / 7;
+  font-size: calc(var(--bj-card-w) * .16); /* 1em = 16% bề rộng lá: mọi chi tiết bên trong co giãn theo */
+  perspective: 700px; rotate: var(--rot, 0deg);
+}
+.bj-card-inner { position: absolute; inset: 0; transform-style: preserve-3d; }
+.bj-card.is-down .bj-card-inner { transform: rotateY(180deg); } /* lật 3D = xoay khối trong, hai mặt riêng biệt */
+.bj-face {
+  position: absolute; inset: 0; border-radius: .7em; overflow: hidden;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  border: max(1px, .07em) solid rgba(58, 16, 0, .65);
+  box-shadow: 0 .12em .4em rgba(0, 0, 0, .38);
+}
+.bj-front { background: linear-gradient(160deg, #fffefa 0%, var(--bj-card) 55%, #fdeec9 100%); color: var(--bj-suit-black); }
+.bj-card[data-color="red"] .bj-front { color: var(--bj-suit-red); }
+
+.bj-corner {
+  position: absolute; left: .42em; top: .32em; display: flex; flex-direction: column; align-items: center;
+  line-height: 1; font: 800 1.32em/1 Georgia, "Times New Roman", serif; letter-spacing: -.04em;
+}
+.bj-corner .bj-suit { width: .86em; height: .86em; margin-top: .08em; }
+.bj-card[data-rank="10"] .bj-rank { font-size: .88em; letter-spacing: -.1em; }
+.bj-corner.br { left: auto; right: .42em; top: auto; bottom: .32em; transform: rotate(180deg); }
+
+.bj-pips { position: absolute; left: 19%; right: 19%; top: 10%; bottom: 10%; }
+.bj-pip { position: absolute; width: 1.6em; height: 1.6em; transform: translate(-50%, -50%); display: block; }
+.bj-pips.dense .bj-pip { width: 1.3em; height: 1.3em; } /* 7-10: biểu tượng nhỏ hơn để khỏi chen nhau */
+.bj-pip.inv { transform: translate(-50%, -50%) rotate(180deg); }
+.bj-pip svg, .bj-pip .bj-suit { width: 100%; height: 100%; display: block; }
+.bj-pip.bj-ace { width: 4.4em; height: 4.4em; }
+
+/* J / Q / K: khung vàng, nền kẻ chéo, hai nửa đối xứng */
+.bj-court {
+  position: absolute; left: 25%; right: 25%; top: 8%; bottom: 8%; overflow: hidden;
+  border: .12em solid var(--bj-gold-deep); border-radius: .4em;
+  background: repeating-linear-gradient(45deg, #fff3cf 0 .32em, #ffe6a6 .32em .64em);
+  box-shadow: inset 0 0 0 .1em rgba(255, 255, 255, .6);
+}
+.bj-half { position: absolute; left: 0; right: 0; top: 0; height: 50%; display: flex; align-items: center; justify-content: center; }
+.bj-half.b { top: 50%; transform: rotate(180deg); }
+.bj-half.a { border-bottom: .08em solid rgba(200, 146, 10, .7); }
+.bj-portrait { height: 100%; width: auto; flex: none; }
+.bj-court-pip { display: none; } /* (đã bỏ biểu tượng chất hai bên khung để chân dung to hơn) */
+
+/* Mặt sau: đỏ lễ hội, viền vàng, lưới kim cương, huy hiệu hoa mai */
+.bj-back {
+  transform: rotateY(180deg);
+  background: radial-gradient(circle at 30% 20%, #e5463f 0%, #c92f32 45%, #8f1418 100%);
+}
+.bj-back::before { content: ""; position: absolute; inset: .42em; border: .13em solid var(--bj-gold); border-radius: .45em; }
+.bj-back::after {
+  content: ""; position: absolute; inset: .92em; border: .07em solid rgba(231, 189, 98, .85); border-radius: .25em;
+  background:
+    repeating-linear-gradient(45deg, rgba(231, 189, 98, .5) 0 .07em, transparent .07em .6em),
+    repeating-linear-gradient(-45deg, rgba(231, 189, 98, .5) 0 .07em, transparent .07em .6em);
+}
+.bj-emblem { position: absolute; left: 50%; top: 50%; width: 52%; transform: translate(-50%, -50%); z-index: 1; filter: drop-shadow(0 .1em .15em rgba(0, 0, 0, .35)); }
+
+/* ===================== BÀN CHƠI ===================== */
+.bj-root { max-width: 960px; margin: 0 auto; }
+.bj-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.bj-head-side { flex: 1 1 0; min-width: 0; display: flex; }
+.bj-title { margin: 0; color: #fff; font-size: clamp(1.6rem, 4vw, 2.3rem); letter-spacing: .06em; text-transform: uppercase; text-shadow: 0 3px 0 #7a2a00, 0 0 2px #7a2a00; }
+.bj-exit { padding: 8px 20px; font-size: .95rem; }
+
+.bj-table {
+  position: relative; isolation: isolate; overflow: hidden; display: grid; gap: clamp(8px, 1.6vw, 18px);
+  padding: clamp(16px, 2.6vw, 28px) clamp(10px, 2vw, 26px);
+  border: 4px solid var(--ink, #3a1000); border-radius: 28px;
+  background:
+    radial-gradient(rgba(255, 255, 255, .045) 1px, transparent 1.6px) 0 0 / 7px 7px,
+    radial-gradient(ellipse at 50% 46%, var(--bj-table-hi) 0%, var(--bj-table) 55%, var(--bj-table-dark) 100%);
+  box-shadow: 0 7px 0 #0a2a1d, 0 16px 26px rgba(70, 20, 0, .35), inset 0 0 46px rgba(0, 0, 0, .4);
+}
+.bj-table::before { /* viền vàng bên trong */
+  content: ""; position: absolute; inset: 9px; z-index: -1; pointer-events: none;
+  border: 2px solid rgba(231, 189, 98, .75); border-radius: 20px; box-shadow: inset 0 0 0 5px rgba(231, 189, 98, .1);
+}
+.bj-lantern { position: absolute; top: -2px; width: clamp(22px, 3.4vw, 36px); z-index: 0; pointer-events: none; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .35)); }
+.bj-lantern.l { left: 4%; } .bj-lantern.r { right: 4%; }
+.bj-lantern svg { display: block; width: 100%; height: auto; }
+
+.bj-zone { position: relative; z-index: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.bj-label { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; min-height: 2em; }
+.bj-who { color: #fff2a8; font-weight: 800; font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 2px 0 #3a1000; }
+.bj-score {
+  min-width: 2.6em; padding: 1px 12px; text-align: center; font-weight: 900; color: #3a1000;
+  background: var(--bj-card); border: 3px solid #3a1000; border-radius: 999px; box-shadow: 0 3px 0 #a24a00;
+}
+.bj-score[data-state="bust"] { background: #ffb4ac; }
+.bj-score[data-state="blackjack"] { background: linear-gradient(180deg, #fff0a8, var(--bj-gold)); }
+.bj-badge { padding: 1px 11px; font-size: .78rem; font-weight: 900; border: 2px solid #3a1000; border-radius: 999px; color: #ffe14d; background: var(--bj-red); text-shadow: 0 1px 0 #3a1000; }
+.bj-badge[data-kind="blackjack"] { color: #3a1000; background: linear-gradient(180deg, #fff0a8, var(--bj-gold)); text-shadow: none; }
+
+/* Tay bài: các lá xếp ngang, càng nhiều lá càng chồng lên nhau để không tràn */
+.bj-hand { --bj-ov: .08; display: flex; justify-content: center; align-items: center; max-width: 100%; min-height: calc(var(--bj-card-w) * 1.4 + 8px); padding: 4px 0; }
+.bj-hand > .bj-card + .bj-card { margin-left: calc(var(--bj-card-w) * var(--bj-ov)); }
+.bj-hand[data-count="4"] { --bj-ov: -.08; } .bj-hand[data-count="5"] { --bj-ov: -.22; } .bj-hand[data-count="6"] { --bj-ov: -.34; }
+.bj-hand[data-count="7"] { --bj-ov: -.44; } .bj-hand[data-count="8"] { --bj-ov: -.5; } .bj-hand[data-count="9"] { --bj-ov: -.55; }
+.bj-hand[data-count="10"], .bj-hand[data-count="11"], .bj-hand[data-count="12"] { --bj-ov: -.6; }
+.bj-hand:empty::before { /* ô trống khi chưa chia bài */
+  content: ""; width: var(--bj-card-w); aspect-ratio: 5 / 7; border: 2px dashed rgba(231, 189, 98, .45); border-radius: calc(var(--bj-card-w) * .11);
+}
+
+.bj-center { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: calc(var(--bj-card-w) * 1.05 + 34px); }
+.bj-deck { position: relative; width: var(--bj-card-w); height: calc(var(--bj-card-w) * 1.4); transform: scale(.72); transform-origin: 50% 50%; margin: calc(var(--bj-card-w) * -.19) 0; }
+.bj-deck > .bj-card { position: absolute; left: 0; top: 0; translate: calc(var(--i, 0) * 1.5px) calc(var(--i, 0) * -1.5px); rotate: 0deg; }
+.bj-msg { margin: 0; padding: 3px 16px; color: #fff2a8; font-weight: 800; font-size: clamp(.9rem, 2.2vw, 1.05rem); text-align: center; text-shadow: 0 2px 0 #3a1000; background: rgba(0, 0, 0, .22); border-radius: 999px; }
+
+.bj-result { /* banner kết quả đặt giữa bàn (hiệu ứng vào ở M3) */
+  position: absolute; left: 50%; top: 50%; z-index: 5; transform: translate(-50%, -50%); max-width: 92%; text-align: center; pointer-events: none;
+  padding: .3em 1.1em; border: 4px solid #3a1000; border-radius: 18px; color: #3a1000; background: var(--bj-card);
+  font: 800 clamp(1.3rem, 4.2vw, 2.3rem)/1.15 "Baloo 2", "Segoe UI Black", "Arial Black", system-ui, sans-serif;
+  box-shadow: 0 6px 0 #7a2a00, 0 12px 22px rgba(0, 0, 0, .4);
+}
+.bj-result[data-kind="win"] { background: linear-gradient(180deg, #fff0a8, var(--bj-gold)); }
+.bj-result[data-kind="blackjack"] { background: linear-gradient(180deg, #fff0a8, var(--bj-gold)); color: #b01218; }
+.bj-result[data-kind="lose"] { background: linear-gradient(180deg, #ffd0ca, #f08a82); }
+.bj-result[data-kind="push"] { background: linear-gradient(180deg, #fffaf0, #f1dfb4); }
+
+.bj-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 20px; }
+.bj-btn { min-width: 140px; min-height: 48px; font-size: 1.05rem; }
+
+/* ===================== MÁY TÍNH BẢNG / ĐIỆN THOẠI DỌC ===================== */
+@media (max-width: 760px) {
+  .bj-root, .bj-sheet { --bj-card-w: clamp(56px, 15vw, 82px); }
+  .bj-title { font-size: 1.5rem; }
+}
+@media (max-width: 600px) { /* bố cục riêng cho màn hẹp: bàn gọn, lá nhỏ hơn, chồng lá chặt hơn, nút cỡ ngón tay */
+  .bj-root, .bj-sheet { --bj-card-w: clamp(52px, 17vw, 72px); }
+  .bj-table { border-radius: 22px; padding: 14px 8px 16px; gap: 6px; }
+  .bj-table::before { inset: 6px; border-radius: 16px; }
+  .bj-lantern { display: none; }
+  .bj-who { font-size: .8rem; }
+  .bj-hand[data-count="4"] { --bj-ov: -.18; } .bj-hand[data-count="5"] { --bj-ov: -.34; } .bj-hand[data-count="6"] { --bj-ov: -.44; }
+  .bj-hand[data-count="7"] { --bj-ov: -.52; } .bj-hand[data-count="8"] { --bj-ov: -.58; } .bj-hand[data-count="9"] { --bj-ov: -.62; }
+  .bj-hand[data-count="10"], .bj-hand[data-count="11"], .bj-hand[data-count="12"] { --bj-ov: -.66; }
+  .bj-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .bj-actions .bj-btn { min-width: 0; min-height: 54px; padding-inline: 10px; }
+  .bj-actions .bj-btn[data-act="new"] { grid-column: 1 / -1; }
+  .bj-exit { padding: 7px 14px; }
+}
+
+/* ===================== ĐIỆN THOẠI NẰM NGANG (thấp) ===================== */
+@media (max-height: 520px) and (orientation: landscape) { /* bài nhà cái | bộ bài | bài người chơi cạnh nhau để khỏi tràn chiều cao */
+  .bj-root, .bj-sheet { --bj-card-w: clamp(40px, 12vh, 58px); }
+  .bj-head { margin-bottom: 6px; }
+  .bj-title { font-size: 1.2rem; }
+  .bj-table { grid-template-columns: 1fr auto 1fr; align-items: center; padding: 10px 14px; gap: 10px; }
+  .bj-lantern { display: none; }
+  .bj-center { grid-column: 2; grid-row: 1; min-width: 110px; }
+  .bj-dealer { grid-column: 1; grid-row: 1; }
+  .bj-player { grid-column: 3; grid-row: 1; flex-direction: column-reverse; }
+  .bj-hand { min-height: calc(var(--bj-card-w) * 1.4 + 4px); }
+  .bj-actions { margin-top: 8px; gap: 10px; }
+  .bj-btn { min-height: 42px; padding-block: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) { .bj-card-inner { transition: none !important; } }
+
+/* ===================== TÍCH HỢP VÀO QUIZWHEEL (M4) ===================== */
+/* Nút Blackjack ở trang chủ: vẽ bằng CSS cùng kiểu nút đỏ bóng chữ vàng của Start/Setting (các nút đó là ảnh PNG). Dùng class .img-btn nên có sẵn hiệu ứng nhấn. */
+.bj-home-btn {
+  aspect-ratio: 640 / 277; display: grid; place-items: center; position: relative; overflow: hidden;
+  border: 4px solid #3a1000; border-radius: 999px;
+  background: radial-gradient(ellipse at 50% 0%, #ff6a58 0%, #e5251b 38%, #a8120d 100%);
+  box-shadow: 0 6px 0 #6e1008, inset 0 3px 0 rgba(255, 255, 255, .35), inset 0 -8px 12px rgba(80, 0, 0, .35);
+}
+.bj-home-btn::after { /* vệt bóng phía trên */
+  content: ""; position: absolute; left: 9%; right: 9%; top: 7%; height: 28%; border-radius: 999px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0));
+}
+.bj-home-btn .game-text { position: relative; z-index: 1; color: #ffd21f; font-size: clamp(1.45rem, 6.2vw, 2.1rem); letter-spacing: .01em; -webkit-text-stroke: 0; paint-order: normal;
+  text-shadow: 0 3px 0 #a24a00, 0 0 2px #3a1000, 2px 2px 0 #3a1000, -2px 2px 0 #3a1000, 2px -2px 0 #3a1000, -2px -2px 0 #3a1000; }
+.bj-home-btn:focus-visible { border-radius: 999px; }
+
+#screen-blackjack:not([hidden]) { display: block; }
+
+/* ===== M6: bảng cược (số dư, độ khó, thanh cược, luật) + dòng tiền ở banner kết quả ===== */
+.bj-bet { margin: 14px auto 0; max-width: 560px; padding: 10px 14px 12px; border-radius: 16px; background: rgba(0, 0, 0, .28); border: 2px solid rgba(231, 189, 98, .55); color: #fff2a8; }
+.bj-bet[hidden] { display: none; }
+.bj-bet-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; font-weight: 800; }
+.bj-bal b { color: #fff; font-size: 1.15rem; text-shadow: 0 2px 0 #3a1000; }
+.bj-diff { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; }
+.bj-diff-bar { display: inline-flex; gap: 4px; }
+.bj-diff-bar i { width: 16px; height: 10px; border-radius: 3px; background: rgba(255, 255, 255, .22); border: 1px solid rgba(0, 0, 0, .35); }
+.bj-diff-bar i.on { background: linear-gradient(180deg, #ffb347, #e5251b); box-shadow: 0 0 6px rgba(229, 37, 27, .6); }
+.bj-rules-btn { appearance: none; border: 2px solid rgba(231, 189, 98, .8); background: transparent; color: #fff2a8; font: inherit; font-weight: 800; font-size: .85rem; padding: 3px 12px; border-radius: 999px; cursor: pointer; min-height: 32px; }
+.bj-rules-btn:focus-visible, .bj-range:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.bj-bet-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.bj-bet-row[hidden] { display: none; }
+.bj-bet-label { font-weight: 800; }
+.bj-range { flex: 1; min-width: 0; height: 32px; accent-color: #e7bd62; cursor: pointer; }
+.bj-range:disabled { opacity: .5; cursor: not-allowed; }
+.bj-bet-val { min-width: 4.2em; text-align: right; color: #fff; font-size: 1.15rem; text-shadow: 0 2px 0 #3a1000; }
+.bj-rules { margin: 8px 0 0; padding: 8px 10px; font-size: .85rem; line-height: 1.45; font-weight: 600; color: #fff6cc; background: rgba(0, 0, 0, .25); border-radius: 10px; }
+.bj-rules[hidden] { display: none; }
+.bj-result-delta { display: block; margin-top: 2px; font-size: .62em; font-weight: 800; }
+.bj-result-delta[hidden] { display: none; }
+.bj-result-delta[data-sign="pos"] { color: #1f6b2a; }
+.bj-result-delta[data-sign="neg"] { color: #a31217; }
+@media (max-width: 600px) {
+  .bj-bet { margin-top: 10px; padding: 8px 10px 10px; }
+  .bj-bet-row { gap: 8px; }
+  .bj-range { height: 40px; }  /* thanh kéo cỡ ngón tay */
+}
+@media (max-height: 520px) and (orientation: landscape) { .bj-bet { margin-top: 6px; padding: 6px 10px; } .bj-rules { display: none; } }
+.bj-home-btn[hidden] { display: none !important; }

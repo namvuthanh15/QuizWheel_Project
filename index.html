@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/home-bg.css">
   <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/blackjack.css">
+  <link rel="stylesheet" href="css/blackjack-animations.css">
 </head>
 <body>
   <!-- Nền động cho trang chủ: gradient + tia sáng + 3 lớp sóng (xem css/home-bg.css) -->
@@ -95,6 +97,7 @@
         <button class="img-btn" type="button" id="btn-start" aria-label="Start">
           <img src="assets/images/btn-start.png" alt="" draggable="false">
         </button>
+        <button class="img-btn bj-home-btn" type="button" id="btn-blackjack"><span class="game-text" data-i18n="home.blackjack">Blackjack</span></button>
         <button class="img-btn" type="button" id="btn-setting" aria-label="Setting">
           <img src="assets/images/btn-setting.png" alt="" draggable="false">
         </button>
@@ -177,6 +180,11 @@
           <button class="btn btn-secondary" type="button" id="gacha-back" data-i18n="gacha.back">Về chọn mức</button>
         </div>
       </div>
+    </section>
+
+    <!-- ===== MÀN HÌNH: BLACKJACK (trò chơi nhỏ độc lập; bàn chơi do js/blackjack/*.js dựng vào #bj-mount) ===== -->
+    <section class="screen" id="screen-blackjack" hidden>
+      <div id="bj-mount"></div>
     </section>
 
     <!-- ===== MÀN HÌNH: QUIZ ===== -->
@@ -322,6 +330,12 @@
   <script src="js/settings.js"></script>
   <script src="js/lang.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/blackjack/blackjack-cards.js"></script>
+  <script src="js/blackjack/blackjack-engine.js"></script>
+  <script src="js/blackjack/blackjack-render.js"></script>
+  <script src="js/blackjack/blackjack-animation.js"></script>
+  <script src="js/blackjack/blackjack-audio.js"></script>
+  <script src="js/blackjack/blackjack.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

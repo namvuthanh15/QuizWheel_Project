@@ -34,7 +34,8 @@
   // Mã lỗi -> câu thông báo (đa ngôn ngữ)
   function errText(code) {
     const known = ["invalid", "locked", "disabled", "network", "config", "auth", "no_turns", "free_used", "pool", "active", "pending_spin",
-                   "bad_count", "bad_level", "stale", "no_play", "not_active", "no_wheel", "wheel_unavailable", "bad_slot", "no_bags", "imp_locked", "gacha_used"];
+                   "bad_count", "bad_level", "stale", "no_play", "not_active", "no_wheel", "wheel_unavailable", "bad_slot", "no_bags", "imp_locked", "gacha_used",
+                   "no_balance", "bad_bet", "no_game", "cannot_hit"];
     return I18n.t("err." + (known.indexOf(code) >= 0 ? code : "generic"));
   }
 
@@ -60,6 +61,12 @@
     abandon: function (playId) { return rpc("api_abandon", { p_token: token, p_play: playId }); },
     spin: function (playId) { return rpc("api_spin", { p_token: token, p_play: playId }); },
     gachaSpin: function () { return rpc("api_gacha_spin", { p_token: token }); },
-    history: function () { return rpc("api_history", { p_token: token }); }
+    history: function () { return rpc("api_history", { p_token: token }); },
+    // Blackjack (sql/12-blackjack.sql): server giữ bộ bài, tiền cược và kết toán
+    bjState: function () { return rpc("api_bj_state", { p_token: token }); },
+    bjStart: function (bet) { return rpc("api_bj_start", { p_token: token, p_bet: bet }); },
+    bjHit: function () { return rpc("api_bj_hit", { p_token: token }); },
+    bjStand: function () { return rpc("api_bj_stand", { p_token: token }); },
+    bjAbandon: function () { return rpc("api_bj_abandon", { p_token: token }); }
   };
 })();

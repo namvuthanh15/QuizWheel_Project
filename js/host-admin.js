@@ -8,6 +8,7 @@
   let players = [];
   let D = { questions: { easy: [], hard: [], impossible: [] }, wheels: {}, settings: null, loseImage: null };
   let gachaReady = false;            // server đã chạy sql/11-gacha.sql chưa
+  let bjReady = false;               // server đã chạy sql/12-blackjack.sql chưa
   let lixiVals = [2, 3, 4, 5, 6, 7, 8, 9, 10], lixiReady = false;     // 9 bao lì xì đăng nhập lần đầu (số lượt trong mỗi bao)
   let cfg = { costs: { easy: 1, hard: 1, impossible: 0 }, startTurns: 3, freeSpins: 1, impossiblePrize: "100K" };
   let qLevel = "easy", wLevel = "free", editing = null, histFor = null;
@@ -19,7 +20,8 @@
     bad_name: "Tên phải 1–30 ký tự.", bad_pin: "PIN phải 4–12 ký tự.", exists: "Tên này đã có người dùng.", no_player: "Không tìm thấy người chơi.",
     short_key: "Mật khẩu mới phải từ 8 ký tự.", bad_data: "Dữ liệu không hợp lệ.",
     need_password: "Việc này cần nhập mật khẩu host (không dùng được bằng thiết bị đã lưu).", bad_key: "Mật khẩu mới không được bắt đầu bằng “qwdev.”.",
-    trust_off: "Tính năng lưu thiết bị đang tắt (bật lại trong tab Cài đặt)." };
+    trust_off: "Tính năng lưu thiết bị đang tắt (bật lại trong tab Cài đặt).",
+    bad_chain: "Chuỗi tỉ lệ Blackjack không hợp lệ: cần 1–10 số, mỗi số từ 0 đến 100." };
 
   // ---- Thiết bị tin cậy: chỉ lưu MÃ THIẾT BỊ ngẫu nhiên (hết hạn 7 ngày, thu hồi được), KHÔNG lưu mật khẩu ----
   const KEY_DEV = "quizwheel.v2.hostDevice";
@@ -87,8 +89,9 @@
       D.wheels = ex.wheels || {}; D.bagValues = ex.bagValues || {}; bagDraft = {}; D.settings = ex.settings; D.loseImage = ex.loseImage || null;
     }
     if (st) {
-      cfg = { costs: st.costs, startTurns: st.startTurns, freeSpins: st.freeSpins, impossiblePrize: st.impossiblePrize, gachaRate: st.gachaRate };
+      cfg = { costs: st.costs, startTurns: st.startTurns, freeSpins: st.freeSpins, impossiblePrize: st.impossiblePrize, gachaRate: st.gachaRate, bjEnabled: st.bjEnabled, bjChain: st.bjChain };
       gachaReady = st.gachaRate !== undefined && st.gachaRate !== null;
+      bjReady = Array.isArray(st.bjChain);
     }
     const lx = await Api.call("admin_lixi_get", { p_key: KEY });
     lixiReady = !!(lx && lx.ok && Array.isArray(lx.values) && lx.values.length === 9);
@@ -115,7 +118,7 @@
   function input(type, value, attrs) { const i = h("input"); i.type = type; i.value = value === undefined || value === null ? "" : value; Object.keys(attrs || {}).forEach(function (k) { i.setAttribute(k, attrs[k]); }); return i; }
   function btn(text, cls, fn) { const b = h("button", cls, text); b.type = "button"; b.addEventListener("click", fn); return b; }
   function link(text, fn, danger) { return btn(text, "link-btn" + (danger ? " danger" : ""), fn); }
-  function kfmt(v) { return String(Math.round(Number(v) * 10) / 10) + "K"; }
+  function kfmt(v) { return String(Math.round(Number(v) * 100) / 100) + "K"; }   // 2 số lẻ vì Blackjack có thể ra 0,05K
 
   // Menu "Thêm ▾" (dropdown có phân nhóm): mở bằng nút, đóng khi bấm ra ngoài / Esc / cuộn / đổi cỡ cửa sổ; dùng phím ↑ ↓ để chọn
   let openMenu = null;
@@ -297,6 +300,11 @@
           if (t !== "") { rate = Number(t.replace(",", ".")); if (!Number.isFinite(rate) || rate < 0 || rate > 100) { say("Hãy nhập số từ 0 đến 100.", false); return; } }
           if (await adm("admin_gacha_rate", { p_id: p.id, p_rate: rate })) { await loadAll(); renderPlayers(); say(rate === null ? "Đã bỏ tỉ lệ riêng của " + p.name + " (dùng mặc định)." : "Đã đặt tỉ lệ trúng Gacha của " + p.name + " (chỉ host thấy).", true); }
         },
+        bjReset: async function () {
+          if (!bjReady) { say("Server chưa có Blackjack. Hãy chạy sql/12-blackjack.sql trong Supabase rồi tải lại trang.", false); return; }
+          if (!(await UI.confirm("Đặt lại độ khó Blackjack của " + p.name + " về bậc 1? Số ván đã thắng được xóa về 0 và tỉ lệ hồi phục bị bỏ.")) ) return;
+          if (await adm("admin_bj_reset_wins", { p_id: p.id })) { await loadAll(); renderPlayers(); say("Đã đặt lại độ khó Blackjack của " + p.name + " về bậc 1.", true); }
+        },
         share: function () { shareBox = { name: p.name, pin: null, withPin: false }; say(""); renderPlayers(); },
         pin: async function () {
           const v = window.prompt("PIN mới cho " + p.name + " (4–12 ký tự):", ""); if (v === null) return;
@@ -319,7 +327,7 @@
       const tr = h("tr", "prow" + (p.active ? "" : " off"));
       const tdName = cell("", "cell-name");
       tdName.append(h("div", "pname", p.name + (p.active ? "" : " (khóa)")),
-        h("div", "sub", "Free đã dùng " + p.freeUsed + " · " + (p.lixi == null ? "chưa rút lì xì" : "rút +" + p.lixi + " lượt") + " · " + p.plays + " ván"));
+        h("div", "sub", "Free đã dùng " + p.freeUsed + " · " + (p.lixi == null ? "chưa rút lì xì" : "rút +" + p.lixi + " lượt") + " · " + p.plays + " ván" + (bjReady && p.bjWins ? " · Blackjack thắng " + p.bjWins : "")));
       const tdTurns = value(cell("Lượt", "num"), String(p.turns));
       const tdOwed = value(cell("Còn nợ", "num"), owed > 0 ? kfmt(owed) : "—", "trúng " + kfmt(p.rewardK) + " · đã trả " + kfmt(p.paidK));
       // Tỉ lệ Gacha riêng KHÔNG hiện số ở bảng (đề phòng chia sẻ màn hình); chỉ hiện nhãn "riêng", số thật nằm trong hộp "Tỉ lệ Gacha"
@@ -330,6 +338,7 @@
         menuButton("Thêm", p.name, [
           { title: "Lượt chơi", items: [["Reset Free", act.resetFree], ["Cho rút lì xì lại", act.lixiAgain]] },
           { title: "Impossible / Gacha", items: [["Mở lại Impossible", act.reopen], ["Tỉ lệ Gacha", act.rate]] },
+          { title: "Blackjack", items: [["Đặt lại độ khó", act.bjReset]] },
           { title: "Tài khoản", items: [["Lấy link", act.share], ["Đổi PIN", act.pin], [p.active ? "Khóa" : "Mở khóa", act.toggle]] },
           { items: [["Xóa người chơi", act.del, true]] }
         ]));
@@ -346,8 +355,11 @@
       if (!histFor.items.length) ul.appendChild(h("li", "host-empty", "Chưa có ván nào."));
       histFor.items.forEach(function (it) {
         const li = h("li", "hist-item");
-        const res = it.rewardLabel ? it.rewardLabel : (it.kind === "gacha" ? "Trượt" : it.wheel && !it.spun ? "chưa quay" : it.status === "active" ? "đang chơi" : "—");
-        li.append(h("span", "", new Date(it.at).toLocaleString("vi-VN")), h("span", "", (it.kind === "free" ? "Free" : it.level + (it.kind === "gacha" ? " · Gacha" : "")) + (it.cost ? " (−" + it.cost + " lượt)" : "")),
+        const isBj = it.kind === "blackjack", BJ = { win: "Thắng", blackjack: "Blackjack", push: "Hòa", lose: "Thua", bust: "Quá 21", dealer_blackjack: "Nhà cái Blackjack", abandoned: "Bỏ ván" };
+        const k = Number(it.rewardK);
+        const res = isBj ? (it.outcome ? (BJ[it.outcome] || it.outcome) + (k !== 0 ? " " + (k > 0 ? "+" : "−") + kfmt(Math.abs(k)) : "") : "đang chơi")
+          : it.rewardLabel ? it.rewardLabel : (it.kind === "gacha" ? "Trượt" : it.wheel && !it.spun ? "chưa quay" : it.status === "active" ? "đang chơi" : "—");
+        li.append(h("span", "", new Date(it.at).toLocaleString("vi-VN")), h("span", "", isBj ? "Blackjack" + (it.bet ? " · cược " + kfmt(it.bet) : "") : (it.kind === "free" ? "Free" : it.level + (it.kind === "gacha" ? " · Gacha" : "")) + (it.cost ? " (−" + it.cost + " lượt)" : "")),
           h("span", "", it.kind === "quiz" ? it.solved + "/" + (it.level === "impossible" ? 2 : it.total) : ""), h("b", "", res));
         ul.appendChild(li);
       });
@@ -709,6 +721,24 @@
       if (b) { await loadAll(); renderSettings(); say("Đã lưu cài đặt.", true); }
     }));
     el.appendChild(c);
+
+    // ----- Blackjack: bật/tắt + chuỗi tỉ lệ thắng theo bậc (lưu riêng, không đụng nút "Lưu cài đặt" ở trên) -----
+    const bc = h("div", "card"); bc.style.marginTop = "14px";
+    bc.appendChild(h("h2", "", "Blackjack (cược bằng số dư lì xì)"));
+    if (!bjReady) bc.appendChild(h("p", "feedback bad", "Server chưa có Blackjack. Hãy chạy file sql/12-blackjack.sql trong Supabase (SQL Editor) rồi tải lại trang."));
+    const bjOn = input("checkbox"); bjOn.checked = cfg.bjEnabled !== false;
+    const bjL = h("label"); bjL.append(bjOn, document.createTextNode(" Bật Blackjack (người chơi thấy nút ở trang chủ)"));
+    const bjChain = input("text", (Array.isArray(cfg.bjChain) ? cfg.bjChain : [50, 40, 33, 27, 22]).join(", "), { maxlength: 60 });
+    bc.append(bjL, field("Tỉ lệ thắng mục tiêu của người chơi chuẩn theo bậc (%), cách nhau bằng dấu phẩy", bjChain));
+    bc.appendChild(h("p", "note", "Bài chia thật, theo luật chuẩn; độ khó chỉ làm lệch nhẹ các lá rút thêm nên đây là tỉ lệ XẤP XỈ cho người chơi dùng chiến thuật cơ bản (người chơi ẩu thắng ít hơn khoảng 10 điểm). Bậc = số ván đã thắng (bậc đầu là số đầu tiên, các bậc sau dùng số kế tiếp; hết chuỗi thì giữ bậc cuối). Dưới khoảng 21% thì không đạt được nếu không gian lận lộ liễu nên được tính như 21%. Mỗi ván thua tăng tỉ lệ thêm 3 điểm cho tới mức của bậc trước; ván hòa giữ nguyên. Số thập phân dùng dấu chấm (vd 37.5). Người chơi chỉ thấy thanh “Độ khó”, không thấy các con số này. Thắng +1× cược, Blackjack tự nhiên +1,5×, hòa hoàn cược, thua hoặc thoát giữa ván mất cược; tiền cược lấy từ số dư lì xì còn lại của người chơi (Đã trúng − Đã trả)."));
+    bc.appendChild(btn("Lưu Blackjack", "btn btn-primary", async function () {
+      if (!bjReady) { say("Server chưa có Blackjack. Hãy chạy sql/12-blackjack.sql trong Supabase rồi tải lại trang.", false); return; }
+      const parts = bjChain.value.split(/\s*[,;]\s*|\s+/).filter(function (x) { return x !== ""; });
+      const arr = parts.map(Number);
+      if (!arr.length || arr.length > 10 || arr.some(function (x) { return !Number.isFinite(x) || x < 0 || x > 100; })) { say(ERR.bad_chain, false); return; }
+      if (await adm("admin_bj_config", { p_enabled: bjOn.checked, p_chain: arr })) { await loadAll(); renderSettings(); say("Đã lưu Blackjack (" + (bjOn.checked ? "đang bật" : "đang tắt") + ", " + arr.length + " bậc).", true); }
+    }));
+    el.appendChild(bc);
 
     // ----- 9 bao lì xì rút ở lần đăng nhập đầu tiên -----
     const lc9 = h("div", "card"); lc9.style.marginTop = "14px";

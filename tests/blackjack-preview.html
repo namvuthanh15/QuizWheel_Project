@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackjack – xem trước (chỉ dùng khi phát triển, M2)</title>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/components.css">
+<link rel="stylesheet" href="../css/blackjack.css">
+<style>
+  body { padding: 12px; }
+  #sheet { overflow-x: auto; }
+  .pv-sheet { display: grid; grid-template-columns: repeat(13, max-content); gap: 10px 8px; margin: 14px 0 26px; }
+  .pv-sheet .bj-card { --bj-card-w: 92px; }
+  .pv-backs { display: flex; gap: 14px; flex-wrap: wrap; margin: 14px 0 26px; }
+  .pv-ctl { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .pv-ctl button { font: inherit; padding: 6px 12px; cursor: pointer; }
+  h1, h2 { color: #fff; }
+</style>
+</head>
+<body>
+<h1>Blackjack – xem trước</h1>
+<div class="pv-ctl" id="pv-ctl"></div>
+<div id="game"></div>
+<h2>52 lá bài</h2>
+<div class="bj-sheet" id="sheet"></div>
+<h2>Mặt sau</h2>
+<div class="bj-sheet pv-backs" id="backs"></div>
+<script src="../js/blackjack/blackjack-cards.js"></script>
+<script src="../js/blackjack/blackjack-engine.js"></script>
+<script src="../js/blackjack/blackjack-render.js"></script>
+<script>
+(function () {
+  const C = BlackjackCards, E = BlackjackEngine;
+  // 52 lá: hàng theo chất, cột theo hạng
+  const sheet = document.getElementById("sheet"), grid = document.createElement("div"); grid.className = "pv-sheet";
+  C.SUITS.forEach(function (s) { C.RANKS.forEach(function (r) { grid.appendChild(C.createCardElement(C.getCard(s + "-" + r))); }); });
+  sheet.appendChild(grid);
+  const backs = document.getElementById("backs"); backs.appendChild(C.createBackElement()); backs.appendChild(C.createCardElement(C.getCard("spades-A"), { faceDown: true }));
+
+  // Bàn chơi: dựng vài tình huống bằng engine với bộ bài chỉ định
+  function stack(ranks) {
+    const used = {};
+    return ranks.map(function (r) { const s = C.SUITS.find(function (x) { return !used[x + "-" + r]; }); used[s + "-" + r] = 1; return s + "-" + r; });
+  }
+  const R = BlackjackRender, game = E.createGame();
+  R.mount(document.getElementById("game"), { onAction: function (a) { console.log("action", a); } });
+  const SCEN = {
+    "Chưa chia": function (g) {},
+    "Lượt người chơi": function (g) { g.startRound({ deck: stack(["K", "9", "5", "7"]) }); g.beginPlayerTurn(); },
+    "Người chơi 5 lá": function (g) { g.startRound({ deck: stack(["2", "9", "3", "7", "2", "4", "5"]) }); g.beginPlayerTurn(); g.playerHit(); g.playerHit(); g.playerHit(); },
+    "Quá 21": function (g) { g.startRound({ deck: stack(["K", "9", "Q", "7", "5"]) }); g.beginPlayerTurn(); g.playerHit(); g.revealDealer(); },
+    "Thắng": function (g) { g.startRound({ deck: stack(["10", "10", "9", "7"]) }); g.beginPlayerTurn(); g.playerStand(); g.revealDealer(); g.dealerPlay(); },
+    "Blackjack": function (g) { g.startRound({ deck: stack(["A", "9", "K", "7"]) }); g.beginPlayerTurn(); g.revealDealer(); },
+    "Nhà cái 8 lá": function (g) { g.startRound({ deck: stack(["10", "A", "8", "A", "A", "A", "2", "2", "2", "2"]) }); g.beginPlayerTurn(); g.playerStand(); g.revealDealer(); g.dealerPlay(); },
+    "Hòa": function (g) { g.startRound({ deck: stack(["10", "10", "8", "8"]) }); g.beginPlayerTurn(); g.playerStand(); g.revealDealer(); g.dealerPlay(); },
+    "Thua": function (g) { g.startRound({ deck: stack(["10", "10", "7", "9"]) }); g.beginPlayerTurn(); g.playerStand(); g.revealDealer(); g.dealerPlay(); },
+    "Ván hoàn tất": function (g) { SCEN["Thắng"](g); g.completeRound(); },
+    "Người chơi 11 lá": function (g) { g.startRound({ deck: stack(["A", "10", "A", "10", "A", "A", "2", "2", "2", "2", "3"]) }); g.beginPlayerTurn(); for (let i = 0; i < 7; i++) g.playerHit(); }
+  };
+  window.__scenario = function (name) { game.reset(); SCEN[name](game); R.render(game.getState(), {}); };
+  const ctl = document.getElementById("pv-ctl");
+  Object.keys(SCEN).forEach(function (k) { const b = document.createElement("button"); b.textContent = k; b.onclick = function () { window.__scenario(k); }; ctl.appendChild(b); });
+  window.__scenario("Lượt người chơi");
+})();
+</script>
+</body>
+</html>
