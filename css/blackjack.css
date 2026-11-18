@@ -177,20 +177,7 @@
 @media (prefers-reduced-motion: reduce) { .bj-card-inner { transition: none !important; } }
 
 /* ===================== TÍCH HỢP VÀO QUIZWHEEL (M4) ===================== */
-/* Nút Blackjack ở trang chủ: vẽ bằng CSS cùng kiểu nút đỏ bóng chữ vàng của Start/Setting (các nút đó là ảnh PNG). Dùng class .img-btn nên có sẵn hiệu ứng nhấn. */
-.bj-home-btn {
-  aspect-ratio: 640 / 277; display: grid; place-items: center; position: relative; overflow: hidden;
-  border: 4px solid #3a1000; border-radius: 999px;
-  background: radial-gradient(ellipse at 50% 0%, #ff6a58 0%, #e5251b 38%, #a8120d 100%);
-  box-shadow: 0 6px 0 #6e1008, inset 0 3px 0 rgba(255, 255, 255, .35), inset 0 -8px 12px rgba(80, 0, 0, .35);
-}
-.bj-home-btn::after { /* vệt bóng phía trên */
-  content: ""; position: absolute; left: 9%; right: 9%; top: 7%; height: 28%; border-radius: 999px; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0));
-}
-.bj-home-btn .game-text { position: relative; z-index: 1; color: #ffd21f; font-size: clamp(1.45rem, 6.2vw, 2.1rem); letter-spacing: .01em; -webkit-text-stroke: 0; paint-order: normal;
-  text-shadow: 0 3px 0 #a24a00, 0 0 2px #3a1000, 2px 2px 0 #3a1000, -2px 2px 0 #3a1000, 2px -2px 0 #3a1000, -2px -2px 0 #3a1000; }
-.bj-home-btn:focus-visible { border-radius: 999px; }
+/* Nút Blackjack ở trang chủ: ảnh assets/images/btn-blackjack.png (640px rộng như btn-start / btn-setting), dùng class .img-btn nên có sẵn hiệu ứng nhấn. Phần hiển thị/ẩn khi host tắt nằm ở cuối file (.bj-home-btn[hidden]). */
 
 #screen-blackjack:not([hidden]) { display: block; }
 

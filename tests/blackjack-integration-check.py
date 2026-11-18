@@ -84,8 +84,9 @@ with sync_playwright() as p:
     wait_screen(pg, "home")
     check(failed == [], "không có file cục bộ nào tải lỗi (404): %s" % failed)
     info = pg.evaluate("""() => { const q = id => document.getElementById(id), r = q('btn-blackjack').getBoundingClientRect(), s = q('btn-start').getBoundingClientRect(), g = q('btn-setting').getBoundingClientRect();
-      return { txt: q('btn-blackjack').textContent, w: r.width, wStart: s.width, order: s.top < r.top && r.top < g.top, inView: r.bottom <= innerHeight } }""")
-    check(info["txt"].strip() == "Blackjack" and abs(info["w"] - info["wStart"]) < 2 and info["order"], "nút Blackjack: chữ đúng, cùng bề rộng nút Start, nằm giữa Start và Setting (%s)" % info)
+      const im = q('btn-blackjack').querySelector('img');
+      return { aria: q('btn-blackjack').getAttribute('aria-label'), imgOk: !!im && im.complete && im.naturalWidth > 0, w: r.width, wStart: s.width, order: s.top < r.top && r.top < g.top, inView: r.bottom <= innerHeight } }""")
+    check(info["aria"] == "Blackjack" and info["imgOk"] and abs(info["w"] - info["wStart"]) < 2 and info["order"], "nút Blackjack: ảnh nút tải được, nhãn truy cập đúng, cùng bề rộng nút Start, nằm giữa Start và Setting (%s)" % info)
     pg.screenshot(path="/tmp/m4_home.png")
     pg.evaluate("() => { window.__bjsfx = []; const o = BlackjackAudio.play; BlackjackAudio.play = n => { window.__bjsfx.push(n); o(n); }; }")
     pg.click("#btn-blackjack"); wait_screen(pg, "blackjack")

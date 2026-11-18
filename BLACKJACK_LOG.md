@@ -96,3 +96,6 @@ Chạy: `python3 tests/blackjack-integration-check.py`
 - Đối chiếu SQL 12 với bản mới nhất của các hàm được thay (api_config, api_history, admin_history, admin_players, admin_settings): không mất trường nào, chỉ thêm trường Blackjack. Các hàm Quiz/Gacha không bị sửa; dòng plays kind 'blackjack' có status 'finished', wheel null, spun true nên không bị hiểu là ván dở / chờ quay.
 - Thay đổi so với bản M4 nhận vào: sửa css/blackjack.css, js/api.js, js/i18n.js, js/main.js, js/host-admin.js, js/blackjack/{blackjack,blackjack-engine,blackjack-render}.js, README.md, TESTING.md; thêm sql/12-blackjack.sql, tests/{bj_fake_server.py, blackjack-server-check.py, blackjack-host-check.py, blackjack-sql-sim.py}; cập nhật tests/{blackjack-engine.test.js, blackjack-integration-check.py}. index.html, host.html không đổi trong phần này.
 - CHƯA làm được: chạy sql/12-blackjack.sql trên PostgreSQL thật; thử với Supabase thật; thử trên điện thoại/Safari thật.
+
+## Sau M8 – ảnh nút Blackjack
+- Nút Blackjack ở trang chủ dùng ảnh assets/images/btn-blackjack.png (do bạn cung cấp, thu về 640x277 như btn-start/btn-setting; 2,2 MB -> 215 KB). index.html: <button id="btn-blackjack"> chứa <img>, aria-label theo i18n (home.blackjack). Đã bỏ phần nút vẽ bằng CSS trong css/blackjack.css. Để đổi ảnh sau này: thay file PNG (giữ tỉ lệ ~2,3:1, rộng 640px).
