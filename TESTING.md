@@ -59,7 +59,7 @@ Chạy tự động (cần Node 20+, Python 3, Playwright + Chromium; không c�
 - `python3 tests/blackjack-integration-check.py` – mở từ trang chủ, bắt buộc đăng nhập, thoát / điều hướng / đăng xuất giữa ván, đổi ngôn ngữ, âm thanh theo thiết lập, 360 / 390px: **32 mục đạt**
 - `python3 tests/blackjack-server-check.py` – chế độ server với máy chủ giả: số dư, thanh cược ¼ đến hết, thắng / Blackjack 1,5× / quá 21, tự dừng ở 21, thoát có xác nhận, ván dở, lỗi mạng, lệch kết quả, hết tiền, host tắt, bấm dồn, đổi ngôn ngữ, Lịch sử, 360px, **80 ván ngẫu nhiên**: **51 mục đạt**
 - `python3 tests/blackjack-host-check.py` – trang host: thẻ Blackjack, kiểm tra chuỗi %, đặt lại độ khó, Lịch sử, server cũ chưa có SQL, 360px: **22 mục đạt**
-- `python3 tests/blackjack-sql-sim.py` – mô phỏng thuật toán chia bài thiên lệch + hồi phục (in bảng tỉ lệ thắng theo bậc; **không phải chạy SQL thật**)
+- `python3 tests/blackjack-sql-sim.py [số ván]` – mô phỏng thuật toán chia bài thiên lệch + hồi phục +1 (in tỉ lệ thắng và **EV** theo bậc cho người chơi chuẩn / stand-17 / ẩu, mặc định 50.000 ván/ô, chạy khoảng 1–2 phút; **không phải chạy SQL thật**)
 - Kiểm tra tĩnh: `node --check` mọi file JS, bộ khóa i18n vi/en khớp nhau (214/214), không có ảnh hoặc URL ngoài trong code Blackjack.
 
 **Giới hạn của các test trên:** máy chủ trong `tests/bj_fake_server.py` là bản cài lại hợp đồng và thuật toán của `sql/12-blackjack.sql` bằng Python. Nó cho biết giao diện và logic khớp với thiết kế, **không chứng minh file SQL chạy đúng trên PostgreSQL thật**. Máy kiểm thử không có PostgreSQL.

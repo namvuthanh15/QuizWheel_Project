@@ -103,3 +103,11 @@ Chạy: `python3 tests/blackjack-integration-check.py`
 ## Sau M8 – rút gọn bảng luật
 - Bảng luật đổi từ đoạn văn dài thành khung NỔI 4 dòng ngắn (Cược / Tiền / Độ khó / Thoát giữa ván) + 1 dòng ghi chú "Trò may rủi, hãy cược vừa sức."; bỏ câu "bạn đóng vai người chơi còn host là nhà cái". Khung nằm đè lên phía trên bảng cược nên mở/đóng không làm xô thanh cược và nút Chia bài. Đóng bằng: bấm nút Luật lần nữa, bấm ra ngoài, nhấn Esc, hoặc bấm nút khác.
 - Sửa: js/blackjack/blackjack-render.js, js/i18n.js (bỏ bj.rules.body, thêm bj.rules.k1-k4 / v1-v4 / note, vi và en), css/blackjack.css; tests/blackjack-server-check.py (+7 kiểm tra: luật ngắn, không xô bố cục, aria-expanded, Esc, bấm ngoài, bấm lại, bấm chỗ khác). Kết quả: server 51 mục, tích hợp 32, host 22, visual 22, anim 50, engine 38/38; i18n vi/en 222/222.
+
+## Sau M8 – A2: hiệu chuẩn lại kinh tế các bậc theo EV (đã chốt phương án A, bước hồi phục giảm xuống +1)
+- Vấn đề: chuỗi cũ 50/40/33/27/22 chọn theo % thắng, nhưng bậc 1 có EV +11,3% (host thua tiền thật) và bậc 5 −44%; hồi phục +3 cho phép cố tình thua để quay về vùng EV dương.
+- Quyết định (chủ dự án chọn phương án A): EV mục tiêu của người chơi chuẩn theo bậc −2, −6, −10, −14, −18 %; bước hồi phục mỗi ván thua giảm từ +3 xuống +1 điểm % (hằng số v_step trong _bj_settle; STEP trong sim và máy chủ giả).
+- Làm: đo EV theo g (~20 điểm, 60.000–120.000 ván/điểm, chiến thuật cơ bản), làm mượt bằng đa thức bậc 5, dựng lại bảng _bj_bias thành 15 điểm (R: 50.0 … 21.0, G: −0.55 … 4), chuỗi mặc định mới [43.6, 41.6, 39.6, 37.5, 35.5]. sql/12-blackjack.sql tự đổi chuỗi mặc định cũ ([50,40,33,27,22] và bản nháp [50,35,20,5,0]) sang chuỗi mới; chuỗi host đã tự đặt thì giữ nguyên.
+- Kiểm lại bằng tests/blackjack-sql-sim.py (50.000 ván/ô, chuẩn 100.000): EV chuẩn −1,6 / −5,9 / −9,8 / −14,5 / −18,6 % (mục tiêu −2/−6/−10/−14/−18, sai số ~±0,3); stand-17 thấp hơn 3–4 điểm; ẩu −30 đến −44%. Đây là mô phỏng Python của thuật toán, CHƯA chạy trên PostgreSQL thật.
+- Sửa: sql/12-blackjack.sql, js/host-admin.js (chuỗi mặc định + ghi chú EV/hồi phục), tests/{blackjack-sql-sim.py, bj_fake_server.py, blackjack-host-check.py}, README.md, TESTING.md. Không đổi host.html, hàm Quiz/Gacha, giao diện người chơi.
+- Còn lại sau A2: A1 (chạy SQL thật; sau đó đo lại EV trên SQL thật), B2 (luật cược tối thiểu ¼ số dư / trần cược), B3.

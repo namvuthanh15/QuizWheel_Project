@@ -10,10 +10,13 @@
 --      - lá nhà cái rút:    lá làm QUÁ 21 có trọng số e^−g.
 --    g > 0 nghiêng về nhà cái (khó hơn), g < 0 nghiêng về người chơi. Người chơi giỏi (chiến thuật cơ bản) vẫn thắng
 --    nhiều hơn người chơi ẩu, nên cần kỹ năng.
---  * Chuỗi app_config.bj_chain (mặc định 50, 40, 33, 27, 22) là TỈ LỆ THẮNG MỤC TIÊU (%) của một người chơi chuẩn theo bậc
---    (bậc = số ván đã thắng players.bj_wins, không tự về 0; host có thể reset). _bj_bias() đổi % thành g bằng bảng hiệu chuẩn
---    từ mô phỏng. Đây là XẤP XỈ, không phải đảm bảo; sàn khả thi khoảng 21% (thấp hơn thì phải gian lận lộ liễu nên bị chặn ở g = 4).
---  * HỒI PHỤC: sau khi thắng ít nhất 1 ván, mỗi ván THUA (thua, quá 21, nhà cái Blackjack, bỏ ván) cộng 3 điểm % vào tỉ lệ
+--  * Chuỗi app_config.bj_chain (mặc định 43.6, 41.6, 39.6, 37.5, 35.5) là TỈ LỆ THẮNG MỤC TIÊU (%) của một người chơi chuẩn theo bậc
+--    (bậc = số ván đã thắng players.bj_wins, không tự về 0; host có thể reset). Các số mặc định được chọn theo EV mục tiêu
+--    của người chơi chuẩn (chiến thuật cơ bản, không Double/Split/Insurance): bậc 1..5 ≈ −2%, −6%, −10%, −14%, −18% trên mỗi 1 đồng cược
+--    (EV = lãi/lỗ trung bình; bậc 1 không còn EV dương nên không có mức nào có lợi cho người chơi). _bj_bias() đổi % thành g bằng
+--    bảng hiệu chuẩn từ mô phỏng (tests/blackjack-sql-sim.py). Đây là XẤP XỈ, không phải đảm bảo; sàn khả thi khoảng 21%
+--    (thấp hơn thì phải gian lận lộ liễu nên bị chặn ở g = 4).
+--  * HỒI PHỤC: sau khi thắng ít nhất 1 ván, mỗi ván THUA (thua, quá 21, nhà cái Blackjack, bỏ ván) cộng 1 điểm % vào tỉ lệ
 --    hiện tại (players.bj_rate) cho tới khi chạm mức của bậc ngay trước; hòa giữ nguyên; thắng thì về mức gốc của bậc kế tiếp.
 --  * Bộ bài còn lại và lá úp nằm trong bảng bj_games (RLS bật, không policy) nên trình duyệt không đọc được.
 --    Trình duyệt chỉ thấy "bước độ khó", không thấy % hay g.
@@ -23,8 +26,10 @@
 alter table public.players    add column if not exists bj_wins int not null default 0 check (bj_wins >= 0);
 alter table public.players    add column if not exists bj_rate numeric check (bj_rate is null or (bj_rate >= 0 and bj_rate <= 100));  -- null = dùng mức gốc của bậc
 alter table public.app_config add column if not exists bj_enabled boolean not null default true;
-alter table public.app_config add column if not exists bj_chain jsonb not null default '[50,40,33,27,22]'::jsonb;
-update public.app_config set bj_chain = '[50,40,33,27,22]'::jsonb where bj_chain = '[50,35,20,5,0]'::jsonb;   -- bản nháp cũ
+alter table public.app_config add column if not exists bj_chain jsonb not null default '[43.6,41.6,39.6,37.5,35.5]'::jsonb;
+-- Đổi các chuỗi mặc định cũ (bản nháp và bản M8) sang chuỗi mới; chuỗi do host tự đặt thì giữ nguyên
+update public.app_config set bj_chain = '[43.6,41.6,39.6,37.5,35.5]'::jsonb
+ where bj_chain in ('[50,35,20,5,0]'::jsonb, '[50,40,33,27,22]'::jsonb);
 
 -- Cho phép loại ván 'blackjack' trong bảng plays (gỡ ràng buộc kind cũ rồi tạo lại)
 do $$
@@ -91,17 +96,17 @@ language sql volatile as $$
 $$;
 
 -- Đổi "tỉ lệ thắng mục tiêu (%) của người chơi chuẩn" thành độ thiên lệch g (nội suy tuyến tính trên bảng hiệu chuẩn).
--- Bảng lấy từ mô phỏng chiến thuật cơ bản (tests/blackjack-sql-sim.py). Dưới ~21% thì dừng ở g = 4.
+-- Bảng lấy từ mô phỏng chiến thuật cơ bản (tests/blackjack-sql-sim.py, đã làm mượt bằng đa thức bậc 5). Dưới ~21% thì dừng ở g = 4.
 create or replace function public._bj_bias(p_rate numeric) returns numeric
 language plpgsql immutable as $$
 declare
-  r numeric[] := array[50, 44, 38, 33, 29, 26, 22, 21]::numeric[];
-  g numeric[] := array[-0.55, 0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0]::numeric[];
+  r numeric[] := array[50.0, 47.1, 44.7, 43.6, 41.8, 40.1, 37.9, 35.8, 33.9, 32.1, 29.0, 26.1, 24.0, 22.5, 21.0]::numeric[];
+  g numeric[] := array[-0.55, -0.3, -0.1, 0, 0.15, 0.3, 0.5, 0.7, 0.9, 1.1, 1.5, 2.0, 2.5, 3.0, 4.0]::numeric[];
   i int;
 begin
   if p_rate is null or p_rate >= r[1] then return g[1]; end if;
-  if p_rate <= r[8] then return g[8]; end if;
-  for i in 1 .. 7 loop
+  if p_rate <= r[15] then return g[15]; end if;
+  for i in 1 .. 14 loop
     if p_rate <= r[i] and p_rate >= r[i + 1] then
       return g[i] + (g[i + 1] - g[i]) * (r[i] - p_rate) / (r[i] - r[i + 1]);
     end if;
@@ -135,6 +140,7 @@ end $$;
 create or replace function public._bj_settle(p_game uuid, p_outcome text, p_dealer text[]) returns numeric
 language plpgsql security definer set search_path = public, extensions as $$
 declare g bj_games; v_delta numeric; v_p players; v_chain jsonb; v_idx int; v_base numeric; v_cap numeric;
+  v_step constant numeric := 1;      -- điểm % hồi phục sau mỗi ván thua
 begin
   select * into g from bj_games where id = p_game;
   select * into v_p from players where id = g.player_id;
@@ -149,10 +155,10 @@ begin
   if p_outcome in ('win', 'blackjack') then
     update players set bj_wins = bj_wins + 1, bj_rate = null where id = g.player_id;       -- thắng: về mức gốc của bậc kế tiếp
   elsif p_outcome <> 'push' and v_idx >= 1 then
-    -- thua (kể cả quá 21 / bỏ ván): +3 điểm %, tối đa bằng mức của bậc ngay trước, và không thấp hơn mức gốc của bậc hiện tại
+    -- thua (kể cả quá 21 / bỏ ván): +v_step (1) điểm %, tối đa bằng mức của bậc ngay trước, và không thấp hơn mức gốc của bậc hiện tại
     v_base := (v_chain ->> v_idx)::numeric;
     v_cap := (v_chain ->> (v_idx - 1))::numeric;
-    update players set bj_rate = greatest(v_base, least(coalesce(bj_rate, v_base) + 3, v_cap)) where id = g.player_id;
+    update players set bj_rate = greatest(v_base, least(coalesce(bj_rate, v_base) + v_step, v_cap)) where id = g.player_id;
   end if;
   return v_delta;
 end $$;

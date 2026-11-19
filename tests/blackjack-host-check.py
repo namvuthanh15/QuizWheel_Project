@@ -37,12 +37,12 @@ with sync_playwright() as p:
     b = p.chromium.launch()
 
     # ===== Tab Cài đặt: thẻ Blackjack =====
-    bj = FakeBJ(10.0); bj.wins = 2; bj.rate = 36.0
+    bj = FakeBJ(10.0); bj.wins = 2; bj.rate = 40.6
     ctx, pg, errs = session(b, bj); tab(pg, "Cài đặt")
     card = pg.locator(".card:has(h2:has-text('Blackjack'))")
     check(card.count() == 1 and card.locator("input[type=checkbox]").is_checked(), "thẻ Blackjack có công tắc, đang bật")
     chain = card.locator("input[type=text]")
-    check(chain.input_value() == "50, 40, 33, 27, 22", "chuỗi mặc định hiển thị: %s" % chain.input_value())
+    check(chain.input_value() == "43.6, 41.6, 39.6, 37.5, 35.5", "chuỗi mặc định hiển thị: %s" % chain.input_value())
     check("Server chưa có Blackjack" not in card.inner_text(), "server có Blackjack: không hiện cảnh báo chạy SQL")
     # lưu hợp lệ
     chain.fill("55, 45.5; 30 22"); card.locator("input[type=checkbox]").uncheck(); card.locator("button:has-text('Lưu Blackjack')").click()
@@ -66,7 +66,7 @@ with sync_playwright() as p:
     tab(pg, "Người chơi")
     row = pg.locator("tr.prow").first
     check("Blackjack thắng 2" in row.inner_text(), "dòng người chơi hiện số ván Blackjack đã thắng (2)")
-    check("36" not in row.inner_text(), "không lộ tỉ lệ hồi phục (36) trên bảng")
+    check("40.6" not in row.inner_text(), "không lộ tỉ lệ hồi phục (40.6) trên bảng")
     row.locator("button.menu-btn").click()
     item = pg.locator(".menu-pop:visible .menu-item:has-text('Đặt lại độ khó')")
     check(item.count() == 1, "menu Thêm có mục Blackjack > Đặt lại độ khó")

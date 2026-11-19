@@ -8,16 +8,18 @@ def score(cs):
     t = sum(val(c.split("-")[1]) for c in cs); a = sum(c.endswith("-A") for c in cs)
     while t > 21 and a: t -= 10; a -= 1
     return t
-R_ = [50, 44, 38, 33, 29, 26, 22, 21]; G_ = [-0.55, 0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+R_ = [50.0, 47.1, 44.7, 43.6, 41.8, 40.1, 37.9, 35.8, 33.9, 32.1, 29.0, 26.1, 24.0, 22.5, 21.0]   # giống _bj_bias trong sql/12-blackjack.sql
+G_ = [-0.55, -0.3, -0.1, 0, 0.15, 0.3, 0.5, 0.7, 0.9, 1.1, 1.5, 2.0, 2.5, 3.0, 4.0]
+STEP = 1          # điểm % hồi phục mỗi ván thua (giống v_step)
 def bias(rate):
     if rate >= R_[0]: return G_[0]
     if rate <= R_[-1]: return G_[-1]
-    for i in range(7):
+    for i in range(len(R_) - 1):
         if R_[i + 1] <= rate <= R_[i]: return G_[i] + (G_[i + 1] - G_[i]) * (R_[i] - rate) / (R_[i] - R_[i + 1])
 def r2(x): return round(x * 100) / 100
 
 class FakeBJ:
-    def __init__(self, balance=10.0, enabled=True, chain=(50, 40, 33, 27, 22)):
+    def __init__(self, balance=10.0, enabled=True, chain=(43.6, 41.6, 39.6, 37.5, 35.5)):
         self.balance = balance; self.enabled = enabled; self.chain = list(chain)
         self.wins = 0; self.rate = None; self.game = None; self.rows = []; self.calls = []; self.params = []
         self.script = None          # danh sách id lá, dùng thay cho xáo bài
@@ -46,7 +48,7 @@ class FakeBJ:
         if outcome in ("win", "blackjack"): self.wins += 1; self.rate = None
         elif outcome != "push" and idx >= 1:
             base, cap = self.chain[idx], self.chain[idx - 1]
-            self.rate = max(base, min((base if self.rate is None else self.rate) + 3, cap))
+            self.rate = max(base, min((base if self.rate is None else self.rate) + STEP, cap))
         g["status"] = "done"; self.game = None
         return delta
     def _state_nums(self):
