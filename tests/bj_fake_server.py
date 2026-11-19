@@ -1,7 +1,7 @@
 """Máy chủ Blackjack GIẢ LẬP cho test trình duyệt: cài lại đúng HỢP ĐỒNG và thuật toán của sql/12-blackjack.sql (không phải SQL thật).
 handle(fn, params) -> dict giống phản hồi api_bj_* / api_history. Có thể đặt `script` (danh sách id lá bài theo thứ tự chia) để test xác định,
 và các cờ lỗi để thử tình huống bất thường (network, sai kết quả...)."""
-import math, random
+import math, random, time
 SU = ["spades", "hearts", "diamonds", "clubs"]; RA = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 val = lambda r: 11 if r == "A" else 10 if r in ("J", "Q", "K") else int(r)
 def score(cs):
@@ -22,6 +22,7 @@ class FakeBJ:
     def __init__(self, balance=10.0, enabled=True, chain=(43.6, 41.6, 39.6, 37.5, 35.5)):
         self.balance = balance; self.enabled = enabled; self.chain = list(chain)
         self.wins = 0; self.rate = None; self.game = None; self.rows = []; self.calls = []; self.params = []
+        self.grace = 5.0           # giống v_grace trong SQL: ván mở dưới mức này (giây) thì api_bj_start trả game_open, không phạt
         self.script = None          # danh sách id lá, dùng thay cho xáo bài
         self.fail = {}              # {"api_bj_hit": "network"} -> trả lỗi; {"api_bj_stand": "wrong_outcome"} -> kết quả sai (thử lệch đồng bộ)
         self.delay = {}
@@ -72,7 +73,9 @@ class FakeBJ:
 
     def api_bj_start(self, p):
         if not self.enabled: return {"ok": False, "error": "disabled"}
-        if self.game: self._settle("abandoned", self.game["dc"])
+        if self.game:
+            if time.monotonic() - self.game["t"] < self.grace: return {"ok": False, "error": "game_open"}
+            self._settle("abandoned", self.game["dc"])
         mn, mx = self._bal_range(); bet = p.get("p_bet")
         if mx < 0.1: return {"ok": False, "error": "no_balance", "balanceK": self.balance}
         if bet is None or bet < mn - 1e-9 or bet > mx + 1e-9 or abs(bet * 10 - round(bet * 10)) > 1e-9:
@@ -85,7 +88,7 @@ class FakeBJ:
         pc, up, hole = [seq[0], seq[2]], seq[1], seq[3]
         self.balance = r2(self.balance - bet)
         row = {"kind": "blackjack", "reward": -bet, "outcome": None, "bet": bet}; self.rows.insert(0, row)
-        self.game = {"bet": bet, "bias": bias(pct), "hole": hole, "deck": deck, "pc": pc, "dc": [up], "row": row, "status": "open"}
+        self.game = {"bet": bet, "bias": bias(pct), "hole": hole, "deck": deck, "pc": pc, "dc": [up], "row": row, "status": "open", "t": time.monotonic()}
         pn, dn = score(pc) == 21, score([up, hole]) == 21
         if pn or dn:
             out = "push" if pn and dn else "blackjack" if pn else "dealer_blackjack"

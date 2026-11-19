@@ -35,7 +35,7 @@
   function errText(code) {
     const known = ["invalid", "locked", "disabled", "network", "config", "auth", "no_turns", "free_used", "pool", "active", "pending_spin",
                    "bad_count", "bad_level", "stale", "no_play", "not_active", "no_wheel", "wheel_unavailable", "bad_slot", "no_bags", "imp_locked", "gacha_used",
-                   "no_balance", "bad_bet", "no_game", "cannot_hit"];
+                   "no_balance", "bad_bet", "no_game", "cannot_hit", "game_open"];
     return I18n.t("err." + (known.indexOf(code) >= 0 ? code : "generic"));
   }
 

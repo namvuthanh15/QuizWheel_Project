@@ -111,3 +111,10 @@ Chạy: `python3 tests/blackjack-integration-check.py`
 - Kiểm lại bằng tests/blackjack-sql-sim.py (50.000 ván/ô, chuẩn 100.000): EV chuẩn −1,6 / −5,9 / −9,8 / −14,5 / −18,6 % (mục tiêu −2/−6/−10/−14/−18, sai số ~±0,3); stand-17 thấp hơn 3–4 điểm; ẩu −30 đến −44%. Đây là mô phỏng Python của thuật toán, CHƯA chạy trên PostgreSQL thật.
 - Sửa: sql/12-blackjack.sql, js/host-admin.js (chuỗi mặc định + ghi chú EV/hồi phục), tests/{blackjack-sql-sim.py, bj_fake_server.py, blackjack-host-check.py}, README.md, TESTING.md. Không đổi host.html, hàm Quiz/Gacha, giao diện người chơi.
 - Còn lại sau A2: A1 (chạy SQL thật; sau đó đo lại EV trên SQL thật), B2 (luật cược tối thiểu ¼ số dư / trần cược), B3.
+
+## Sau A2 – Lỗi trừ cược hai lần khi hai tab chia bài sát nhau (A4, đã chốt cách 1, ân hạn 5 giây)
+- Phát hiện khi thử thật: một tài khoản, hai tab bấm "Chia bài" sát nhau => Lịch sử có cặp ván "Bỏ ván" + ván thua cùng giây, cùng mức cược; tab kia báo lỗi đồng bộ.
+- Nguyên nhân: không phải hở khóa song song (server vẫn xử lần lượt, không bao giờ có hai ván mở cùng lúc). Do luật "có ván mở thì ván cũ bị tính thua" trong api_bj_start: ván vừa chia ở tab A bị tab B xử thua rồi mở ván mới và trừ cược lần hai. Cũng xảy ra khi bấm đúp "Chia bài".
+- Sửa (cách 1): api_bj_start trả {ok:false, error:'game_open'} và KHÔNG làm gì khác nếu ván đang mở mới tạo dưới 5 giây (hằng số v_grace; so với clock_timestamp() và bj_games.created_at). Ván mở cũ hơn 5 giây vẫn bị xử thua như thiết kế (tab B bấm sau vài chục giây vẫn làm tab A thua; api_bj_abandon / mở màn hình có ván dở không đổi). Cách 2 (khôi phục ván) để dành cho B1.
+- Client: js/api.js (+game_open), js/blackjack/blackjack.js (game_open cũng tải lại số dư), js/i18n.js (+err.game_open vi/en). Máy chủ giả: grace 5 giây (`FakeBJ.grace`, ván có mốc `t`). Test: tests/blackjack-server-check.py thêm mục I2 (server 57 mục), integration, host vẫn 0 lỗi.
+- CHƯA kiểm: SQL mới chưa chạy trên Supabase thật; cần chạy lại 12-blackjack.sql rồi thử lại A4 (hai tab bấm Chia bài sát nhau: chỉ trừ một cược, tab kia hiện thông báo chờ vài giây).

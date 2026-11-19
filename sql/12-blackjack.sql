@@ -194,7 +194,8 @@ begin
 end $$;
 
 -- Chia bài. p_bet: bội của 0,1K, từ ¼ số dư (làm tròn xuống, tối thiểu 0,1K) đến toàn bộ số dư (làm tròn xuống 0,1K).
--- Có ván đang mở (thoát giữa chừng / tải lại trang) thì ván đó bị xử THUA trước.
+-- Có ván đang mở (thoát giữa chừng / tải lại trang) thì ván đó bị xử THUA trước, TRỪ khi ván đó vừa mở dưới 5 giây
+-- (bấm đúp, hai tab bấm sát nhau): khi đó trả lỗi 'game_open', KHÔNG phạt ván cũ và KHÔNG mở ván mới / trừ thêm cược.
 -- Bốn lá đầu chia đều: người chơi, nhà cái (ngửa), người chơi, nhà cái (úp). Nhà cái xem bài: có Blackjack tự nhiên thì ván xong ngay.
 -- Trả về: {ok, bet, player:[2 lá], dealer:[lá ngửa], playerScore, done:false}
 --         hoặc, khi có Blackjack tự nhiên (ván kết thúc ngay): done:true, outcome: blackjack | dealer_blackjack | push, dealer:[2 lá], delta.
@@ -206,6 +207,7 @@ declare
   v_len int; v_idx int; v_pct numeric; v_bias numeric;
   v_deck text[]; v_pc text[]; v_up text; v_hole text;
   v_play uuid; v_gid uuid; v_delta numeric; v_pn boolean; v_dn boolean; v_out text;
+  v_grace constant interval := interval '5 seconds';                  -- ván mở dưới mức này thì không bị ván mới đè
 begin
   v_pid := public._player_id(p_token);
   if v_pid is null then return jsonb_build_object('ok', false, 'error', 'auth'); end if;
@@ -215,6 +217,9 @@ begin
 
   select * into v_old from bj_games where player_id = v_pid and status = 'open' for update;
   if v_old.id is not null then
+    if clock_timestamp() - v_old.created_at < v_grace then                    -- ván vừa mở (tab/thiết bị khác hoặc bấm đúp): giữ nguyên, không phạt
+      return jsonb_build_object('ok', false, 'error', 'game_open');
+    end if;
     perform public._bj_settle(v_old.id, 'abandoned', v_old.dealer_cards);   -- bỏ ván = thua (cược đã trừ sẵn)
     select * into v_p from players where id = v_pid;                          -- đọc lại: bj_rate có thể vừa đổi
   end if;

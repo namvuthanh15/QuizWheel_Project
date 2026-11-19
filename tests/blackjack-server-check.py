@@ -138,6 +138,21 @@ with sync_playwright() as p:
     check("tính thua" in (txt(pg, "msg") or ""), "hiện thông báo: %s" % txt(pg, "msg"))
     ctx.close()
 
+    # ===== I2. Hai tab chia bài sát nhau (A4): ván vừa mở < 5 giây thì tab kia bị từ chối, KHÔNG phạt, KHÔNG trừ cược lần hai =====
+    bj = FakeBJ(10.0); ctx, pg, errs, dl = session(b, bj); open_bj(pg, dl); wait_bal(pg, "10K")
+    bj.script = ["spades-10", "hearts-10", "spades-9", "hearts-7"]; bj.handle("api_bj_start", {"p_bet": 2.5})        # "tab A" vừa chia xong
+    pg.click("[data-act=new]"); pg.wait_for_timeout(500); idle(pg)
+    check(bj.rows[0]["outcome"] is None and bj.game is not None and len(bj.rows) == 1, "tab B bấm Chia bài sát nhau: ván của tab A giữ nguyên, không bị tính thua, không có ván thứ hai")
+    check(abs(bj.balance - 7.5) < 1e-9, "chỉ trừ cược MỘT lần (số dư server %s)" % bj.balance)
+    check("vài giây" in (txt(pg, "msg") or ""), "tab B hiện thông báo chờ vài giây: %s" % txt(pg, "msg"))
+    check(phase(pg) == "IDLE", "bàn tab B không kẹt (phase %s)" % phase(pg))
+    bj.game["t"] -= 6                                                                                            # ván của tab A đã cũ hơn 5 giây
+    bj.script = ["spades-2", "hearts-3", "spades-4", "hearts-5"]
+    pg.wait_for_timeout(200); pg.click("[data-act=new]"); pg.wait_for_timeout(500); idle(pg)
+    check(len(bj.rows) == 2 and bj.rows[1]["outcome"] == "abandoned" and bj.game is not None, "ván cũ hơn 5 giây vẫn bị tính thua khi chia ván mới (theo thiết kế)")
+    check(errs == [], "không lỗi JS: %s" % errs)
+    ctx.close()
+
     # ===== J. Lỗi mạng giữa ván: bàn giữ nguyên, nút không kẹt, thử lại được =====
     bj = FakeBJ(10.0); ctx, pg, errs, dl = session(b, bj); open_bj(pg, dl); wait_bal(pg, "10K")
     bj.script = ["spades-10", "hearts-10", "spades-6", "hearts-7", "clubs-2"]; deal(pg)

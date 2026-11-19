@@ -146,7 +146,7 @@
         if (!acct || !acct.ready || !acct.enabled || acct.max < 0.1) return;
         resp = await api.bjStart(acct.value);
         try { s.check(); } catch (e) { if (resp && resp.ok && !resp.done) api.bjAbandon(); throw e; } // thoát khi đang chờ server: ván vừa mở bị tính thua
-        if (!resp || !resp.ok) { fail(resp && resp.error); if (resp && /^(no_balance|bad_bet|disabled)$/.test(resp.error)) await loadAcct(); return; }
+        if (!resp || !resp.ok) { fail(resp && resp.error); if (resp && /^(no_balance|bad_bet|disabled|game_open)$/.test(resp.error)) await loadAcct(); return; }
         srvRound = { settled: !!resp.done };
         acct.balance = Number(resp.balanceK);
         const hole = resp.dealer[1] || pickPlaceholder([resp.player[0], resp.player[1], resp.dealer[0]]);
